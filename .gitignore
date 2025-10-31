@@ -1,0 +1,54 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+*.so
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Logs
+logs/
+*.log
+
+# Coverage / test
+.coverage
+coverage/
+.pytest_cache/
+htmlcov/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Cache
+.cache/
+.mypy_cache/
+
+# IDEs/editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Data/artifacts (uncomment if you generate large data locally)
+# data/
+# outputs/
+# artifacts/
+
