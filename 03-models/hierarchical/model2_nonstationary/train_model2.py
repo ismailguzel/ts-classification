@@ -119,17 +119,42 @@ if args.mode == 'raw':
     for cat, count in sorted(categories.items()):
         print(f"  {cat}: {count} files")
     
-    # Load all files
-    print("\nLoading files...")
-    dfs = []
-    for i, fp in enumerate(files):
-        if i % 20 == 0:
-            print(f"  Progress: {i}/{len(files)} files loaded...", end='\r')
-        df_part = pd.read_parquet(fp)
-        dfs.append(df_part)
+    # Load files in batches (memory-efficient)
+    print("\nLoading files in batches (memory-efficient)...")
+    BATCH_SIZE = 10  # Process 10 files at a time
+    all_batches = []
     
-    df = pd.concat(dfs, ignore_index=True)
-    print(f"\n✓ Loaded {len(df):,} data points from {len(files)} files")
+    import gc
+    for batch_idx in range(0, len(files), BATCH_SIZE):
+        batch_files = files[batch_idx:batch_idx + BATCH_SIZE]
+        batch_num = batch_idx // BATCH_SIZE + 1
+        total_batches = (len(files) + BATCH_SIZE - 1) // BATCH_SIZE
+        
+        print(f"  Batch {batch_num}/{total_batches}: Loading {len(batch_files)} files...")
+        
+        # Load batch
+        batch_dfs = []
+        for fp in batch_files:
+            df_part = pd.read_parquet(fp)
+            batch_dfs.append(df_part)
+        
+        # Concatenate batch
+        batch_df = pd.concat(batch_dfs, ignore_index=True)
+        all_batches.append(batch_df)
+        
+        # Clean up batch DataFrames
+        del batch_dfs
+        gc.collect()
+        
+        print(f"  ✓ Batch {batch_num} loaded: {len(batch_df):,} rows")
+    
+    # Final concatenation
+    print("\nCombining all batches...")
+    df = pd.concat(all_batches, ignore_index=True)
+    del all_batches
+    gc.collect()
+    
+    print(f"✓ Loaded {len(df):,} data points from {len(files)} files")
     
     # Filter only NON-STATIONARY series
     df_nonstat = df[df['is_stationary'] == False].copy()
