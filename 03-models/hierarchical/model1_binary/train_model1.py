@@ -302,6 +302,12 @@ if args.mode == 'raw':
         }
         print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
         print(f"  ✓ Training time: {train_time:.2f}s")
+        
+        # Memory cleanup
+        del tsf, y_pred
+        import gc
+        gc.collect()
+        print("  ✓ Memory cleaned")
     
     # Model 2: ROCKET (SOTA)
     if args.classifier in ['all', 'rocket']:
@@ -321,6 +327,11 @@ if args.mode == 'raw':
         }
         print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
         print(f"  ✓ Training time: {train_time:.2f}s")
+        
+        # Memory cleanup
+        import gc
+        gc.collect()
+        print("  ✓ Memory cleaned")
     
     # Model 3: MiniROCKET (Faster ROCKET)
     if args.classifier in ['all', 'minirocket']:
@@ -342,6 +353,11 @@ if args.mode == 'raw':
             }
             print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
             print(f"  ✓ Training time: {train_time:.2f}s")
+        
+        # Memory cleanup
+        import gc
+        gc.collect()
+        print("  ✓ Memory cleaned")
         except ImportError:
             print("  ⚠️  MiniROCKET not available in this sktime version")
     
@@ -363,6 +379,11 @@ if args.mode == 'raw':
         }
         print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
         print(f"  ✓ Training time: {train_time:.2f}s")
+        
+        # Memory cleanup
+        import gc
+        gc.collect()
+        print("  ✓ Memory cleaned")
     
     # Model 5: ShapeletTransform (Pattern-based)
     if args.classifier in ['all', 'shapelet'] and has_shapelet:
@@ -389,6 +410,11 @@ if args.mode == 'raw':
         }
         print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
         print(f"  ✓ Training time: {train_time:.2f}s")
+        
+        # Memory cleanup
+        import gc
+        gc.collect()
+        print("  ✓ Memory cleaned")
     
     # Model 6: HIVECOTEV2 (Most powerful, very slow)
     if args.classifier in ['all', 'hivecote'] and has_hivecote:
@@ -412,6 +438,11 @@ if args.mode == 'raw':
             }
             print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
             print(f"  ✓ Training time: {train_time:.2f}s")
+        
+        # Memory cleanup
+        import gc
+        gc.collect()
+        print("  ✓ Memory cleaned")
         else:
             print("  Skipped HIVECOTEV2")
 
@@ -435,6 +466,11 @@ else:
     }
     print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
     print(f"  ✓ Training time: {train_time:.2f}s")
+        
+        # Memory cleanup
+        import gc
+        gc.collect()
+        print("  ✓ Memory cleaned")
     
     # Model 2: XGBoost (if available)
     if has_xgboost:
@@ -455,6 +491,11 @@ else:
         }
         print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
         print(f"  ✓ Training time: {train_time:.2f}s")
+        
+        # Memory cleanup
+        import gc
+        gc.collect()
+        print("  ✓ Memory cleaned")
     
     # Model 3: SVM (fast linear kernel for large feature sets)
     print("\n⚡ Training SVM (Linear)...")
@@ -473,6 +514,11 @@ else:
     }
     print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
     print(f"  ✓ Training time: {train_time:.2f}s")
+        
+        # Memory cleanup
+        import gc
+        gc.collect()
+        print("  ✓ Memory cleaned")
 # ============================================================================
 # 5. Evaluate and Compare
 # ============================================================================

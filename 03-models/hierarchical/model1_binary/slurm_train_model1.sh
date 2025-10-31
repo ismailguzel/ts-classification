@@ -40,7 +40,7 @@ module list
 # Conda environment aktive et
 echo ""
 echo "Activating conda environment..."
-conda activate ts-generation
+conda activate ts-sktime
 echo "Conda env: $CONDA_DEFAULT_ENV"
 
 # Python ve kütüphane versiyonlarını kontrol et
@@ -71,16 +71,17 @@ fi
 
 # Model training parametreleri
 MODE="raw"
-CLASSIFIER="all"
+CLASSIFIER="minirocket"  # Memory-efficient: tek classifier (all yerine)
 TEST_SIZE=0.2
 
 echo ""
 echo "=================================================="
 echo "Training Configuration:"
 echo "  Mode: $MODE"
-echo "  Classifier: $CLASSIFIER"
+echo "  Classifier: $CLASSIFIER (memory-efficient, single classifier)"
 echo "  Test Size: $TEST_SIZE"
 echo "  Data Path: $DATA_PATH"
+echo "  Note: Using single classifier to prevent OOM errors"
 echo "=================================================="
 
 # Model 1 eğitimi başlat
