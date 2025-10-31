@@ -21,55 +21,44 @@ from pathlib import Path
 import random
 import numpy as np
 
-# Add ts-stationary library to path
-# Adjust this path to your ts-stationary installation
-#TS_STATIONARY_PATH = "/Users/iguzel/Library/CloudStorage/OneDrive-itu.edu.tr/current-research/1001-Time Series/ts-stationary"
-#sys.path.insert(0, TS_STATIONARY_PATH)
-
 # Import configuration
 from config_150k import COUNTS_150K, LENGTH_CONFIG, RANDOM_SEED, OUTPUT_DIR
 
 # Import ts-stationary library
-try:
-    from timeseries_dataset_generator import TimeSeriesGenerator
-    from timeseries_dataset_generator.generators import (
-        # Stationary
-        generate_ar_dataset,
-        generate_ma_dataset,
-        generate_arma_dataset,
-        generate_wn_dataset,
-        # Trends
-        generate_linear_trend_dataset,
-        generate_quadratic_trend_dataset,
-        generate_cubic_trend_dataset,
-        generate_exponential_trend_dataset,
-        generate_damped_trend_dataset,
-        # Stochastic
-        generate_random_walk_dataset,
-        generate_random_walk_with_drift_dataset,
-        generate_ari_dataset,
-        generate_ima_dataset,
-        generate_arima_dataset,
-        # Volatility
-        generate_arch_dataset,
-        generate_garch_dataset,
-        generate_egarch_dataset,
-        generate_aparch_dataset,
-        # Anomalies
-        generate_point_anomaly_dataset,
-        generate_collective_anomaly_dataset,
-        # Structural Breaks
-        generate_mean_shift_dataset,
-        generate_variance_shift_dataset,
-        generate_trend_shift_dataset,
-    )
-    print("✓ ts-stationary library imported successfully")
-except ImportError as e:
-    print(f"✗ ERROR: Could not import ts-stationary library")
-    print(f"  {e}")
-    print(f"\nPlease install ts-stationary:")
-    print(f"  pip install -e {TS_STATIONARY_PATH}")
-    sys.exit(1)
+from timeseries_dataset_generator import TimeSeriesGenerator
+from timeseries_dataset_generator.generators import (
+    # Stationary
+    generate_ar_dataset,
+    generate_ma_dataset,
+    generate_arma_dataset,
+    generate_wn_dataset,
+    # Trends
+    generate_linear_trend_dataset,
+    generate_quadratic_trend_dataset,
+    generate_cubic_trend_dataset,
+    generate_exponential_trend_dataset,
+    generate_damped_trend_dataset,
+    # Stochastic
+    generate_random_walk_dataset,
+    generate_random_walk_with_drift_dataset,
+    generate_ari_dataset,
+    generate_ima_dataset,
+    generate_arima_dataset,
+    # Volatility
+    generate_arch_dataset,
+    generate_garch_dataset,
+    generate_egarch_dataset,
+    generate_aparch_dataset,
+    # Anomalies
+    generate_point_anomaly_dataset,
+    generate_collective_anomaly_dataset,
+    # Structural Breaks
+    generate_mean_shift_dataset,
+    generate_variance_shift_dataset,
+    generate_trend_shift_dataset,
+)
+
+print("✓ ts-stationary library imported successfully")
 
 # Set random seeds
 random.seed(RANDOM_SEED)
