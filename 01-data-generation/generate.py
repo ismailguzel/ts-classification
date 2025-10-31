@@ -1,28 +1,26 @@
 """
-150K Dataset Generation Script
-===============================
+90K Dataset Generation Script
+==============================
 
-Uses ts-stationary library to generate balanced 150K dataset.
+Uses ts-stationary library to generate balanced 90K dataset.
 Run this script from the 01-data-generation directory.
 
 Usage:
     python generate.py
 
 Output:
-    ../data/raw/unified-150k/*.parquet
+    ../data/raw/unified-90k/*.parquet
 
-Time: ~12-18 hours
-Size: ~7-10 GB
+Time: ~8-12 hours
+Size: ~5-7 GB
 """
 
-import sys
-import os
 from pathlib import Path
 import random
 import numpy as np
 
 # Import configuration
-from config import COUNTS_150K, LENGTH_CONFIG, RANDOM_SEED, OUTPUT_DIR
+from config import COUNTS_90K, LENGTH_CONFIG, RANDOM_SEED, OUTPUT_DIR
 
 # Import ts-stationary library
 from timeseries_dataset_generator import TimeSeriesGenerator
@@ -69,7 +67,7 @@ output_path = Path(OUTPUT_DIR)
 output_path.mkdir(parents=True, exist_ok=True)
 
 print("="*70)
-print("150K DATASET GENERATION STARTING")
+print("90K DATASET GENERATION STARTING")
 print("="*70)
 print(f"Random Seed: {RANDOM_SEED}")
 print(f"Output Directory: {output_path.absolute()}")
@@ -85,10 +83,10 @@ def folder_path(*parts):
     return str(path)
 
 # ============================================================================
-# 1. STATIONARY (75,000)
+# 1. STATIONARY (45,000)
 # ============================================================================
-print("[1/10] Generating STATIONARY series (75,000)...")
-stationary_config = COUNTS_150K['stationary']
+print("[1/10] Generating STATIONARY series (45,000)...")
+stationary_config = COUNTS_90K['stationary']
 
 generators = {
     "ar": generate_ar_dataset,
@@ -107,10 +105,10 @@ for base in stationary_config['bases']:
 print(f"  ✓ Generated {stationary_config['total']:,} stationary series\n")
 
 # ============================================================================
-# 2. DETERMINISTIC TRENDS (15,000)
+# 2. DETERMINISTIC TRENDS (9,000)
 # ============================================================================
-print("[2/10] Generating DETERMINISTIC TRENDS (15,000)...")
-trend_config = COUNTS_150K['deterministic_trends']
+print("[2/10] Generating DETERMINISTIC TRENDS (9,000)...")
+trend_config = COUNTS_90K['deterministic_trends']
 
 trend_generators = {
     'linear': generate_linear_trend_dataset,
@@ -135,10 +133,10 @@ for trend_type in trend_config['trend_types']:
 print(f"  ✓ Generated {trend_config['total']:,} trend series\n")
 
 # ============================================================================
-# 3. STOCHASTIC (15,000)
+# 3. STOCHASTIC (9,000)
 # ============================================================================
-print("[3/10] Generating STOCHASTIC series (15,000)...")
-stochastic_config = COUNTS_150K['stochastic']
+print("[3/10] Generating STOCHASTIC series (9,000)...")
+stochastic_config = COUNTS_90K['stochastic']
 
 stochastic_generators = {
     "random_walk": generate_random_walk_dataset,
@@ -158,10 +156,10 @@ for stype in stochastic_config['types']:
 print(f"  ✓ Generated {stochastic_config['total']:,} stochastic series\n")
 
 # ============================================================================
-# 4. VOLATILITY (15,000)
+# 4. VOLATILITY (9,000)
 # ============================================================================
-print("[4/10] Generating VOLATILITY series (15,000)...")
-volatility_config = COUNTS_150K['volatility']
+print("[4/10] Generating VOLATILITY series (9,000)...")
+volatility_config = COUNTS_90K['volatility']
 
 volatility_generators = {
     "arch": generate_arch_dataset,
@@ -180,10 +178,10 @@ for vtype in volatility_config['types']:
 print(f"  ✓ Generated {volatility_config['total']:,} volatility series\n")
 
 # ============================================================================
-# 5. POINT ANOMALIES - SINGLE (5,004)
+# 5. POINT ANOMALIES - SINGLE (3,000)
 # ============================================================================
-print("[5/10] Generating POINT ANOMALIES - SINGLE (5,004)...")
-point_single_config = COUNTS_150K['point_anomalies']['single']
+print("[5/10] Generating POINT ANOMALIES - SINGLE (3,000)...")
+point_single_config = COUNTS_90K['point_anomalies']['single']
 
 for base in point_single_config['bases']:
     for location in point_single_config['locations']:
@@ -199,10 +197,10 @@ for base in point_single_config['bases']:
 print(f"  ✓ Generated {point_single_config['total']:,} point anomaly (single) series\n")
 
 # ============================================================================
-# 6. POINT ANOMALIES - MULTIPLE (4,996)
+# 6. POINT ANOMALIES - MULTIPLE (3,000)
 # ============================================================================
-print("[6/10] Generating POINT ANOMALIES - MULTIPLE (4,996)...")
-point_multiple_config = COUNTS_150K['point_anomalies']['multiple']
+print("[6/10] Generating POINT ANOMALIES - MULTIPLE (3,000)...")
+point_multiple_config = COUNTS_90K['point_anomalies']['multiple']
 
 for base in point_multiple_config['bases']:
     generate_point_anomaly_dataset(
@@ -216,10 +214,10 @@ for base in point_multiple_config['bases']:
 print(f"  ✓ Generated {point_multiple_config['total']:,} point anomaly (multiple) series\n")
 
 # ============================================================================
-# 7. COLLECTIVE ANOMALIES (5,000)
+# 7. COLLECTIVE ANOMALIES (3,000)
 # ============================================================================
-print("[7/10] Generating COLLECTIVE ANOMALIES (5,000)...")
-collective_config = COUNTS_150K['collective_anomalies']
+print("[7/10] Generating COLLECTIVE ANOMALIES (3,000)...")
+collective_config = COUNTS_90K['collective_anomalies']
 
 for base in collective_config['bases']:
     n = random.randint(2, 4)
@@ -235,10 +233,10 @@ for base in collective_config['bases']:
 print(f"  ✓ Generated {collective_config['total']:,} collective anomaly series\n")
 
 # ============================================================================
-# 8. STRUCTURAL BREAKS - MEAN SHIFT (5,000)
+# 8. STRUCTURAL BREAKS - MEAN SHIFT (3,000)
 # ============================================================================
-print("[8/10] Generating STRUCTURAL BREAKS - MEAN SHIFT (5,000)...")
-mean_shift_config = COUNTS_150K['structural_breaks']['mean_shift']
+print("[8/10] Generating STRUCTURAL BREAKS - MEAN SHIFT (3,000)...")
+mean_shift_config = COUNTS_90K['structural_breaks']['mean_shift']
 
 for base in mean_shift_config['bases']:
     n = random.randint(2, 4)
@@ -254,10 +252,10 @@ for base in mean_shift_config['bases']:
 print(f"  ✓ Generated {mean_shift_config['total']:,} mean shift series\n")
 
 # ============================================================================
-# 9. STRUCTURAL BREAKS - VARIANCE SHIFT (5,000)
+# 9. STRUCTURAL BREAKS - VARIANCE SHIFT (3,000)
 # ============================================================================
-print("[9/10] Generating STRUCTURAL BREAKS - VARIANCE SHIFT (5,000)...")
-variance_shift_config = COUNTS_150K['structural_breaks']['variance_shift']
+print("[9/10] Generating STRUCTURAL BREAKS - VARIANCE SHIFT (3,000)...")
+variance_shift_config = COUNTS_90K['structural_breaks']['variance_shift']
 
 for base in variance_shift_config['bases']:
     n = random.randint(2, 4)
@@ -273,10 +271,10 @@ for base in variance_shift_config['bases']:
 print(f"  ✓ Generated {variance_shift_config['total']:,} variance shift series\n")
 
 # ============================================================================
-# 10. STRUCTURAL BREAKS - TREND SHIFT (5,000)
+# 10. STRUCTURAL BREAKS - TREND SHIFT (3,000)
 # ============================================================================
-print("[10/10] Generating STRUCTURAL BREAKS - TREND SHIFT (5,000)...")
-trend_shift_config = COUNTS_150K['structural_breaks']['trend_shift']
+print("[10/10] Generating STRUCTURAL BREAKS - TREND SHIFT (3,000)...")
+trend_shift_config = COUNTS_90K['structural_breaks']['trend_shift']
 
 change_types = ['direction_change', 'magnitude_change', 'direction_and_magnitude_change']
 
@@ -306,7 +304,7 @@ print("="*70)
 print("DATASET GENERATION COMPLETE!")
 print("="*70)
 print(f"Output directory: {output_path.absolute()}")
-print(f"Total series: 150,000")
+print(f"Total series: 90,000")
 print()
 print("="*70)
 print("NEXT STEPS")

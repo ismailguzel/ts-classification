@@ -3,26 +3,25 @@ Test Dataset Generation Script (1,500 samples)
 ===============================================
 
 Quick test to verify all generation code works correctly.
+Uses the EXACT SAME logic as generate.py, just with smaller counts.
 Run this script from the 01-data-generation directory.
 
 Usage:
     python generate_test.py
 
 Output:
-    ../data/raw/test-1500/*.parquet
+    ../data/raw/unified-test/*.parquet
 
 Time: ~5-10 minutes
 Size: ~100-200 MB
 """
 
-import sys
-import os
 from pathlib import Path
 import random
 import numpy as np
 
-# Import test configuration
-from config_test import COUNTS_150K, LENGTH_CONFIG, RANDOM_SEED, OUTPUT_DIR
+# Import configuration
+from config import COUNTS_TEST, LENGTH_CONFIG, RANDOM_SEED, OUTPUT_DIR_TEST
 
 # Import ts-stationary library
 from timeseries_dataset_generator import TimeSeriesGenerator
@@ -65,7 +64,7 @@ random.seed(RANDOM_SEED)
 np.random.seed(RANDOM_SEED)
 
 # Create output directory
-output_path = Path(OUTPUT_DIR)
+output_path = Path(OUTPUT_DIR_TEST)
 output_path.mkdir(parents=True, exist_ok=True)
 
 print("="*70)
@@ -88,7 +87,7 @@ def folder_path(*parts):
 # 1. STATIONARY (752)
 # ============================================================================
 print("[1/10] Generating STATIONARY series (752)...")
-stationary_config = COUNTS_150K['stationary']
+stationary_config = COUNTS_TEST['stationary']
 
 generators = {
     "ar": generate_ar_dataset,
@@ -110,7 +109,7 @@ print(f"  ✓ Generated {stationary_config['total']:,} stationary series\n")
 # 2. DETERMINISTIC TRENDS (160)
 # ============================================================================
 print("[2/10] Generating DETERMINISTIC TRENDS (160)...")
-trend_config = COUNTS_150K['deterministic_trends']
+trend_config = COUNTS_TEST['deterministic_trends']
 
 trend_generators = {
     'linear': generate_linear_trend_dataset,
@@ -138,7 +137,7 @@ print(f"  ✓ Generated {trend_config['total']:,} trend series\n")
 # 3. STOCHASTIC (150)
 # ============================================================================
 print("[3/10] Generating STOCHASTIC series (150)...")
-stochastic_config = COUNTS_150K['stochastic']
+stochastic_config = COUNTS_TEST['stochastic']
 
 stochastic_generators = {
     "random_walk": generate_random_walk_dataset,
@@ -161,7 +160,7 @@ print(f"  ✓ Generated {stochastic_config['total']:,} stochastic series\n")
 # 4. VOLATILITY (152)
 # ============================================================================
 print("[4/10] Generating VOLATILITY series (152)...")
-volatility_config = COUNTS_150K['volatility']
+volatility_config = COUNTS_TEST['volatility']
 
 volatility_generators = {
     "arch": generate_arch_dataset,
@@ -183,7 +182,7 @@ print(f"  ✓ Generated {volatility_config['total']:,} volatility series\n")
 # 5. POINT ANOMALIES - SINGLE (48)
 # ============================================================================
 print("[5/10] Generating POINT ANOMALIES - SINGLE (48)...")
-point_single_config = COUNTS_150K['point_anomalies']['single']
+point_single_config = COUNTS_TEST['point_anomalies']['single']
 
 for base in point_single_config['bases']:
     for location in point_single_config['locations']:
@@ -202,7 +201,7 @@ print(f"  ✓ Generated {point_single_config['total']:,} point anomaly (single) 
 # 6. POINT ANOMALIES - MULTIPLE (52)
 # ============================================================================
 print("[6/10] Generating POINT ANOMALIES - MULTIPLE (52)...")
-point_multiple_config = COUNTS_150K['point_anomalies']['multiple']
+point_multiple_config = COUNTS_TEST['point_anomalies']['multiple']
 
 for base in point_multiple_config['bases']:
     generate_point_anomaly_dataset(
@@ -219,7 +218,7 @@ print(f"  ✓ Generated {point_multiple_config['total']:,} point anomaly (multip
 # 7. COLLECTIVE ANOMALIES (52)
 # ============================================================================
 print("[7/10] Generating COLLECTIVE ANOMALIES (52)...")
-collective_config = COUNTS_150K['collective_anomalies']
+collective_config = COUNTS_TEST['collective_anomalies']
 
 for base in collective_config['bases']:
     n = random.randint(2, 4)
@@ -238,7 +237,7 @@ print(f"  ✓ Generated {collective_config['total']:,} collective anomaly series
 # 8. STRUCTURAL BREAKS - MEAN SHIFT (52)
 # ============================================================================
 print("[8/10] Generating STRUCTURAL BREAKS - MEAN SHIFT (52)...")
-mean_shift_config = COUNTS_150K['structural_breaks']['mean_shift']
+mean_shift_config = COUNTS_TEST['structural_breaks']['mean_shift']
 
 for base in mean_shift_config['bases']:
     n = random.randint(2, 4)
@@ -257,7 +256,7 @@ print(f"  ✓ Generated {mean_shift_config['total']:,} mean shift series\n")
 # 9. STRUCTURAL BREAKS - VARIANCE SHIFT (52)
 # ============================================================================
 print("[9/10] Generating STRUCTURAL BREAKS - VARIANCE SHIFT (52)...")
-variance_shift_config = COUNTS_150K['structural_breaks']['variance_shift']
+variance_shift_config = COUNTS_TEST['structural_breaks']['variance_shift']
 
 for base in variance_shift_config['bases']:
     n = random.randint(2, 4)
@@ -276,7 +275,7 @@ print(f"  ✓ Generated {variance_shift_config['total']:,} variance shift series
 # 10. STRUCTURAL BREAKS - TREND SHIFT (48)
 # ============================================================================
 print("[10/10] Generating STRUCTURAL BREAKS - TREND SHIFT (48)...")
-trend_shift_config = COUNTS_150K['structural_breaks']['trend_shift']
+trend_shift_config = COUNTS_TEST['structural_breaks']['trend_shift']
 
 change_types = ['direction_change', 'magnitude_change', 'direction_and_magnitude_change']
 
@@ -326,10 +325,8 @@ print("="*70)
 print("NEXT STEPS")
 print("="*70)
 print("\nTest Models:")
-print("  • Model 1 (Binary): cd ../03-models/hierarchical/model1_binary && python test_model1.py")
-print("  • Model 2 (5-class): cd ../03-models/hierarchical/model2_nonstationary && python test_model2.py")
-print("\nOptional - Feature Engineering:")
-print("  • TSFresh features: cd ../02-preprocessing && python extract_features.py")
+print("  • Model 1 (Binary): cd ../03-models/hierarchical/model1_binary && python train_model1.py --data-path ../../../data/raw/unified-test")
+print("  • Model 2 (5-class): cd ../03-models/hierarchical/model2_nonstationary && python train_model2.py --data-path ../../../data/raw/unified-test")
 print("\nIf successful, generate full dataset:")
 print("  • python generate.py")
 print("="*70)
