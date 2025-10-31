@@ -7,15 +7,15 @@ A comprehensive pipeline for hierarchical classification of time series data usi
 This project implements a hierarchical classification system for time series data:
 
 1. **Level 1 (Binary)**: Stationary vs Non-Stationary
-2. **Level 2 (Primary Category)**: AR, MA, ARMA, Random Walk, Trend, etc.
-3. **Level 3 (Sub-Category)**: Specific types within each category
+2. **Level 2 (5-Class)**: Trend, Volatility, Stochastic, Anomaly, Structural Break
 
 ### Key Features
-- ✅ Automated time series generation (150K+ samples)
-- ✅ TSFresh feature engineering (~200-800 features)
-- ✅ Feature selection for optimal performance
-- ✅ Hierarchical classification models
+- ✅ Automated time series generation (150K samples)
+- ✅ Two training modes: RAW (sktime) or FEATURES (TSFresh + sklearn)
+- ✅ Dual-mode architecture for flexibility
+- ✅ Hierarchical classification (2 levels implemented)
 - ✅ Comprehensive evaluation metrics
+- ✅ Production-ready code (~1,400+ lines)
 
 ---
 
@@ -23,31 +23,35 @@ This project implements a hierarchical classification system for time series dat
 
 ```
 hierarchical-ts-classification/
-├── 01-data-generation/          # Data generation scripts
-│   ├── generate.py              # Generate 150K dataset
-│   ├── generate_test.py         # Generate test dataset
-│   ├── config_150k.py           # Configuration for 150K dataset
-│   └── config_test.py           # Configuration for test dataset
+├── 01-data-generation/          # Data generation
+│   ├── generate.py              # Main dataset generation (150K)
+│   ├── generate_test.py         # Test dataset (1.5K)
+│   ├── config.py                # Main dataset configuration
+│   └── config_test.py           # Test dataset configuration
 │
-├── 02-preprocessing/            # Feature engineering
+├── 02-preprocessing/            # Feature engineering (OPTIONAL)
 │   ├── extract_features.py     # TSFresh feature extraction
 │   ├── feature_selection.py    # Feature selection methods
-│   └── README.md                # Preprocessing documentation
+│   └── README.md                # Preprocessing docs
 │
-├── 03-models/                   # Model training & evaluation
-│   └── hierarchical/            # Hierarchical models
-│       ├── model1_binary/       # Binary classification (stationary vs non-stationary)
-│       ├── configs/             # Model configurations
-│       └── MODEL1_QUICKSTART.md # Quick start guide
+├── 03-models/hierarchical/      # Hierarchical models
+│   ├── model1_binary/           # Level 1: Binary (Stat vs Non-stat)
+│   │   ├── train_model1.py      # Dual-mode training
+│   │   ├── test_model1.py       # Testing script
+│   │   └── README.md            # Documentation
+│   │
+│   └── model2_nonstationary/    # Level 2: 5-Class (Non-stat types)
+│       ├── train_model2.py      # Dual-mode training
+│       ├── test_model2.py       # Testing script
+│       └── README.md            # Documentation
 │
 ├── data/                        # Data storage
-│   ├── raw/                     # Raw generated data
-│   ├── processed/               # Processed data
-│   └── features/                # Extracted features
-│       └── selected/            # Selected features
+│   ├── raw/                     # Raw time series
+│   ├── features/                # TSFresh features (optional)
+│   └── README.md                # Data documentation
 │
 ├── README.md                    # This file
-└── requirements.txt             # Python dependencies
+└── requirements.txt             # Dependencies
 ```
 
 ---
@@ -121,28 +125,32 @@ python test_model1.py
 
 ### Stage 1: Data Generation
 - Generate synthetic time series data using `ts-stationary` library
-- Support for multiple categories: AR, MA, ARMA, Random Walk, Trends, etc.
-- Balanced dataset with configurable sample sizes
+- Two levels: Stationary vs Non-Stationary (binary), then 5-class non-stationary classification
+- Categories: deterministic_trends, volatility, stochastic, anomalies, structural_breaks
 
-### Stage 2: Feature Engineering
-- Extract time series features using **TSFresh**
+### Stage 2: Feature Engineering (OPTIONAL)
+- Extract time series features using **TSFresh** (for FEATURES mode)
 - 200-800 features per series (configurable)
 - Statistical, temporal, frequency, and complexity features
+- **Not needed for RAW mode** - models work directly on time series
 
-### Stage 3: Feature Selection
+### Stage 3: Feature Selection (OPTIONAL)
 - Multiple selection methods: mutual information, statistical tests, importance
 - Reduce dimensionality while maintaining performance
 - Task-specific feature selection
+- **Only for FEATURES mode**
 
 ### Stage 4: Model Training
-- Hierarchical classification architecture
-- Multiple algorithms: Random Forest, XGBoost, SVM, etc.
-- Cross-validation and hyperparameter tuning
+- **Dual-mode architecture**: RAW (sktime) or FEATURES (sklearn)
+- Hierarchical classification: Model 1 (binary) → Model 2 (5-class)
+- RAW mode: TimeSeriesForest, ROCKET
+- FEATURES mode: Random Forest, XGBoost, SVM
+- Cross-validation and performance evaluation
 
 ### Stage 5: Evaluation
 - Comprehensive metrics: accuracy, precision, recall, F1-score
 - Confusion matrices and classification reports
-- Model comparison and analysis
+- Per-class performance analysis
 
 ---
 
@@ -150,30 +158,13 @@ python test_model1.py
 
 ### Data Generation
 
-Edit `01-data-generation/config_150k.py` or `config_test.py`:
+Edit `01-data-generation/config.py` or `config_test.py` to customize:
 
-```python
-# Dataset size
-COUNTS_150K = {
-    'stationary': {
-        'ar': 10000,
-        'ma': 10000,
-        # ...
-    },
-    'unstationary': {
-        'random_walk': 10000,
-        # ...
-    }
-}
+- Dataset size per category
+- Time series length (min/max)
+- Generation parameters
 
-# Time series length
-LENGTH_CONFIG = {
-    'min': 1000,
-    'max': 5000
-}
-```
-
-### Feature Extraction
+### Feature Extraction (Optional - for FEATURES mode)
 
 Choose feature set in `02-preprocessing/extract_features.py`:
 
@@ -183,30 +174,29 @@ Choose feature set in `02-preprocessing/extract_features.py`:
 
 ### Model Training
 
-Configure models in `03-models/hierarchical/configs/`:
+All training scripts support command-line arguments:
 
-- Learning rate, epochs, batch size
-- Model architecture
-- Cross-validation settings
+```bash
+# RAW mode (default)
+python train_model1.py --mode raw --classifier rocket
+
+# FEATURES mode
+python train_model1.py --mode features --classifier xgboost --features-path /path/to/features
+```
 
 ---
 
 ## 📈 Expected Results
 
-### Binary Classification (Stationary vs Non-Stationary)
-- **Accuracy**: >95%
-- **Training Time**: 5-15 minutes
-- **Dataset**: 15,000 samples
+### Model 1: Binary Classification (Stationary vs Non-Stationary)
+- **Accuracy**: 93-98%
+- **Training Time**: 30-120 seconds
+- **Dataset**: 15,000 test samples
 
-### Primary Category Classification
-- **Accuracy**: >85%
-- **Training Time**: 10-30 minutes
-- **Dataset**: 15,000 samples
-
-### Sub-Category Classification
-- **Accuracy**: >75%
-- **Training Time**: 15-45 minutes
-- **Dataset**: 150,000 samples
+### Model 2: 5-Class Classification (Non-Stationary Types)
+- **Accuracy**: 80-92%
+- **Training Time**: 60-180 seconds
+- **Dataset**: ~7,500 non-stationary samples
 
 ---
 

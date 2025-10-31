@@ -4,10 +4,11 @@ Data preprocessing and feature engineering pipeline.
 
 ## Overview
 
+⚠️ **Note**: Preprocessing is **OPTIONAL**. Models support both RAW (sktime) and FEATURES (sklearn) modes.
+
 This directory contains scripts for:
 1. **Feature Extraction**: Extract time series features using TSFresh
 2. **Feature Selection**: Select relevant features for classification
-3. **Data Transformation**: Normalize, scale, and prepare data for models
 
 ---
 

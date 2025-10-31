@@ -22,7 +22,7 @@ import random
 import numpy as np
 
 # Import configuration
-from config_150k import COUNTS_150K, LENGTH_CONFIG, RANDOM_SEED, OUTPUT_DIR
+from config import COUNTS_150K, LENGTH_CONFIG, RANDOM_SEED, OUTPUT_DIR
 
 # Import ts-stationary library
 from timeseries_dataset_generator import TimeSeriesGenerator
