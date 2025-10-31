@@ -119,18 +119,23 @@ if args.mode == 'raw':
     for cat, count in sorted(categories.items()):
         print(f"  {cat}: {count} files")
     
-    # Load files in batches (memory-efficient)
-    print("\nLoading files in batches (memory-efficient)...")
-    BATCH_SIZE = 10  # Process 10 files at a time
-    all_batches = []
+    # Load and extract time series INCREMENTALLY (memory-efficient)
+    print("\nLoading and extracting time series incrementally...")
+    print("This avoids loading entire dataset into memory at once.")
+    
+    series_list = []
+    labels = []
+    total_series = 0
     
     import gc
+    BATCH_SIZE = 10  # Process 10 files at a time
+    
     for batch_idx in range(0, len(files), BATCH_SIZE):
         batch_files = files[batch_idx:batch_idx + BATCH_SIZE]
         batch_num = batch_idx // BATCH_SIZE + 1
         total_batches = (len(files) + BATCH_SIZE - 1) // BATCH_SIZE
         
-        print(f"  Batch {batch_num}/{total_batches}: Loading {len(batch_files)} files...")
+        print(f"  Batch {batch_num}/{total_batches}: Processing {len(batch_files)} files...")
         
         # Load batch
         batch_dfs = []
@@ -140,52 +145,44 @@ if args.mode == 'raw':
         
         # Concatenate batch
         batch_df = pd.concat(batch_dfs, ignore_index=True)
-        all_batches.append(batch_df)
         
-        # Clean up batch DataFrames
-        del batch_dfs
+        # Filter for non-stationary only
+        batch_df = batch_df[batch_df['is_stationary'] == False].copy()
+        
+        # Extract time series from this batch immediately
+        for series_id in batch_df['id'].unique():
+            series_data = batch_df[batch_df['id'] == series_id].sort_values('time')
+            ts_data = series_data['value'].values
+            
+            # Get primary category and map to Model 2 label
+            primary_cat = series_data['primary_category'].iloc[0]
+            
+            if primary_cat not in CATEGORY_MAPPING:
+                continue  # Skip unknown categories
+            
+            label = CATEGORY_MAPPING[primary_cat]
+            
+            series_list.append(ts_data)
+            labels.append(label)
+        
+        batch_series_count = batch_df['id'].nunique()
+        total_series += batch_series_count
+        
+        # Clean up batch completely
+        del batch_dfs, batch_df
         gc.collect()
         
-        print(f"  ✓ Batch {batch_num} loaded: {len(batch_df):,} rows")
+        print(f"  ✓ Batch {batch_num}: Extracted {batch_series_count} series (Total: {total_series})")
     
-    # Final concatenation
-    print("\nCombining all batches...")
-    df = pd.concat(all_batches, ignore_index=True)
-    del all_batches
-    gc.collect()
-    
-    print(f"✓ Loaded {len(df):,} data points from {len(files)} files")
-    
-    # Filter only NON-STATIONARY series
-    df_nonstat = df[df['is_stationary'] == False].copy()
-    print(f"✓ Filtered to {df_nonstat['id'].nunique():,} non-stationary series")
-    
-    if len(df_nonstat) == 0:
+    if len(series_list) == 0:
         print("❌ Error: No non-stationary series found!")
         exit(1)
     
-    # Extract time series and labels
-    print("\n[2/6] Preparing time series data...")
-    series_list = []
-    labels = []
+    print(f"\n✓ Prepared {len(series_list):,} time series without loading full dataset")
     
-    for series_id in df_nonstat['id'].unique():
-        series_data = df_nonstat[df_nonstat['id'] == series_id].sort_values('time')
-        ts_data = series_data['value'].values
-        
-        # Get primary category and map to Model 2 label
-        primary_cat = series_data['primary_category'].iloc[0]
-        
-        if primary_cat in CATEGORY_MAPPING:
-            label = CATEGORY_MAPPING[primary_cat]
-        else:
-            print(f"⚠️  Unknown category: {primary_cat}, skipping...")
-            continue
-        
-        series_list.append(ts_data)
-        labels.append(label)
-    
-    print(f"✓ Prepared {len(series_list):,} time series")
+    # Display label distribution
+    print("\n[2/6] Analyzing label distribution...")
+    unique_labels, counts = np.unique(labels, return_counts=True)
 
 else:
     # FEATURES MODE: Load TSFresh features
