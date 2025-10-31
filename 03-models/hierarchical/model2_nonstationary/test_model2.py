@@ -69,14 +69,18 @@ if mode == 'raw':
         print(f"❌ Error: Test data not found: {data_path}")
         exit(1)
     
-    files = list(data_path.glob('*.parquet'))
+    # Search for parquet files recursively (they're in subdirectories by category)
+    files = list(data_path.rglob('*.parquet'))
     if not files:
         print(f"❌ Error: No parquet files found in: {data_path}")
+        print(f"    Searched recursively in all subdirectories")
         exit(1)
+    
+    print(f"Found {len(files)} parquet files")
     
     # Load and prepare test series
     dfs = []
-    for fp in files[:2]:  # Load first few files for quick test
+    for fp in files[:5]:  # Load first few files for quick test
         df_part = pd.read_parquet(fp)
         dfs.append(df_part)
     

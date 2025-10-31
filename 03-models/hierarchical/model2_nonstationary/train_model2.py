@@ -99,21 +99,37 @@ if args.mode == 'raw':
         print(f"    cd ../../../01-data-generation && python generate_test.py")
         exit(1)
     
-    files = list(raw_path.glob('*.parquet'))
+    # Search for parquet files recursively (they're in subdirectories by category)
+    files = list(raw_path.rglob('*.parquet'))
     if not files:
         print(f"❌ Error: No parquet files found in: {raw_path}")
+        print(f"    Searched recursively in all subdirectories")
+        print(f"    Expected structure: {raw_path}/stationary/, {raw_path}/deterministic_trend_*, etc.")
         exit(1)
     
-    print(f"Found {len(files)} parquet files")
+    print(f"Found {len(files)} parquet files across categories")
+    
+    # Show category distribution
+    categories = {}
+    for fp in files:
+        cat = fp.parent.name
+        categories[cat] = categories.get(cat, 0) + 1
+    
+    print("Category distribution:")
+    for cat, count in sorted(categories.items()):
+        print(f"  {cat}: {count} files")
     
     # Load all files
+    print("\nLoading files...")
     dfs = []
-    for fp in files:
+    for i, fp in enumerate(files):
+        if i % 20 == 0:
+            print(f"  Progress: {i}/{len(files)} files loaded...", end='\r')
         df_part = pd.read_parquet(fp)
         dfs.append(df_part)
     
     df = pd.concat(dfs, ignore_index=True)
-    print(f"✓ Loaded {len(df):,} data points")
+    print(f"\n✓ Loaded {len(df):,} data points from {len(files)} files")
     
     # Filter only NON-STATIONARY series
     df_nonstat = df[df['is_stationary'] == False].copy()
