@@ -47,8 +47,26 @@ dist/
 *.swp
 *.swo
 
-# Data/artifacts (uncomment if you generate large data locally)
-# data/
-# outputs/
-# artifacts/
+# Data files (large datasets excluded from git)
+data/raw/**/*.parquet
+data/processed/**/*.parquet
+data/features/**/*.parquet
+data/**/*.csv
+data/**/*.pkl
+
+# But keep directory structure and READMEs
+!data/README.md
+!data/**/README.md
+
+# Model outputs
+outputs/
+artifacts/
+*.pkl
+*.joblib
+*.h5
+*.pt
+
+# Checkpoints
+checkpoints/
+*.ckpt
 
