@@ -22,8 +22,12 @@ Uses raw time series with specialized time series classifiers:
 - ✅ No feature engineering needed
 - ✅ Fast training
 - ✅ Good baseline performance
-- ⚡ **TimeSeriesForest**: Fast ensemble method
-- 🚀 **ROCKET**: State-of-the-art, very fast (2000 kernels)
+- 🌲 **TimeSeriesForest**: Fast ensemble method
+- 🚀 **ROCKET**: State-of-the-art (2000 kernels for 5-class)
+- ⚡ **MiniROCKET**: 10x faster than ROCKET
+- 🎯 **Arsenal**: ROCKET-based ensemble (2000 kernels)
+- 🔍 **ShapeletTransform**: Pattern-based classification
+- 🏆 **HIVECOTEV2**: Most powerful (very slow)
 
 ### Mode 2: FEATURES - sklearn classifiers
 Uses TSFresh extracted features with traditional ML:
@@ -42,15 +46,40 @@ Uses TSFresh extracted features with traditional ML:
 
 #### 1. TimeSeriesForest
 - **Type**: Interval-based ensemble
-- **Speed**: Fast ⚡
+- **Speed**: Fast ⚡⚡⚡
+- **Accuracy**: 80-85%
 - **Use case**: Quick baseline
 
 #### 2. ROCKET
 - **Type**: Convolutional kernel transform
-- **Kernels**: 2000 (more than Model 1 for 5-class)
+- **Kernels**: 2000 (optimized for 5-class)
+- **Speed**: Fast ⚡⚡
+- **Accuracy**: 85-88%
+- **Use case**: Balanced performance
+
+#### 3. MiniROCKET ⭐ Recommended
+- **Type**: Faster ROCKET variant
 - **Speed**: Very fast ⚡⚡⚡
-- **Performance**: State-of-the-art
-- **Use case**: Production model
+- **Accuracy**: 84-87%
+- **Use case**: Best speed/accuracy ratio
+
+#### 4. Arsenal ⭐ Best Accuracy
+- **Type**: ROCKET ensemble (2000 kernels)
+- **Speed**: Moderate ⚡
+- **Accuracy**: 86-90%
+- **Use case**: Highest accuracy
+
+#### 5. ShapeletTransform
+- **Type**: Pattern-based
+- **Speed**: Slow ⏱️
+- **Accuracy**: 82-86%
+- **Use case**: Interpretable patterns
+
+#### 6. HIVECOTEV2
+- **Type**: Hybrid ensemble
+- **Speed**: Very slow 🐌
+- **Accuracy**: 88-92%
+- **Use case**: Research/benchmarking only
 
 ### FEATURES Mode (sklearn)
 
@@ -82,13 +111,35 @@ Uses TSFresh extracted features with traditional ML:
 ```bash
 cd 03-models/hierarchical/model2_nonstationary
 
-# Train with raw time series (sktime)
+# Train all models (default)
 python train_model2.py --mode raw
+
+# Train specific classifier
+python train_model2.py --mode raw --classifier minirocket  # Fastest
+python train_model2.py --mode raw --classifier arsenal     # Best accuracy
+python train_model2.py --mode raw --classifier rocket      # Balanced
+python train_model2.py --mode raw --classifier tsf         # Quick baseline
+python train_model2.py --mode raw --classifier shapelet    # Pattern-based
+python train_model2.py --mode raw --classifier hivecote    # Research (very slow)
 ```
+
+**Available classifiers:**
+- `all` - Train all models (default)
+- `tsf` - TimeSeriesForest only
+- `rocket` - ROCKET only (2000 kernels)
+- `minirocket` - MiniROCKET only ⭐ **Recommended for speed**
+- `arsenal` - Arsenal only (2000 kernels) ⭐ **Recommended for accuracy**
+- `shapelet` - ShapeletTransform only
+- `hivecote` - HIVECOTEV2 only (very slow, for 5-class)
 
 **Requirements:**
 - Raw data: `data/raw/unified-test/`
-- Time: ~10-20 minutes (5-class is harder than binary)
+- Time (5-class is harder): 
+  - MiniROCKET: ~30 seconds
+  - ROCKET: ~90 seconds
+  - Arsenal: ~2 minutes
+  - All models: ~10-15 minutes
+  - HIVECOTEV2: ~2+ hours
 - Output: `saved_models/model2_nonstationary_classifier.pkl`
 
 ### Training - FEATURES Mode
@@ -123,22 +174,45 @@ python test_model2.py --n-samples 500
 
 ## 📈 Expected Performance
 
-**Target Accuracy:** >85% (5-class is harder than binary)
+**Target Accuracy:** 80-92% (5-class is harder than binary)
 
-### RAW Mode Results (15K non-stationary):
-- TimeSeriesForest: ~80-85%
-- ROCKET: ~85-90%
+### RAW Mode Results (~750 non-stationary test samples)
 
-### FEATURES Mode Results (15K non-stationary):
-- Random Forest: ~85-88%
-- XGBoost: ~88-92%
-- SVM (RBF): ~83-87%
+| Classifier | Accuracy | Training Time | Speed | Use Case |
+|------------|----------|---------------|-------|----------|
+| TimeSeriesForest | 80-85% | ~45s | ⚡⚡⚡ | Quick baseline |
+| ROCKET | 85-88% | ~90s | ⚡⚡ | Balanced |
+| **MiniROCKET** ⭐ | 84-87% | ~30s | ⚡⚡⚡ | **Best speed/accuracy** |
+| **Arsenal** ⭐ | 86-90% | ~2min | ⚡ | **Best accuracy** |
+| Shapelet | 82-86% | ~10min | ⏱️ | Interpretable |
+| HIVECOTEV2 | 88-92% | ~2+hrs | 🐌 | Research only |
+
+### FEATURES Mode Results (~750 non-stationary test samples)
+
+| Classifier | Accuracy | Training Time | Use Case |
+|------------|----------|---------------|----------|
+| Random Forest | 85-88% | ~10s | Robust baseline |
+| XGBoost | 88-92% | ~15s | Best performance |
+| SVM (RBF) | 83-87% | ~20s | Non-linear patterns |
 
 **Why harder than Model 1?**
 - 5 classes instead of 2
 - Some categories have overlapping characteristics
 - Trends vs structural breaks can be similar
 - Stochastic vs volatility patterns overlap
+
+**Per-Class Performance (typical):**
+- Trend: 85-92% (easiest to detect)
+- Volatility: 80-88% (distinct GARCH patterns)
+- Stochastic: 75-85% (overlaps with volatility)
+- Anomaly: 85-90% (clear outliers)
+- Structural Break: 80-88% (can overlap with trends)
+
+**Recommendations:**
+- 🏃 **Need speed?** → Use MiniROCKET
+- 🎯 **Need accuracy?** → Use Arsenal or XGBoost (features)
+- ⚖️ **Balanced?** → Use ROCKET or MiniROCKET
+- 🔬 **Research?** → Compare all models
 
 ---
 

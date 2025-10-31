@@ -6,6 +6,10 @@ Two training modes:
 1. RAW MODE (default): Uses raw time series with sktime classifiers
    - TimeSeriesForestClassifier
    - ROCKET (Random Convolutional Kernel Transform)
+   - MiniROCKET (Faster version of ROCKET)
+   - Arsenal (ROCKET-based ensemble)
+   - ShapeletTransformClassifier (Pattern-based)
+   - HIVECOTEV2 (Most powerful, slowest)
    
 2. FEATURES MODE (optional): Uses TSFresh features with sklearn classifiers
    - Random Forest
@@ -18,6 +22,9 @@ Usage:
     
     # TSFresh features (sklearn)
     python train_model1.py --mode features --features-path ../../../data/features/selected
+    
+    # Choose specific classifier
+    python train_model1.py --mode raw --classifier rocket
 """
 
 import pandas as pd
@@ -43,6 +50,9 @@ parser.add_argument('--test-size', type=float, default=0.2,
                     help='Test set size (default: 0.2)')
 parser.add_argument('--random-state', type=int, default=42,
                     help='Random state for reproducibility')
+parser.add_argument('--classifier', type=str, default='all',
+                    choices=['all', 'tsf', 'rocket', 'minirocket', 'arsenal', 'shapelet', 'hivecote'],
+                    help='Specific classifier to train (default: all)')
 
 args = parser.parse_args()
 
@@ -162,6 +172,20 @@ if args.mode == 'raw':
     # Import sktime classifiers
     from sktime.classification.interval_based import TimeSeriesForestClassifier
     from sktime.classification.kernel_based import RocketClassifier
+    from sktime.classification.kernel_based import Arsenal
+    try:
+        from sktime.classification.shapelet_based import ShapeletTransformClassifier
+        has_shapelet = True
+    except ImportError:
+        has_shapelet = False
+        print("⚠️  ShapeletTransformClassifier not available in this sktime version")
+    
+    try:
+        from sktime.classification.hybrid import HIVECOTEV2
+        has_hivecote = True
+    except ImportError:
+        has_hivecote = False
+        print("⚠️  HIVECOTEV2 not available in this sktime version")
     
     # sktime expects 3D array: (n_samples, n_features, n_timepoints)
     # For univariate series: (n_samples, 1, n_timepoints)
@@ -245,40 +269,135 @@ if args.mode == 'raw':
     # RAW MODE: Train sktime classifiers
     
     # Model 1: TimeSeriesForest (Fast baseline)
-    print("\n🌲 Training TimeSeriesForestClassifier...")
-    start_time = time.time()
-    tsf = TimeSeriesForestClassifier(n_estimators=100, random_state=args.random_state, n_jobs=-1)
-    tsf.fit(X_train, y_train)
-    train_time = time.time() - start_time
-    
-    y_pred = tsf.predict(X_test)
-    acc = accuracy_score(y_test, y_pred)
-    models['TimeSeriesForest'] = tsf
-    results['TimeSeriesForest'] = {
-        'accuracy': acc,
-        'train_time': train_time,
-        'predictions': y_pred
-    }
-    print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
-    print(f"  ✓ Training time: {train_time:.2f}s")
+    if args.classifier in ['all', 'tsf']:
+        print("\n🌲 Training TimeSeriesForestClassifier...")
+        start_time = time.time()
+        tsf = TimeSeriesForestClassifier(n_estimators=100, random_state=args.random_state, n_jobs=-1)
+        tsf.fit(X_train, y_train)
+        train_time = time.time() - start_time
+        
+        y_pred = tsf.predict(X_test)
+        acc = accuracy_score(y_test, y_pred)
+        models['TimeSeriesForest'] = tsf
+        results['TimeSeriesForest'] = {
+            'accuracy': acc,
+            'train_time': train_time,
+            'predictions': y_pred
+        }
+        print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
+        print(f"  ✓ Training time: {train_time:.2f}s")
     
     # Model 2: ROCKET (SOTA)
-    print("\n🚀 Training ROCKET Classifier...")
-    start_time = time.time()
-    rocket = RocketClassifier(num_kernels=1000, random_state=args.random_state, n_jobs=-1)
-    rocket.fit(X_train, y_train)
-    train_time = time.time() - start_time
+    if args.classifier in ['all', 'rocket']:
+        print("\n🚀 Training ROCKET Classifier...")
+        start_time = time.time()
+        rocket = RocketClassifier(num_kernels=1000, random_state=args.random_state, n_jobs=-1)
+        rocket.fit(X_train, y_train)
+        train_time = time.time() - start_time
+        
+        y_pred = rocket.predict(X_test)
+        acc = accuracy_score(y_test, y_pred)
+        models['ROCKET'] = rocket
+        results['ROCKET'] = {
+            'accuracy': acc,
+            'train_time': train_time,
+            'predictions': y_pred
+        }
+        print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
+        print(f"  ✓ Training time: {train_time:.2f}s")
     
-    y_pred = rocket.predict(X_test)
-    acc = accuracy_score(y_test, y_pred)
-    models['ROCKET'] = rocket
-    results['ROCKET'] = {
-        'accuracy': acc,
-        'train_time': train_time,
-        'predictions': y_pred
-    }
-    print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
-    print(f"  ✓ Training time: {train_time:.2f}s")
+    # Model 3: MiniROCKET (Faster ROCKET)
+    if args.classifier in ['all', 'minirocket']:
+        print("\n⚡ Training MiniROCKET Classifier...")
+        try:
+            from sktime.classification.kernel_based import MiniRocketClassifier
+            start_time = time.time()
+            minirocket = MiniRocketClassifier(random_state=args.random_state, n_jobs=-1)
+            minirocket.fit(X_train, y_train)
+            train_time = time.time() - start_time
+            
+            y_pred = minirocket.predict(X_test)
+            acc = accuracy_score(y_test, y_pred)
+            models['MiniROCKET'] = minirocket
+            results['MiniROCKET'] = {
+                'accuracy': acc,
+                'train_time': train_time,
+                'predictions': y_pred
+            }
+            print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
+            print(f"  ✓ Training time: {train_time:.2f}s")
+        except ImportError:
+            print("  ⚠️  MiniROCKET not available in this sktime version")
+    
+    # Model 4: Arsenal (ROCKET ensemble)
+    if args.classifier in ['all', 'arsenal']:
+        print("\n🎯 Training Arsenal Classifier...")
+        start_time = time.time()
+        arsenal = Arsenal(num_kernels=1000, random_state=args.random_state, n_jobs=-1)
+        arsenal.fit(X_train, y_train)
+        train_time = time.time() - start_time
+        
+        y_pred = arsenal.predict(X_test)
+        acc = accuracy_score(y_test, y_pred)
+        models['Arsenal'] = arsenal
+        results['Arsenal'] = {
+            'accuracy': acc,
+            'train_time': train_time,
+            'predictions': y_pred
+        }
+        print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
+        print(f"  ✓ Training time: {train_time:.2f}s")
+    
+    # Model 5: ShapeletTransform (Pattern-based)
+    if args.classifier in ['all', 'shapelet'] and has_shapelet:
+        print("\n🔍 Training ShapeletTransformClassifier...")
+        print("  ⚠️  This may take longer...")
+        start_time = time.time()
+        shapelet = ShapeletTransformClassifier(
+            n_shapelet_samples=200,
+            max_shapelets=20,
+            batch_size=100,
+            random_state=args.random_state,
+            n_jobs=-1
+        )
+        shapelet.fit(X_train, y_train)
+        train_time = time.time() - start_time
+        
+        y_pred = shapelet.predict(X_test)
+        acc = accuracy_score(y_test, y_pred)
+        models['Shapelet'] = shapelet
+        results['Shapelet'] = {
+            'accuracy': acc,
+            'train_time': train_time,
+            'predictions': y_pred
+        }
+        print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
+        print(f"  ✓ Training time: {train_time:.2f}s")
+    
+    # Model 6: HIVECOTEV2 (Most powerful, very slow)
+    if args.classifier in ['all', 'hivecote'] and has_hivecote:
+        print("\n🏆 Training HIVECOTEV2...")
+        print("  ⚠️  WARNING: This is VERY SLOW (may take hours)!")
+        print("  ⚠️  Consider using smaller dataset or skip this model")
+        confirm = input("  Continue? [y/N]: ")
+        if confirm.lower() == 'y':
+            start_time = time.time()
+            hivecote = HIVECOTEV2(random_state=args.random_state, n_jobs=-1)
+            hivecote.fit(X_train, y_train)
+            train_time = time.time() - start_time
+            
+            y_pred = hivecote.predict(X_test)
+            acc = accuracy_score(y_test, y_pred)
+            models['HIVECOTEV2'] = hivecote
+            results['HIVECOTEV2'] = {
+                'accuracy': acc,
+                'train_time': train_time,
+                'predictions': y_pred
+            }
+            print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
+            print(f"  ✓ Training time: {train_time:.2f}s")
+        else:
+            print("  Skipped HIVECOTEV2")
 
 else:
     # FEATURES MODE: Train sklearn classifiers

@@ -143,8 +143,10 @@ python test_model1.py
 ### Stage 4: Model Training
 - **Dual-mode architecture**: RAW (sktime) or FEATURES (sklearn)
 - Hierarchical classification: Model 1 (binary) → Model 2 (5-class)
-- RAW mode: TimeSeriesForest, ROCKET
-- FEATURES mode: Random Forest, XGBoost, SVM
+- **RAW mode classifiers**: 
+  - TimeSeriesForest, ROCKET, MiniROCKET ⭐
+  - Arsenal ⭐, ShapeletTransform, HIVECOTEV2
+- **FEATURES mode classifiers**: Random Forest, XGBoost, SVM
 - Cross-validation and performance evaluation
 
 ### Stage 5: Evaluation

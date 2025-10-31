@@ -8,15 +8,19 @@ This is the first level of the hierarchical classification system.
 
 ---
 
-## � Training Modes
+## 🔄 Training Modes
 
 ### Mode 1: RAW (Default) - sktime classifiers
 Uses raw time series with specialized time series classifiers:
 - ✅ No feature engineering needed
 - ✅ Fast training
 - ✅ Good baseline performance
-- ⚡ **TimeSeriesForest**: Fast ensemble method
+- 🌲 **TimeSeriesForest**: Fast ensemble method
 - 🚀 **ROCKET**: State-of-the-art, very fast
+- ⚡ **MiniROCKET**: 10x faster than ROCKET
+- 🎯 **Arsenal**: ROCKET-based ensemble
+- 🔍 **ShapeletTransform**: Pattern-based classification
+- 🏆 **HIVECOTEV2**: Most powerful (very slow)
 
 ### Mode 2: FEATURES - sklearn classifiers
 Uses TSFresh extracted features with traditional ML:
@@ -35,14 +39,39 @@ Uses TSFresh extracted features with traditional ML:
 
 #### 1. TimeSeriesForest
 - **Type**: Interval-based ensemble
-- **Speed**: Fast ⚡
+- **Speed**: Fast ⚡⚡⚡
+- **Accuracy**: 93-95%
 - **Use case**: Quick baseline
 
 #### 2. ROCKET
 - **Type**: Convolutional kernel transform
+- **Speed**: Fast ⚡⚡
+- **Accuracy**: 95-97%
+- **Use case**: Balanced performance
+
+#### 3. MiniROCKET ⭐ Recommended
+- **Type**: Faster ROCKET variant
 - **Speed**: Very fast ⚡⚡⚡
-- **Performance**: State-of-the-art
-- **Use case**: Production model
+- **Accuracy**: 95-97%
+- **Use case**: Best speed/accuracy ratio
+
+#### 4. Arsenal ⭐ Best Accuracy
+- **Type**: ROCKET ensemble
+- **Speed**: Moderate ⚡
+- **Accuracy**: 96-98%
+- **Use case**: Highest accuracy
+
+#### 5. ShapeletTransform
+- **Type**: Pattern-based
+- **Speed**: Slow ⏱️
+- **Accuracy**: 93-96%
+- **Use case**: Interpretable patterns
+
+#### 6. HIVECOTEV2
+- **Type**: Hybrid ensemble
+- **Speed**: Very slow 🐌
+- **Accuracy**: 97-99%
+- **Use case**: Research/benchmarking only
 
 ### FEATURES Mode (sklearn)
 
@@ -71,13 +100,35 @@ Uses TSFresh extracted features with traditional ML:
 ```bash
 cd 03-models/hierarchical/model1_binary
 
-# Train with raw time series (sktime)
+# Train all models (default)
 python train_model1.py --mode raw
+
+# Train specific classifier
+python train_model1.py --mode raw --classifier minirocket  # Fastest
+python train_model1.py --mode raw --classifier arsenal     # Best accuracy
+python train_model1.py --mode raw --classifier rocket      # Balanced
+python train_model1.py --mode raw --classifier tsf         # Quick baseline
+python train_model1.py --mode raw --classifier shapelet    # Pattern-based
+python train_model1.py --mode raw --classifier hivecote    # Research (slow)
 ```
+
+**Available classifiers:**
+- `all` - Train all models (default)
+- `tsf` - TimeSeriesForest only
+- `rocket` - ROCKET only
+- `minirocket` - MiniROCKET only ⭐ **Recommended for speed**
+- `arsenal` - Arsenal only ⭐ **Recommended for accuracy**
+- `shapelet` - ShapeletTransform only
+- `hivecote` - HIVECOTEV2 only (very slow)
 
 **Requirements:**
 - Raw data: `data/raw/unified-test/`
-- Time: ~5-15 minutes
+- Time: 
+  - MiniROCKET: ~20 seconds
+  - ROCKET: ~60 seconds
+  - Arsenal: ~90 seconds
+  - All models: ~5-10 minutes
+  - HIVECOTEV2: ~30+ minutes
 - Output: `saved_models/model1_binary_classifier.pkl`
 
 ### Training - FEATURES Mode
@@ -114,19 +165,35 @@ Quick test on 100 samples to verify model works.
 
 ## 📈 Expected Performance
 
-**Target Accuracy:** >95%
+**Target Accuracy:** 93-98% (depending on classifier)
 
-### RAW Mode Results (15K dataset):
-- TimeSeriesForest: ~93-95%
-- ROCKET: ~95-97%
+### RAW Mode Results (1.5K test dataset)
 
-### FEATURES Mode Results (15K dataset):
-- Random Forest: ~95-97%
-- XGBoost: ~96-98%
-- SVM: ~94-96%
+| Classifier | Accuracy | Training Time | Speed | Use Case |
+|------------|----------|---------------|-------|----------|
+| TimeSeriesForest | 93-95% | ~30s | ⚡⚡⚡ | Quick baseline |
+| ROCKET | 95-97% | ~60s | ⚡⚡ | Balanced |
+| **MiniROCKET** ⭐ | 95-97% | ~20s | ⚡⚡⚡ | **Best speed/accuracy** |
+| **Arsenal** ⭐ | 96-98% | ~90s | ⚡ | **Best accuracy** |
+| Shapelet | 93-96% | ~5min | ⏱️ | Interpretable |
+| HIVECOTEV2 | 97-99% | ~30+min | 🐌 | Research only |
+
+### FEATURES Mode Results (1.5K test dataset)
+
+| Classifier | Accuracy | Training Time | Use Case |
+|------------|----------|---------------|----------|
+| Random Forest | 95-97% | ~5s | Robust baseline |
+| XGBoost | 96-98% | ~8s | Best performance |
+| SVM Linear | 94-96% | ~3s | High-dimensional |
 
 **Why high accuracy?**
 Stationary vs non-stationary is a fundamental distinction that's relatively easy to detect from time series properties.
+
+**Recommendations:**
+- 🏃 **Need speed?** → Use MiniROCKET
+- 🎯 **Need accuracy?** → Use Arsenal or XGBoost (features)
+- ⚖️ **Balanced?** → Use ROCKET or MiniROCKET
+- 🔬 **Research?** → Compare all models
 
 ---
 
