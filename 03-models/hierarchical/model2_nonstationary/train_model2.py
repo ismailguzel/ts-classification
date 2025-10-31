@@ -326,7 +326,7 @@ if args.mode == 'raw':
     if args.classifier in ['all', 'tsf']:
         print("\n🌲 Training TimeSeriesForestClassifier...")
         start_time = time.time()
-        tsf = TimeSeriesForestClassifier(n_estimators=100, random_state=args.random_state, n_jobs=-1)
+        tsf = TimeSeriesForestClassifier(n_estimators=100, random_state=args.random_state, n_jobs=110)
         tsf.fit(X_train, y_train)
         train_time = time.time() - start_time
         
@@ -345,7 +345,7 @@ if args.mode == 'raw':
     if args.classifier in ['all', 'rocket']:
         print("\n🚀 Training ROCKET Classifier...")
         start_time = time.time()
-        rocket = RocketClassifier(num_kernels=2000, random_state=args.random_state, n_jobs=-1)
+        rocket = RocketClassifier(num_kernels=2000, random_state=args.random_state, n_jobs=110)
         rocket.fit(X_train, y_train)
         train_time = time.time() - start_time
         
@@ -366,7 +366,7 @@ if args.mode == 'raw':
         try:
             from sktime.classification.kernel_based import MiniRocketClassifier
             start_time = time.time()
-            minirocket = MiniRocketClassifier(random_state=args.random_state, n_jobs=-1)
+            minirocket = MiniRocketClassifier(random_state=args.random_state, n_jobs=110)
             minirocket.fit(X_train, y_train)
             train_time = time.time() - start_time
             
@@ -387,7 +387,7 @@ if args.mode == 'raw':
     if args.classifier in ['all', 'arsenal']:
         print("\n🎯 Training Arsenal Classifier...")
         start_time = time.time()
-        arsenal = Arsenal(num_kernels=2000, random_state=args.random_state, n_jobs=-1)
+        arsenal = Arsenal(num_kernels=2000, random_state=args.random_state, n_jobs=110)
         arsenal.fit(X_train, y_train)
         train_time = time.time() - start_time
         
@@ -412,7 +412,7 @@ if args.mode == 'raw':
             max_shapelets=20,
             batch_size=100,
             random_state=args.random_state,
-            n_jobs=-1
+            n_jobs=110
         )
         shapelet.fit(X_train, y_train)
         train_time = time.time() - start_time
@@ -436,7 +436,7 @@ if args.mode == 'raw':
         confirm = input("  Continue? [y/N]: ")
         if confirm.lower() == 'y':
             start_time = time.time()
-            hivecote = HIVECOTEV2(random_state=args.random_state, n_jobs=-1)
+            hivecote = HIVECOTEV2(random_state=args.random_state, n_jobs=110)
             hivecote.fit(X_train, y_train)
             train_time = time.time() - start_time
             
@@ -459,7 +459,7 @@ else:
     # Model 1: Random Forest
     print("\n🌲 Training Random Forest...")
     start_time = time.time()
-    rf = RandomForestClassifier(n_estimators=200, random_state=args.random_state, n_jobs=-1)
+    rf = RandomForestClassifier(n_estimators=200, random_state=args.random_state, n_jobs=110)
     rf.fit(X_train, y_train)
     train_time = time.time() - start_time
     
@@ -478,7 +478,7 @@ else:
     if has_xgboost:
         print("\n🚀 Training XGBoost...")
         start_time = time.time()
-        xgb = XGBClassifier(n_estimators=200, random_state=args.random_state, n_jobs=-1, 
+        xgb = XGBClassifier(n_estimators=200, random_state=args.random_state, n_jobs=110, 
                            eval_metric='mlogloss')
         xgb.fit(X_train, y_train)
         train_time = time.time() - start_time

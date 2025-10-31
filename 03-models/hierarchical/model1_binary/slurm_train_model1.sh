@@ -5,7 +5,7 @@
 #SBATCH --partition=orfoz
 #SBATCH -N 1
 #SBATCH -n 1
-#SBATCH -c 40
+#SBATCH -c 110
 #SBATCH -C weka
 #SBATCH --time=06:00:00
 #SBATCH --account=iguzel
@@ -89,7 +89,7 @@ echo "=================================================="
 echo "Starting Model 1 Training..."
 echo "Task: Binary Classification (Stationary vs Non-Stationary)"
 echo "Expected duration: 1-5 hours (depends on classifier)"
-echo "Using 40 CPUs on ORFOZ partition"
+echo "Using 110 CPUs on ORFOZ partition"
 echo "=================================================="
 
 # Time ve resource tracking ile çalıştır
