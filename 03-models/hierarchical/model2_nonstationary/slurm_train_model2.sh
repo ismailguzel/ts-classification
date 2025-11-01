@@ -103,7 +103,7 @@ echo "Using 110 CPUs on ORFOZ partition"
 echo "=================================================="
 
 # Time ve resource tracking ile çalıştır
-/usr/bin/time -v python train_model2.py \
+python -u train_model2.py \
     --mode $MODE \
     --classifier $CLASSIFIER \
     --data-path $DATA_PATH \
