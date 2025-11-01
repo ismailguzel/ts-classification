@@ -146,50 +146,17 @@ if args.mode == 'raw':
             try:
                 df_part = pd.read_parquet(fp)
                 
-                # Check if file has 'id' or 'series_id' column (multiple series per file)
-                id_col = None
-                if 'id' in df_part.columns:
-                    id_col = 'id'
-                elif 'series_id' in df_part.columns:
-                    id_col = 'series_id'
+                # Expect series_id and data columns (standard format from generation)
+                if 'series_id' not in df_part.columns:
+                    raise ValueError(f"Column 'series_id' not found in {fp}")
+                if 'data' not in df_part.columns:
+                    raise ValueError(f"Column 'data' not found in {fp}")
                 
-                if id_col:
-                    # Multiple series per file
-                    for series_id in df_part[id_col].unique():
-                        series_data = df_part[df_part[id_col] == series_id].sort_values('time')
-                        
-                        # Check for data or value column
-                        if 'data' in series_data.columns:
-                            ts_data = series_data['data'].values
-                        elif 'value' in series_data.columns:
-                            ts_data = series_data['value'].values
-                        else:
-                            ts_data = series_data.iloc[:, 0].values
-                        
-                        label = 0 if series_data['is_stationary'].iloc[0] else 1
-                        series_list.append(ts_data)
-                        labels.append(label)
-                        total_series += 1
-                else:
-                    # Single series per file (shouldn't happen with ts-stationary, but handle it)
-                    if 'time' in df_part.columns:
-                        df_part = df_part.sort_values('time')
-                    
-                    # Get data column
-                    if 'data' in df_part.columns:
-                        ts_data = df_part['data'].values
-                    elif 'value' in df_part.columns:
-                        ts_data = df_part['value'].values
-                    else:
-                        ts_data = df_part.iloc[:, 2].values  # Assume 3rd column
-                    
-                    # Get label from metadata if available
-                    if 'is_stationary' in df_part.columns:
-                        label = 0 if df_part['is_stationary'].iloc[0] else 1
-                    else:
-                        # Fallback: determine from path
-                        label = 0 if 'stationary' in str(fp).lower() else 1
-                    
+                # Multiple series per file
+                for series_id in df_part['series_id'].unique():
+                    series_data = df_part[df_part['series_id'] == series_id].sort_values('time')
+                    ts_data = series_data['data'].values
+                    label = 0 if series_data['is_stationary'].iloc[0] else 1
                     series_list.append(ts_data)
                     labels.append(label)
                     total_series += 1
@@ -230,7 +197,7 @@ else:
     X_df = pd.read_parquet(features_file)
     labels_df = pd.read_parquet(labels_file)
     
-    # Set index to id
+    # TSFresh outputs features with 'id' as index, labels have 'id' column
     if 'id' in X_df.columns:
         X_df = X_df.set_index('id')
     

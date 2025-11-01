@@ -64,7 +64,7 @@ echo "Using 55 CPUs on ORFOZ partition"
 echo "=================================================="
 
 # Time ve resource tracking ile çalıştır
-/usr/bin/time -v python generate.py
+python generate.py
 
 # Sonuçları kontrol et
 echo ""

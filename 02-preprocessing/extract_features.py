@@ -76,7 +76,7 @@ class TSFreshFeatureExtractor:
             input_path: Path to directory containing parquet files
             
         Returns:
-            DataFrame with columns: id, time, value, is_stationary, primary_category, sub_category
+            DataFrame with columns: series_id, time, data, is_stationary, primary_category, sub_category
         """
         input_path = Path(input_path)
         
@@ -85,8 +85,8 @@ class TSFreshFeatureExtractor:
         
         print(f"Loading data from: {input_path}")
         
-        # Find all parquet files
-        parquet_files = list(input_path.glob("*.parquet"))
+        # Find all parquet files (including subdirectories)
+        parquet_files = list(input_path.glob("**/*.parquet"))
         
         if not parquet_files:
             raise ValueError(f"No parquet files found in: {input_path}")
@@ -103,7 +103,48 @@ class TSFreshFeatureExtractor:
         combined_df = pd.concat(dfs, ignore_index=True)
         
         print(f"Loaded {len(combined_df)} total rows")
-        print(f"Unique series: {combined_df['id'].nunique()}")
+        print(f"Unique series: {combined_df['series_id'].nunique()}")
+        
+        # Check for required columns
+        if 'series_id' not in combined_df.columns:
+            raise ValueError("Column 'series_id' not found in data")
+        if 'data' not in combined_df.columns:
+            raise ValueError("Column 'data' not found in data")
+        
+        # Clean NaN values (TSFresh doesn't accept NaN)
+        print(f"Checking for NaN values...")
+        nan_count_before = combined_df['data'].isna().sum()
+        if nan_count_before > 0:
+            print(f"  Found {nan_count_before} NaN values in 'data' column")
+            print(f"  Filling NaN with forward fill then backward fill...")
+            combined_df['data'] = combined_df.groupby('series_id')['data'].ffill().bfill()
+            nan_count_after = combined_df['data'].isna().sum()
+            if nan_count_after > 0:
+                print(f"  Warning: {nan_count_after} NaN values remain, dropping those rows...")
+                combined_df = combined_df.dropna(subset=['data'])
+            print(f"  ✓ Cleaned {nan_count_before - nan_count_after} NaN values")
+        else:
+            print(f"  ✓ No NaN values found")
+        
+        # Clean infinite values
+        print(f"Checking for inf values...")
+        inf_count = np.isinf(combined_df['data']).sum()
+        if inf_count > 0:
+            print(f"  Found {inf_count} inf values in 'data' column")
+            print(f"  Replacing inf with finite max/min values...")
+            # Replace +inf with max finite value, -inf with min finite value
+            finite_values = combined_df.loc[np.isfinite(combined_df['data']), 'data']
+            if len(finite_values) > 0:
+                max_finite = finite_values.max()
+                min_finite = finite_values.min()
+                combined_df.loc[combined_df['data'] == np.inf, 'data'] = max_finite
+                combined_df.loc[combined_df['data'] == -np.inf, 'data'] = min_finite
+                print(f"  ✓ Replaced {inf_count} inf values")
+            else:
+                print(f"  Warning: No finite values found, dropping inf rows...")
+                combined_df = combined_df[np.isfinite(combined_df['data'])]
+        else:
+            print(f"  ✓ No inf values found")
         
         return combined_df
     
@@ -112,14 +153,14 @@ class TSFreshFeatureExtractor:
         Prepare data for TSFresh format.
         
         Args:
-            df: DataFrame with columns: id, time, value, is_stationary, primary_category, sub_category
+            df: DataFrame with columns: series_id, time, data, is_stationary, primary_category, sub_category
             
         Returns:
-            timeseries_df: DataFrame for feature extraction (id, time, value)
-            labels_df: DataFrame with labels (id, is_stationary, primary_category, sub_category)
+            timeseries_df: DataFrame for feature extraction (series_id, time, data)
+            labels_df: DataFrame with labels (series_id, is_stationary, primary_category, sub_category)
         """
         # Extract labels
-        labels_df = df.groupby('id').agg({
+        labels_df = df.groupby('series_id').agg({
             'is_stationary': 'first',
             'primary_category': 'first',
             'sub_category': 'first'
@@ -127,8 +168,12 @@ class TSFreshFeatureExtractor:
         
         # Prepare time series data for TSFresh
         # TSFresh expects columns: id, sort (time), value
-        timeseries_df = df[['id', 'time', 'value']].copy()
-        timeseries_df = timeseries_df.rename(columns={'time': 'sort'})
+        timeseries_df = df[['series_id', 'time', 'data']].copy()
+        timeseries_df = timeseries_df.rename(columns={
+            'series_id': 'id',
+            'time': 'sort',
+            'data': 'value'
+        })
         
         return timeseries_df, labels_df
     

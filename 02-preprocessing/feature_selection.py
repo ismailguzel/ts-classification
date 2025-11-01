@@ -54,7 +54,9 @@ class FeatureSelector:
         self.selected_features_ = None
     
     def load_data(self, input_path):
-        """Load features and labels."""
+        """
+        Load features and labels.
+        """
         input_path = Path(input_path)
         
         features_file = input_path / 'features.parquet'
@@ -66,9 +68,14 @@ class FeatureSelector:
         print(f"Loading labels from: {labels_file}")
         labels_df = pd.read_parquet(labels_file)
         
-        # Set index to id
+        # TSFresh outputs features with 'id' as index, but labels have 'series_id'
+        # We need to align them
         if 'id' in features_df.columns:
             features_df = features_df.set_index('id')
+        
+        # Rename series_id to id in labels for consistency with features
+        if 'series_id' in labels_df.columns:
+            labels_df = labels_df.rename(columns={'series_id': 'id'})
         
         return features_df, labels_df
     

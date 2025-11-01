@@ -158,74 +158,30 @@ if args.mode == 'raw':
             try:
                 df_part = pd.read_parquet(fp)
                 
-                # Check if file has 'id' or 'series_id' column (multiple series per file)
-                id_col = None
-                if 'id' in df_part.columns:
-                    id_col = 'id'
-                elif 'series_id' in df_part.columns:
-                    id_col = 'series_id'
+                # Expect series_id and data columns (standard format from generation)
+                if 'series_id' not in df_part.columns:
+                    raise ValueError(f"Column 'series_id' not found in {fp}")
+                if 'data' not in df_part.columns:
+                    raise ValueError(f"Column 'data' not found in {fp}")
                 
-                if id_col:
-                    # Multiple series per file
-                    # Filter for non-stationary only
-                    df_part = df_part[df_part['is_stationary'] == False].copy()
+                # Filter for non-stationary only
+                df_part = df_part[df_part['is_stationary'] == False].copy()
+                
+                if len(df_part) == 0:
+                    continue
+                
+                # Process each series in the file
+                for series_id in df_part['series_id'].unique():
+                    series_data = df_part[df_part['series_id'] == series_id].sort_values('time')
+                    ts_data = series_data['data'].values
                     
-                    if len(df_part) == 0:
-                        continue
+                    # Get primary category and map to Model 2 label
+                    primary_cat = series_data['primary_category'].iloc[0]
                     
-                    for series_id in df_part[id_col].unique():
-                        series_data = df_part[df_part[id_col] == series_id].sort_values('time')
-                        
-                        # Check for data or value column
-                        if 'data' in series_data.columns:
-                            ts_data = series_data['data'].values
-                        elif 'value' in series_data.columns:
-                            ts_data = series_data['value'].values
-                        else:
-                            ts_data = series_data.iloc[:, 0].values
-                        
-                        # Get primary category and map to Model 2 label
-                        primary_cat = series_data['primary_category'].iloc[0]
-                        
-                        if primary_cat not in CATEGORY_MAPPING:
-                            continue  # Skip unknown categories
-                        
-                        label = CATEGORY_MAPPING[primary_cat]
-                        
-                        series_list.append(ts_data)
-                        labels.append(label)
-                        total_series += 1
-                else:
-                    # Single series per file (shouldn't happen with ts-stationary, but handle it)
-                    # Check if this is a non-stationary series
-                    if 'is_stationary' in df_part.columns:
-                        # Check the is_stationary column value
-                        if df_part['is_stationary'].iloc[0]:
-                            continue  # Skip stationary series
-                    elif 'stationary' in str(fp).lower():
-                        continue  # Fallback: check path
+                    if primary_cat not in CATEGORY_MAPPING:
+                        continue  # Skip unknown categories
                     
-                    if 'time' in df_part.columns:
-                        df_part = df_part.sort_values('time')
-                    
-                    # Get data column
-                    if 'data' in df_part.columns:
-                        ts_data = df_part['data'].values
-                    elif 'value' in df_part.columns:
-                        ts_data = df_part['value'].values
-                    else:
-                        ts_data = df_part.iloc[:, 2].values  # Assume 3rd column
-                    
-                    # Get label from metadata if available
-                    if 'primary_category' in df_part.columns:
-                        primary_cat = df_part['primary_category'].iloc[0]
-                        if primary_cat not in CATEGORY_MAPPING:
-                            continue  # Skip unknown categories
-                        label = CATEGORY_MAPPING[primary_cat]
-                    else:
-                        # Fallback: shouldn't reach here with ts-stationary data
-                        print(f"  ⚠️  Warning: No primary_category found in {fp.name}, skipping")
-                        continue
+                    label = CATEGORY_MAPPING[primary_cat]
                     
                     series_list.append(ts_data)
                     labels.append(label)
@@ -275,7 +231,7 @@ else:
     X_df = pd.read_parquet(features_file)
     labels_df = pd.read_parquet(labels_file)
     
-    # Set index to id
+    # TSFresh outputs features with 'id' as index, labels have 'id' column
     if 'id' in X_df.columns:
         X_df = X_df.set_index('id')
     

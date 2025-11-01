@@ -1,0 +1,9 @@
+index
+value__sum_values
+value__length
+value__standard_deviation
+value__variance
+value__root_mean_square
+value__maximum
+value__absolute_maximum
+value__minimum
