@@ -54,7 +54,7 @@ python -c "import sklearn; print(f'scikit-learn: {sklearn.__version__}')"
 python -c "import sktime; print(f'sktime: {sktime.__version__}')"
 
 # Veri setini kontrol et
-DATA_PATH="../../../data/raw/unified-150k"
+DATA_PATH="../../../data/raw/unified-90k"
 echo ""
 echo "=================================================="
 echo "Dataset Info:"
