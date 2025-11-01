@@ -3,6 +3,7 @@
 #SBATCH --output=logs/generate_90k_%j.out
 #SBATCH --error=logs/generate_90k_%j.err
 #SBATCH --partition=orfoz
+#SBATCH --reservation=test
 #SBATCH -N 1
 #SBATCH -n 1
 #SBATCH -c 55

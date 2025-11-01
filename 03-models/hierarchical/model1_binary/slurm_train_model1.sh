@@ -3,6 +3,7 @@
 #SBATCH --output=logs/train_model1_%j.out
 #SBATCH --error=logs/train_model1_%j.err
 #SBATCH --partition=orfoz
+#SBATCH --reservation=test
 #SBATCH -N 1
 #SBATCH -n 1
 #SBATCH -c 110
