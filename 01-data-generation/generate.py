@@ -85,13 +85,13 @@ def folder_path(*parts):
     return str(path)
 
 # ============================================================================
-# 1. WHITE NOISE (45,000)
+# 1. STATIONARY (45,000)
 # ============================================================================
 print("="*70)
-print("[1/10] Generating WHITE NOISE series (45,000)...")
+print("[1/10] Generating STATIONARY series (45,000)...")
 print(">>> First category starting NOW")
 print("="*70)
-noise_config = COUNTS_90K['white_noise']
+noise_config = COUNTS_90K['stationary']
 
 generators = {
     "ar": generate_ar_dataset,
