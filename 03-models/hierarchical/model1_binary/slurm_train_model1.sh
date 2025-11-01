@@ -71,7 +71,7 @@ fi
 
 # Model training parametreleri
 MODE="raw"
-CLASSIFIER="minirocket"  # Memory-efficient: tek classifier (all yerine)
+CLASSIFIER="rocket"  # Fast and reliable (minirocket removed due to NumPy 2.0 issues)
 TEST_SIZE=0.2
 
 echo ""

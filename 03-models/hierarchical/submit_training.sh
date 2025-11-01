@@ -40,25 +40,21 @@ case $MODEL_CHOICE in
         # Classifier seçimi
         echo ""
         echo -e "${BLUE}Available classifiers:${NC}"
-        echo "  1) All classifiers (trains all 6 models)"
+        echo "  1) All classifiers (trains all 4 models)"
         echo "  2) TimeSeriesForest (fast, baseline)"
-        echo "  3) ROCKET (good balance)"
-        echo "  4) MiniROCKET ⭐ (fastest, recommended)"
-        echo "  5) Arsenal ⭐ (best accuracy)"
-        echo "  6) Shapelet (interpretable)"
-        echo "  7) HIVECOTEV2 (most powerful, very slow)"
+        echo "  3) ROCKET ⭐ (good balance, recommended)"
+        echo "  4) Arsenal ⭐ (best accuracy)"
+        echo "  5) Shapelet (interpretable)"
         echo ""
         
-        read -p "Select classifier [1-7]: " CLASSIFIER_CHOICE
+        read -p "Select classifier [1-5]: " CLASSIFIER_CHOICE
         
         case $CLASSIFIER_CHOICE in
             1) CLASSIFIER="all" ;;
             2) CLASSIFIER="tsf" ;;
             3) CLASSIFIER="rocket" ;;
-            4) CLASSIFIER="minirocket" ;;
-            5) CLASSIFIER="arsenal" ;;
-            6) CLASSIFIER="shapelet" ;;
-            7) CLASSIFIER="hivecote" ;;
+            4) CLASSIFIER="arsenal" ;;
+            5) CLASSIFIER="shapelet" ;;
             *) 
                 echo -e "${RED}Invalid choice. Exiting.${NC}"
                 exit 1
@@ -99,25 +95,21 @@ case $MODEL_CHOICE in
         # Classifier seçimi
         echo ""
         echo -e "${BLUE}Available classifiers:${NC}"
-        echo "  1) All classifiers (trains all 6 models)"
+        echo "  1) All classifiers (trains all 4 models)"
         echo "  2) TimeSeriesForest (fast, baseline)"
-        echo "  3) ROCKET (good balance, 2000 kernels)"
-        echo "  4) MiniROCKET ⭐ (fastest, recommended)"
-        echo "  5) Arsenal ⭐ (best accuracy, 2000 kernels)"
-        echo "  6) Shapelet (interpretable)"
-        echo "  7) HIVECOTEV2 (most powerful, very slow ~2+ hours)"
+        echo "  3) ROCKET ⭐ (good balance, recommended)"
+        echo "  4) Arsenal ⭐ (best accuracy)"
+        echo "  5) Shapelet (interpretable)"
         echo ""
         
-        read -p "Select classifier [1-7]: " CLASSIFIER_CHOICE
+        read -p "Select classifier [1-5]: " CLASSIFIER_CHOICE
         
         case $CLASSIFIER_CHOICE in
             1) CLASSIFIER="all" ;;
             2) CLASSIFIER="tsf" ;;
             3) CLASSIFIER="rocket" ;;
-            4) CLASSIFIER="minirocket" ;;
-            5) CLASSIFIER="arsenal" ;;
-            6) CLASSIFIER="shapelet" ;;
-            7) CLASSIFIER="hivecote" ;;
+            4) CLASSIFIER="arsenal" ;;
+            5) CLASSIFIER="shapelet" ;;
             *) 
                 echo -e "${RED}Invalid choice. Exiting.${NC}"
                 exit 1
@@ -158,19 +150,19 @@ case $MODEL_CHOICE in
         # Classifier seçimi
         echo ""
         echo -e "${BLUE}Select classifier for both models:${NC}"
-        echo "  1) MiniROCKET ⭐ (recommended for speed)"
+        echo "  1) ROCKET ⭐ (recommended for balance)"
         echo "  2) Arsenal ⭐ (recommended for accuracy)"
-        echo "  3) ROCKET (good balance)"
-        echo "  4) TimeSeriesForest (baseline)"
+        echo "  3) TimeSeriesForest (fast baseline)"
+        echo "  4) Shapelet (interpretable)"
         echo ""
         
         read -p "Select classifier [1-4]: " CLASSIFIER_CHOICE
         
         case $CLASSIFIER_CHOICE in
-            1) CLASSIFIER="minirocket" ;;
+            1) CLASSIFIER="rocket" ;;
             2) CLASSIFIER="arsenal" ;;
-            3) CLASSIFIER="rocket" ;;
-            4) CLASSIFIER="tsf" ;;
+            3) CLASSIFIER="tsf" ;;
+            4) CLASSIFIER="shapelet" ;;
             *) 
                 echo -e "${RED}Invalid choice. Exiting.${NC}"
                 exit 1
