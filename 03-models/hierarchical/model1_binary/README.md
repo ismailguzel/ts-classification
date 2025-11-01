@@ -17,10 +17,8 @@ Uses raw time series with specialized time series classifiers:
 - ✅ Good baseline performance
 - 🌲 **TimeSeriesForest**: Fast ensemble method
 - 🚀 **ROCKET**: State-of-the-art (1000 kernels for binary)
-- ⚡ **MiniROCKET**: 10x faster than ROCKET
 - 🎯 **Arsenal**: ROCKET-based ensemble (1000 kernels)
 - 🔍 **ShapeletTransform**: Pattern-based classification
-- 🏆 **HIVECOTEV2**: Most powerful (very slow)
 
 ### Mode 2: FEATURES - sklearn classifiers
 Uses TSFresh extracted features with traditional ML:
@@ -50,29 +48,17 @@ Uses TSFresh extracted features with traditional ML:
 - **Accuracy**: 95-97%
 - **Use case**: Balanced performance
 
-#### 3. MiniROCKET ⭐ Recommended
-- **Type**: Faster ROCKET variant
-- **Speed**: Very fast ⚡⚡⚡
-- **Accuracy**: 95-97%
-- **Use case**: Best speed/accuracy ratio
-
-#### 4. Arsenal ⭐ Best Accuracy
+#### 3. Arsenal ⭐ Best Accuracy
 - **Type**: ROCKET ensemble (1000 kernels)
 - **Speed**: Moderate ⚡
 - **Accuracy**: 96-98%
 - **Use case**: Highest accuracy
 
-#### 5. ShapeletTransform
+#### 4. ShapeletTransform
 - **Type**: Pattern-based
 - **Speed**: Slow ⏱️
 - **Accuracy**: 93-96%
 - **Use case**: Interpretable patterns
-
-#### 6. HIVECOTEV2
-- **Type**: Hybrid ensemble
-- **Speed**: Very slow 🐌
-- **Accuracy**: 97-99%
-- **Use case**: Research/benchmarking only
 
 ### FEATURES Mode (sklearn)
 
@@ -105,31 +91,26 @@ cd 03-models/hierarchical/model1_binary
 python train_model1.py --mode raw
 
 # Train specific classifier
-python train_model1.py --mode raw --classifier minirocket  # Fastest
-python train_model1.py --mode raw --classifier arsenal     # Best accuracy
 python train_model1.py --mode raw --classifier rocket      # Balanced
+python train_model1.py --mode raw --classifier arsenal     # Best accuracy
 python train_model1.py --mode raw --classifier tsf         # Quick baseline
 python train_model1.py --mode raw --classifier shapelet    # Pattern-based
-python train_model1.py --mode raw --classifier hivecote    # Research (slow)
 ```
 
 **Available classifiers:**
 - `all` - Train all models (default)
 - `tsf` - TimeSeriesForest only
 - `rocket` - ROCKET only
-- `minirocket` - MiniROCKET only ⭐ **Recommended for speed**
 - `arsenal` - Arsenal only ⭐ **Recommended for accuracy**
 - `shapelet` - ShapeletTransform only
-- `hivecote` - HIVECOTEV2 only (very slow)
 
 **Requirements:**
 - Raw data: `../../../data/raw/unified-test/`
 - Time (for 1,450 samples): 
-  - MiniROCKET: ~20 seconds
+  - TimeSeriesForest: ~30 seconds
   - ROCKET: ~60 seconds
   - Arsenal: ~90 seconds
-  - All models: ~5-10 minutes
-  - HIVECOTEV2: ~30+ minutes
+  - All models: ~3-5 minutes
 - Output: `saved_models/model1_binary_classifier.pkl`
 - Parallelization: N_JOBS=-1 (uses all CPU cores)
 
@@ -178,10 +159,8 @@ Quick test on 100 samples to verify model works.
 |------------|----------|---------------|-------|----------|
 | TimeSeriesForest | 80-85% | ~30s | ⚡⚡⚡ | Quick baseline |
 | ROCKET | 82-87% | ~60s | ⚡⚡ | Balanced |
-| **MiniROCKET** ⭐ | 82-87% | ~20s | ⚡⚡⚡ | **Best speed/accuracy** |
 | **Arsenal** ⭐ | 84-89% | ~90s | ⚡ | **Best accuracy** |
 | Shapelet | 80-86% | ~5min | ⏱️ | Interpretable |
-| HIVECOTEV2 | 86-91% | ~30+min | 🐌 | Research only |
 
 ### FEATURES Mode Results (~1,450 test samples)
 
@@ -198,9 +177,9 @@ Binary classification (stationary vs non-stationary) is relatively straightforwa
 - Classifier choice
 
 **Recommendations:**
-- 🏃 **Need speed?** → Use MiniROCKET
-- 🎯 **Need accuracy?** → Use Arsenal or XGBoost (features)
-- ⚖️ **Balanced?** → Use ROCKET or MiniROCKET
+-  **Need accuracy?** → Use Arsenal or XGBoost (features)
+- ⚖️ **Balanced?** → Use ROCKET
+- 🏃 **Need speed?** → Use TimeSeriesForest or ROCKET
 - 🔬 **Research?** → Compare all models
 
 ---

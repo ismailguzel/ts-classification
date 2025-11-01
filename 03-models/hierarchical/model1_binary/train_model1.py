@@ -6,10 +6,8 @@ Two training modes:
 1. RAW MODE (default): Uses raw time series with sktime classifiers
    - TimeSeriesForestClassifier
    - ROCKET (Random Convolutional Kernel Transform)
-   - MiniROCKET (Faster version of ROCKET)
    - Arsenal (ROCKET-based ensemble)
    - ShapeletTransformClassifier (Pattern-based)
-   - HIVECOTEV2 (Most powerful, slowest)
    
 2. FEATURES MODE (optional): Uses TSFresh features with sklearn classifiers
    - Random Forest
@@ -51,13 +49,13 @@ parser.add_argument('--test-size', type=float, default=0.2,
 parser.add_argument('--random-state', type=int, default=42,
                     help='Random state for reproducibility')
 parser.add_argument('--classifier', type=str, default='all',
-                    choices=['all', 'tsf', 'rocket', 'minirocket', 'arsenal', 'shapelet', 'hivecote'],
+                    choices=['all', 'tsf', 'rocket', 'arsenal', 'shapelet'],
                     help='Specific classifier to train (default: all)')
 
 args = parser.parse_args()
 
 # Global n_jobs setting for all models
-N_JOBS = 110  # Use all available cores
+N_JOBS = -1  # Use all available cores
 
 print("="*80)
 print("MODEL 1: BINARY CLASSIFICATION (Stationary vs Non-Stationary)")
@@ -275,13 +273,6 @@ if args.mode == 'raw':
         has_shapelet = False
         print("⚠️  ShapeletTransformClassifier not available in this sktime version")
     
-    try:
-        from sktime.classification.hybrid import HIVECOTEV2
-        has_hivecote = True
-    except ImportError:
-        has_hivecote = False
-        print("⚠️  HIVECOTEV2 not available in this sktime version")
-    
     # sktime expects 3D array: (n_samples, n_features, n_timepoints)
     # For univariate series: (n_samples, 1, n_timepoints)
     
@@ -424,31 +415,7 @@ if args.mode == 'raw':
             print(f"  ⚠️  ROCKET not available: {str(e)[:100]}")
             print(f"  ⚠️  This may be due to NumPy 2.0 incompatibility. Consider downgrading to numpy<2.0")
     
-    # Model 3: MiniROCKET (Faster ROCKET)
-    if args.classifier in ['all', 'minirocket']:
-        print("\n⚡ Training MiniROCKET Classifier...")
-        try:
-            from sktime.classification.kernel_based import MiniRocketClassifier
-            start_time = time.time()
-            minirocket = MiniRocketClassifier(random_state=args.random_state, n_jobs=N_JOBS)
-            minirocket.fit(X_train, y_train)
-            train_time = time.time() - start_time
-            
-            y_pred = minirocket.predict(X_test)
-            acc = accuracy_score(y_test, y_pred)
-            models['MiniROCKET'] = minirocket
-            results['MiniROCKET'] = {
-                'accuracy': acc,
-                'train_time': train_time,
-                'predictions': y_pred
-            }
-            print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
-            print(f"  ✓ Training time: {train_time:.2f}s")
-        except (ImportError, AttributeError) as e:
-            print(f"  ⚠️  MiniROCKET not available: {str(e)[:100]}")
-            print(f"  ⚠️  This may be due to NumPy 2.0 incompatibility. Consider downgrading to numpy<2.0")
-    
-    # Model 4: Arsenal (ROCKET ensemble)
+    # Model 3: Arsenal (ROCKET ensemble)
     if args.classifier in ['all', 'arsenal']:
         print("\n🎯 Training Arsenal Classifier...")
         try:
@@ -471,7 +438,7 @@ if args.mode == 'raw':
             print(f"  ⚠️  Arsenal not available: {str(e)[:100]}")
             print(f"  ⚠️  This may be due to NumPy 2.0 incompatibility. Consider downgrading to numpy<2.0")
     
-    # Model 5: ShapeletTransform (Pattern-based)
+    # Model 4: ShapeletTransform (Pattern-based)
     if args.classifier in ['all', 'shapelet'] and has_shapelet:
         print("\n🔍 Training ShapeletTransformClassifier...")
         print("  ⚠️  This may take longer...")
@@ -496,31 +463,6 @@ if args.mode == 'raw':
         }
         print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
         print(f"  ✓ Training time: {train_time:.2f}s")
-    
-    # Model 6: HIVECOTEV2 (Most powerful, very slow)
-    if args.classifier in ['all', 'hivecote'] and has_hivecote:
-        print("\n🏆 Training HIVECOTEV2...")
-        print("  ⚠️  WARNING: This is VERY SLOW (may take hours)!")
-        print("  ⚠️  Consider using smaller dataset or skip this model")
-        confirm = input("  Continue? [y/N]: ")
-        if confirm.lower() == 'y':
-            start_time = time.time()
-            hivecote = HIVECOTEV2(random_state=args.random_state, n_jobs=N_JOBS)
-            hivecote.fit(X_train, y_train)
-            train_time = time.time() - start_time
-            
-            y_pred = hivecote.predict(X_test)
-            acc = accuracy_score(y_test, y_pred)
-            models['HIVECOTEV2'] = hivecote
-            results['HIVECOTEV2'] = {
-                'accuracy': acc,
-                'train_time': train_time,
-                'predictions': y_pred
-            }
-            print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
-            print(f"  ✓ Training time: {train_time:.2f}s")
-        else:
-            print("  Skipped HIVECOTEV2")
 
 else:
     # FEATURES MODE: Train sklearn classifiers
