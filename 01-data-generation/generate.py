@@ -64,7 +64,9 @@ np.random.seed(RANDOM_SEED)
 
 # Create output directory
 output_path = Path(OUTPUT_DIR)
+print(f">>> Creating output directory: {output_path.absolute()}")
 output_path.mkdir(parents=True, exist_ok=True)
+print(f">>> Directory created successfully: {output_path.exists()}")
 
 print("="*70)
 print("90K DATASET GENERATION STARTING")
@@ -83,10 +85,13 @@ def folder_path(*parts):
     return str(path)
 
 # ============================================================================
-# 1. STATIONARY (45,000)
+# 1. WHITE NOISE (45,000)
 # ============================================================================
-print("[1/10] Generating STATIONARY series (45,000)...")
-stationary_config = COUNTS_90K['stationary']
+print("="*70)
+print("[1/10] Generating WHITE NOISE series (45,000)...")
+print(">>> First category starting NOW")
+print("="*70)
+noise_config = COUNTS_90K['white_noise']
 
 generators = {
     "ar": generate_ar_dataset,
@@ -95,14 +100,16 @@ generators = {
     "white_noise": generate_wn_dataset
 }
 
-for base in stationary_config['bases']:
+for base in noise_config['bases']:
+    print(f"  >>> Generating {base} series...")
     generators[base](
         TimeSeriesGenerator,
         folder=folder_path("stationary", base, "long"),
-        count=stationary_config['per_base'],
+        count=noise_config['per_base'],
         length_range=LENGTH_CONFIG['long']
     )
-print(f"  ✓ Generated {stationary_config['total']:,} stationary series\n")
+    print(f"  >>> {base} completed")
+print(f"  ✓ Generated {noise_config['total']:,} stationary series\n")
 
 # ============================================================================
 # 2. DETERMINISTIC TRENDS (9,000)
