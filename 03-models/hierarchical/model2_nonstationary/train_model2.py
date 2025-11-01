@@ -63,6 +63,9 @@ parser.add_argument('--classifier', type=str, default='all',
 
 args = parser.parse_args()
 
+# Global n_jobs setting for all models
+N_JOBS = -1  # Use all available cores
+
 print("="*80)
 print("MODEL 2: NON-STATIONARY 5-CLASS CLASSIFICATION")
 print("="*80)
@@ -70,16 +73,16 @@ print(f"Mode: {args.mode.upper()}")
 print(f"Data path: {args.data_path}")
 if args.mode == 'features':
     print(f"Features path: {args.features_path}")
+print(f"n_jobs: {N_JOBS}")
 print("="*80)
 
 # Define category mapping
 CATEGORY_MAPPING = {
-    'deterministic_trends': 0,  # Trend
-    'volatility': 1,            # Volatility
-    'stochastic': 2,            # Stochastic
-    'point_anomalies': 3,       # Anomaly
-    'collective_anomalies': 3,  # Anomaly
-    'structural_breaks': 4      # Structural Break
+    'trend': 0,              # Trend (deterministic_trends in folder names)
+    'volatility': 1,         # Volatility
+    'stochastic': 2,         # Stochastic
+    'anomaly': 3,            # Anomaly (point & collective anomalies)
+    'structural_break': 4    # Structural Break (mean/variance/trend shifts)
 }
 
 CLASS_NAMES = ['Trend', 'Volatility', 'Stochastic', 'Anomaly', 'Structural Break']
@@ -100,22 +103,37 @@ if args.mode == 'raw':
         exit(1)
     
     # Search for parquet files recursively (they're in subdirectories by category)
-    files = list(raw_path.rglob('*.parquet'))
-    if not files:
+    all_files = list(raw_path.rglob('*.parquet'))
+    if not all_files:
         print(f"❌ Error: No parquet files found in: {raw_path}")
         print(f"    Searched recursively in all subdirectories")
         print(f"    Expected structure: {raw_path}/stationary/, {raw_path}/deterministic_trend_*, etc.")
         exit(1)
     
-    print(f"Found {len(files)} parquet files across categories")
+    # Filter out stationary files (Model 2 only processes non-stationary)
+    files = [f for f in all_files if 'stationary' not in str(f.parent).lower()]
     
-    # Show category distribution
+    print(f"Found {len(all_files)} total parquet files")
+    print(f"Filtered to {len(files)} non-stationary files (excluded stationary)")
+    
+    if len(files) == 0:
+        print("❌ Error: No non-stationary files found!")
+        exit(1)
+    
+    # Show category distribution (non-stationary only)
     categories = {}
     for fp in files:
-        cat = fp.parent.name
-        categories[cat] = categories.get(cat, 0) + 1
+        # Get the primary category (parent or grandparent folder)
+        # For nested structure like "deterministic_trend_quadratic/up/ar"
+        # we want "deterministic_trend_quadratic", not "ar"
+        parts = fp.parts
+        raw_idx = parts.index('unified-test') if 'unified-test' in parts else -1
+        
+        if raw_idx != -1 and raw_idx + 1 < len(parts):
+            primary_cat = parts[raw_idx + 1]  # First folder after unified-test
+            categories[primary_cat] = categories.get(primary_cat, 0) + 1
     
-    print("Category distribution:")
+    print("\nNon-stationary category distribution (by primary category):")
     for cat, count in sorted(categories.items()):
         print(f"  {cat}: {count} files")
     
@@ -137,42 +155,93 @@ if args.mode == 'raw':
         
         print(f"  Batch {batch_num}/{total_batches}: Processing {len(batch_files)} files...")
         
-        # Load batch
-        batch_dfs = []
+        # Process each file in the batch
         for fp in batch_files:
-            df_part = pd.read_parquet(fp)
-            batch_dfs.append(df_part)
+            try:
+                df_part = pd.read_parquet(fp)
+                
+                # Check if file has 'id' or 'series_id' column (multiple series per file)
+                id_col = None
+                if 'id' in df_part.columns:
+                    id_col = 'id'
+                elif 'series_id' in df_part.columns:
+                    id_col = 'series_id'
+                
+                if id_col:
+                    # Multiple series per file
+                    # Filter for non-stationary only
+                    df_part = df_part[df_part['is_stationary'] == False].copy()
+                    
+                    if len(df_part) == 0:
+                        continue
+                    
+                    for series_id in df_part[id_col].unique():
+                        series_data = df_part[df_part[id_col] == series_id].sort_values('time')
+                        
+                        # Check for data or value column
+                        if 'data' in series_data.columns:
+                            ts_data = series_data['data'].values
+                        elif 'value' in series_data.columns:
+                            ts_data = series_data['value'].values
+                        else:
+                            ts_data = series_data.iloc[:, 0].values
+                        
+                        # Get primary category and map to Model 2 label
+                        primary_cat = series_data['primary_category'].iloc[0]
+                        
+                        if primary_cat not in CATEGORY_MAPPING:
+                            continue  # Skip unknown categories
+                        
+                        label = CATEGORY_MAPPING[primary_cat]
+                        
+                        series_list.append(ts_data)
+                        labels.append(label)
+                        total_series += 1
+                else:
+                    # Single series per file (shouldn't happen with ts-stationary, but handle it)
+                    # Check if this is a non-stationary series
+                    if 'is_stationary' in df_part.columns:
+                        # Check the is_stationary column value
+                        if df_part['is_stationary'].iloc[0]:
+                            continue  # Skip stationary series
+                    elif 'stationary' in str(fp).lower():
+                        continue  # Fallback: check path
+                    
+                    if 'time' in df_part.columns:
+                        df_part = df_part.sort_values('time')
+                    
+                    # Get data column
+                    if 'data' in df_part.columns:
+                        ts_data = df_part['data'].values
+                    elif 'value' in df_part.columns:
+                        ts_data = df_part['value'].values
+                    else:
+                        ts_data = df_part.iloc[:, 2].values  # Assume 3rd column
+                    
+                    # Get label from metadata if available
+                    if 'primary_category' in df_part.columns:
+                        primary_cat = df_part['primary_category'].iloc[0]
+                        if primary_cat not in CATEGORY_MAPPING:
+                            continue  # Skip unknown categories
+                        label = CATEGORY_MAPPING[primary_cat]
+                    else:
+                        # Fallback: shouldn't reach here with ts-stationary data
+                        print(f"  ⚠️  Warning: No primary_category found in {fp.name}, skipping")
+                        continue
+                    
+                    series_list.append(ts_data)
+                    labels.append(label)
+                    total_series += 1
+                
+                # Clean up immediately
+                del df_part
+                
+            except Exception as e:
+                print(f"  ⚠️  Error processing {fp.name}: {e}")
+                continue
         
-        # Concatenate batch
-        batch_df = pd.concat(batch_dfs, ignore_index=True)
-        
-        # Filter for non-stationary only
-        batch_df = batch_df[batch_df['is_stationary'] == False].copy()
-        
-        # Extract time series from this batch immediately
-        for series_id in batch_df['id'].unique():
-            series_data = batch_df[batch_df['id'] == series_id].sort_values('time')
-            ts_data = series_data['value'].values
-            
-            # Get primary category and map to Model 2 label
-            primary_cat = series_data['primary_category'].iloc[0]
-            
-            if primary_cat not in CATEGORY_MAPPING:
-                continue  # Skip unknown categories
-            
-            label = CATEGORY_MAPPING[primary_cat]
-            
-            series_list.append(ts_data)
-            labels.append(label)
-        
-        batch_series_count = batch_df['id'].nunique()
-        total_series += batch_series_count
-        
-        # Clean up batch completely
-        del batch_dfs, batch_df
         gc.collect()
-        
-        print(f"  ✓ Batch {batch_num}: Extracted {batch_series_count} series (Total: {total_series})")
+        print(f"  ✓ Batch {batch_num}: Extracted series (Total: {total_series})")
     
     if len(series_list) == 0:
         print("❌ Error: No non-stationary series found!")
@@ -288,6 +357,19 @@ if args.mode == 'raw':
             return series
     
     X = np.array([prepare_series(s, fixed_length) for s in series_list])
+    
+    # Check for and handle NaN values
+    nan_count = np.isnan(X).sum()
+    if nan_count > 0:
+        print(f"⚠️  Found {nan_count} NaN values in data, replacing with 0")
+        X = np.nan_to_num(X, nan=0.0)
+    
+    # Check for inf values
+    inf_count = np.isinf(X).sum()
+    if inf_count > 0:
+        print(f"⚠️  Found {inf_count} inf values in data, replacing with 0")
+        X = np.nan_to_num(X, nan=0.0, posinf=0.0, neginf=0.0)
+    
     X = X.reshape(X.shape[0], 1, X.shape[1])  # (n_samples, 1, n_timepoints)
     y = labels
     
@@ -348,7 +430,7 @@ if args.mode == 'raw':
     if args.classifier in ['all', 'tsf']:
         print("\n🌲 Training TimeSeriesForestClassifier...")
         start_time = time.time()
-        tsf = TimeSeriesForestClassifier(n_estimators=100, random_state=args.random_state, n_jobs=110)
+        tsf = TimeSeriesForestClassifier(n_estimators=100, random_state=args.random_state, n_jobs=N_JOBS)
         tsf.fit(X_train, y_train)
         train_time = time.time() - start_time
         
@@ -366,21 +448,25 @@ if args.mode == 'raw':
     # Model 2: ROCKET (2000 kernels for 5-class)
     if args.classifier in ['all', 'rocket']:
         print("\n🚀 Training ROCKET Classifier...")
-        start_time = time.time()
-        rocket = RocketClassifier(num_kernels=2000, random_state=args.random_state, n_jobs=110)
-        rocket.fit(X_train, y_train)
-        train_time = time.time() - start_time
-        
-        y_pred = rocket.predict(X_test)
-        acc = accuracy_score(y_test, y_pred)
-        models['ROCKET'] = rocket
-        results['ROCKET'] = {
-            'accuracy': acc,
-            'train_time': train_time,
-            'predictions': y_pred
-        }
-        print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
-        print(f"  ✓ Training time: {train_time:.2f}s")
+        try:
+            start_time = time.time()
+            rocket = RocketClassifier(num_kernels=2000, random_state=args.random_state, n_jobs=N_JOBS)
+            rocket.fit(X_train, y_train)
+            train_time = time.time() - start_time
+            
+            y_pred = rocket.predict(X_test)
+            acc = accuracy_score(y_test, y_pred)
+            models['ROCKET'] = rocket
+            results['ROCKET'] = {
+                'accuracy': acc,
+                'train_time': train_time,
+                'predictions': y_pred
+            }
+            print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
+            print(f"  ✓ Training time: {train_time:.2f}s")
+        except (AttributeError, ImportError) as e:
+            print(f"  ⚠️  ROCKET not available: {str(e)[:100]}")
+            print(f"  ⚠️  This may be due to NumPy 2.0 incompatibility. Consider downgrading to numpy<2.0")
     
     # Model 3: MiniROCKET (Faster ROCKET)
     if args.classifier in ['all', 'minirocket']:
@@ -388,7 +474,7 @@ if args.mode == 'raw':
         try:
             from sktime.classification.kernel_based import MiniRocketClassifier
             start_time = time.time()
-            minirocket = MiniRocketClassifier(random_state=args.random_state, n_jobs=110)
+            minirocket = MiniRocketClassifier(random_state=args.random_state, n_jobs=N_JOBS)
             minirocket.fit(X_train, y_train)
             train_time = time.time() - start_time
             
@@ -402,27 +488,32 @@ if args.mode == 'raw':
             }
             print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
             print(f"  ✓ Training time: {train_time:.2f}s")
-        except ImportError:
-            print("  ⚠️  MiniROCKET not available in this sktime version")
+        except (ImportError, AttributeError) as e:
+            print(f"  ⚠️  MiniROCKET not available: {str(e)[:100]}")
+            print(f"  ⚠️  This may be due to NumPy 2.0 incompatibility. Consider downgrading to numpy<2.0")
     
     # Model 4: Arsenal (ROCKET ensemble)
     if args.classifier in ['all', 'arsenal']:
         print("\n🎯 Training Arsenal Classifier...")
-        start_time = time.time()
-        arsenal = Arsenal(num_kernels=2000, random_state=args.random_state, n_jobs=110)
-        arsenal.fit(X_train, y_train)
-        train_time = time.time() - start_time
-        
-        y_pred = arsenal.predict(X_test)
-        acc = accuracy_score(y_test, y_pred)
-        models['Arsenal'] = arsenal
-        results['Arsenal'] = {
-            'accuracy': acc,
-            'train_time': train_time,
-            'predictions': y_pred
-        }
-        print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
-        print(f"  ✓ Training time: {train_time:.2f}s")
+        try:
+            start_time = time.time()
+            arsenal = Arsenal(num_kernels=2000, random_state=args.random_state, n_jobs=N_JOBS)
+            arsenal.fit(X_train, y_train)
+            train_time = time.time() - start_time
+            
+            y_pred = arsenal.predict(X_test)
+            acc = accuracy_score(y_test, y_pred)
+            models['Arsenal'] = arsenal
+            results['Arsenal'] = {
+                'accuracy': acc,
+                'train_time': train_time,
+                'predictions': y_pred
+            }
+            print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
+            print(f"  ✓ Training time: {train_time:.2f}s")
+        except (ImportError, AttributeError) as e:
+            print(f"  ⚠️  Arsenal not available: {str(e)[:100]}")
+            print(f"  ⚠️  This may be due to NumPy 2.0 incompatibility. Consider downgrading to numpy<2.0")
     
     # Model 5: ShapeletTransform (Pattern-based)
     if args.classifier in ['all', 'shapelet'] and has_shapelet:
@@ -434,7 +525,7 @@ if args.mode == 'raw':
             max_shapelets=20,
             batch_size=100,
             random_state=args.random_state,
-            n_jobs=110
+            n_jobs=N_JOBS
         )
         shapelet.fit(X_train, y_train)
         train_time = time.time() - start_time
@@ -458,7 +549,7 @@ if args.mode == 'raw':
         confirm = input("  Continue? [y/N]: ")
         if confirm.lower() == 'y':
             start_time = time.time()
-            hivecote = HIVECOTEV2(random_state=args.random_state, n_jobs=110)
+            hivecote = HIVECOTEV2(random_state=args.random_state, n_jobs=N_JOBS)
             hivecote.fit(X_train, y_train)
             train_time = time.time() - start_time
             
@@ -481,7 +572,7 @@ else:
     # Model 1: Random Forest
     print("\n🌲 Training Random Forest...")
     start_time = time.time()
-    rf = RandomForestClassifier(n_estimators=200, random_state=args.random_state, n_jobs=110)
+    rf = RandomForestClassifier(n_estimators=200, random_state=args.random_state, n_jobs=N_JOBS)
     rf.fit(X_train, y_train)
     train_time = time.time() - start_time
     
@@ -500,7 +591,7 @@ else:
     if has_xgboost:
         print("\n🚀 Training XGBoost...")
         start_time = time.time()
-        xgb = XGBClassifier(n_estimators=200, random_state=args.random_state, n_jobs=110, 
+        xgb = XGBClassifier(n_estimators=200, random_state=args.random_state, n_jobs=N_JOBS, 
                            eval_metric='mlogloss')
         xgb.fit(X_train, y_train)
         train_time = time.time() - start_time

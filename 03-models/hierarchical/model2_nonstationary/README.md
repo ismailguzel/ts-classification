@@ -133,14 +133,15 @@ python train_model2.py --mode raw --classifier hivecote    # Research (very slow
 - `hivecote` - HIVECOTEV2 only (very slow, for 5-class)
 
 **Requirements:**
-- Raw data: `data/raw/unified-test/`
-- Time (5-class is harder): 
+- Raw data: `../../../data/raw/unified-test/`
+- Time (5-class, ~698 non-stationary samples): 
   - MiniROCKET: ~30 seconds
   - ROCKET: ~90 seconds
   - Arsenal: ~2 minutes
   - All models: ~10-15 minutes
   - HIVECOTEV2: ~2+ hours
 - Output: `saved_models/model2_nonstationary_classifier.pkl`
+- Parallelization: N_JOBS=-1 (uses all CPU cores)
 
 ### Training - FEATURES Mode
 
@@ -156,9 +157,10 @@ python train_model2.py --mode features --features-path ../../../data/features/se
 ```
 
 **Requirements:**
-- Features: `data/features/selected/features_primary_*.parquet`
-- Time: ~10-15 minutes
+- Features: `../../../data/features/selected/features_primary_*.parquet`
+- Time: ~10-15 minutes (after feature extraction)
 - Output: `saved_models/model2_nonstationary_classifier.pkl`
+- Parallelization: N_JOBS=-1 (uses all CPU cores)
 
 ### Testing
 
@@ -174,26 +176,28 @@ python test_model2.py --n-samples 500
 
 ## 📈 Expected Performance
 
-**Target Accuracy:** 80-92% (5-class is harder than binary)
+**Target Accuracy:** 60-75% (5-class is harder than binary)
 
-### RAW Mode Results (~750 non-stationary test samples)
+**Dataset:** 698 non-stationary samples across 5 categories
+
+### RAW Mode Results (~698 non-stationary test samples)
 
 | Classifier | Accuracy | Training Time | Speed | Use Case |
 |------------|----------|---------------|-------|----------|
-| TimeSeriesForest | 80-85% | ~45s | ⚡⚡⚡ | Quick baseline |
-| ROCKET | 85-88% | ~90s | ⚡⚡ | Balanced |
-| **MiniROCKET** ⭐ | 84-87% | ~30s | ⚡⚡⚡ | **Best speed/accuracy** |
-| **Arsenal** ⭐ | 86-90% | ~2min | ⚡ | **Best accuracy** |
-| Shapelet | 82-86% | ~10min | ⏱️ | Interpretable |
-| HIVECOTEV2 | 88-92% | ~2+hrs | 🐌 | Research only |
+| TimeSeriesForest | 60-70% | ~45s | ⚡⚡⚡ | Quick baseline |
+| ROCKET | 65-72% | ~90s | ⚡⚡ | Balanced |
+| **MiniROCKET** ⭐ | 63-70% | ~30s | ⚡⚡⚡ | **Best speed/accuracy** |
+| **Arsenal** ⭐ | 67-75% | ~2min | ⚡ | **Best accuracy** |
+| Shapelet | 60-70% | ~10min | ⏱️ | Interpretable |
+| HIVECOTEV2 | 70-78% | ~2+hrs | 🐌 | Research only |
 
-### FEATURES Mode Results (~750 non-stationary test samples)
+### FEATURES Mode Results (~698 non-stationary test samples)
 
 | Classifier | Accuracy | Training Time | Use Case |
 |------------|----------|---------------|----------|
-| Random Forest | 85-88% | ~10s | Robust baseline |
-| XGBoost | 88-92% | ~15s | Best performance |
-| SVM (RBF) | 83-87% | ~20s | Non-linear patterns |
+| Random Forest | 65-73% | ~10s | Robust baseline |
+| XGBoost | 68-76% | ~15s | Best performance |
+| SVM (RBF) | 63-72% | ~20s | Non-linear patterns |
 
 **Why harder than Model 1?**
 - 5 classes instead of 2
@@ -202,11 +206,11 @@ python test_model2.py --n-samples 500
 - Stochastic vs volatility patterns overlap
 
 **Per-Class Performance (typical):**
-- Trend: 85-92% (easiest to detect)
-- Volatility: 80-88% (distinct GARCH patterns)
-- Stochastic: 75-85% (overlaps with volatility)
-- Anomaly: 85-90% (clear outliers)
-- Structural Break: 80-88% (can overlap with trends)
+- Trend: 70-80% (clear trends, but can overlap with structural breaks)
+- Volatility: 65-75% (distinct GARCH patterns)
+- Stochastic: 55-70% (overlaps with volatility and trends)
+- Anomaly: 70-80% (clear outliers when present)
+- Structural Break: 60-75% (can overlap with trends)
 
 **Recommendations:**
 - 🏃 **Need speed?** → Use MiniROCKET
@@ -221,31 +225,38 @@ python test_model2.py --n-samples 500
 ### RAW Mode - Data Preparation
 
 1. **Filtering**: Only non-stationary series (is_stationary = False)
-2. **Format**: Univariate time series
-3. **Length**: Fixed to 1,500 points (pad/truncate)
-4. **Shape**: (n_samples, 1, 1500) for sktime
-5. **Split**: 80% train, 20% test (stratified)
+2. **Data Source**: Parquet files with metadata
+   - Column detection: 'series_id' or 'id'
+   - Data column: 'data' or 'value'
+   - Label from: 'primary_category' metadata
+3. **Format**: Univariate time series
+4. **Length**: Fixed to 1,500 points (pad/truncate)
+5. **Shape**: (n_samples, 1, 1500) for sktime
+6. **Split**: 80% train, 20% test (stratified)
+7. **Preprocessing**: NaN/inf values replaced with 0
 
 ### FEATURES Mode - Data Preparation
 
 1. **Filtering**: Only non-stationary series
-2. **Format**: Feature vectors from TSFresh
-3. **Features**: 50-150 selected features for primary categories
-4. **Scaling**: StandardScaler normalization
-5. **Split**: 80% train, 20% test (stratified)
+2. **Data Source**: TSFresh extracted features
+3. **Format**: Feature vectors from TSFresh
+4. **Features**: 50-150 selected features for primary categories (mutual info)
+5. **Scaling**: StandardScaler normalization
+6. **Split**: 80% train, 20% test (stratified)
 
 ### Category Mapping
 
 ```python
 CATEGORY_MAPPING = {
-    'deterministic_trends': 0,  # Trend
-    'volatility': 1,            # Volatility
-    'stochastic': 2,            # Stochastic
-    'point_anomalies': 3,       # Anomaly
-    'collective_anomalies': 3,  # Anomaly (merged)
-    'structural_breaks': 4      # Structural Break
+    'trend': 0,              # Trend (deterministic trends)
+    'volatility': 1,         # Volatility (ARCH/GARCH patterns)
+    'stochastic': 2,         # Stochastic (random walk, ARIMA)
+    'anomaly': 3,            # Anomaly (point & collective)
+    'structural_break': 4    # Structural Break (mean/variance/trend shifts)
 }
 ```
+
+**Note:** These are the actual metadata values from `primary_category` column in parquet files.
 
 ### Model Selection
 
@@ -269,7 +280,9 @@ Metadata includes:
 - Accuracy metrics
 - Class names and mapping
 - Data shapes and parameters
+- Fixed length (for raw mode)
 - Scaler (if features mode)
+- N_JOBS configuration
 
 ---
 
@@ -295,7 +308,7 @@ Metadata includes:
 | Setup | ✅ Fast | ⏳ Slow (feature extraction) |
 | Training | ⚡ Fast (~10-20 min) | ⚡ Fast (~10-15 min) |
 | Inference | 🐢 Slower | ⚡⚡ Faster |
-| Accuracy | ✅ Good (80-90%) | ✅ Better (85-92%) |
+| Accuracy | ✅ Good (60-75%) | ✅ Better (65-76%) |
 | Interpretability | ❌ Limited | ✅ High |
 | Memory | 💾 Higher | 💾 Lower |
 
@@ -323,16 +336,24 @@ python feature_selection.py --target primary
 - Verify primary_category field exists
 - Ensure data generation completed successfully
 
-**Low accuracy (<75%)**
-- Check class distribution (should be balanced)
+**Low accuracy (<60%)**
+- Check class distribution (should be relatively balanced)
 - Try different mode (raw vs features)
-- Increase dataset size
-- Tune hyperparameters
+- Increase dataset size (currently 698 non-stationary)
+- Tune hyperparameters (n_estimators, num_kernels)
+- Check for NaN/inf values in data
+- 5-class problem is inherently harder than binary
 
 **Out of memory** (raw mode)
-- Reduce fixed_length parameter
+- Reduce fixed_length parameter (currently 1500)
 - Use features mode instead
-- Process in smaller batches
+- Data is processed in batches (BATCH_SIZE=10)
+- Check available RAM
+
+**ROCKET models fail with NumPy 2.0**
+- Error: AttributeError: np.NINF removed
+- Solution: Downgrade NumPy: `pip install "numpy<2.0"`
+- Or use TimeSeriesForest/ShapeletTransform instead
 
 ---
 
@@ -386,8 +407,8 @@ if not is_stationary:
 After successful Model 2 training:
 
 1. **Review Results**: Check classification report and confusion matrix
-2. **Test Performance**: Run test_model2.py
-3. **Analyze Confusion**: Which classes are confused?
+2. **Test Performance**: Run `python test_model2.py`
+3. **Analyze Confusion**: Which classes are confused? (common: trend/structural_break, stochastic/volatility)
 4. **Compare Modes**: Try both raw and features modes
 5. **Build Pipeline**: Combine Model 1 + Model 2 for hierarchical classification
 6. **Proceed to Model 3**: Train sub-category classifiers (optional)
@@ -399,29 +420,37 @@ After successful Model 2 training:
 - **sktime**: https://www.sktime.net/
 - **ROCKET**: Dempster et al., 2020
 - **TSFresh**: https://tsfresh.readthedocs.io/
-- **Hierarchical Classification**: Survey papers on multi-level classification
+- **ts-stationary**: Data generation library
 
 ---
 
-## 🆘 Common Issues
+## 🆘 Configuration
 
-**Confusion between Trend and Structural Break:**
-- Both involve changes over time
-- Structural break is sudden, trend is gradual
-- May need more sophisticated features
+### Parallelization Settings
 
-**Confusion between Stochastic and Volatility:**
-- Both have random components
-- Volatility focuses on variance patterns (GARCH)
-- Stochastic focuses on mean patterns (random walk)
+Both training files have centralized `N_JOBS` configuration:
 
-**Poor Anomaly Detection:**
-- Anomalies are point/collective events
-- May be rare in test set
-- Consider separate anomaly detection methods
+```python
+# At the top of train_model2.py
+N_JOBS = -1  # Use all available cores
+```
 
-**Solutions:**
-1. Use features mode for better discrimination
-2. Analyze feature importance to understand separation
-3. Consider ensemble methods
-4. Increase training data for confused classes
+To change parallelization, edit this single variable.
+
+### Data Format
+
+The code automatically detects:
+- **Column names**: 'series_id' or 'id' for series identifier
+- **Data columns**: 'data' or 'value' for time series values
+- **Labels**: 'primary_category' metadata (trend, volatility, stochastic, anomaly, structural_break)
+
+### Batch Processing
+
+For memory efficiency, data is loaded in batches:
+- **BATCH_SIZE**: 10 files at a time
+- Garbage collection after each batch
+- Prevents memory overflow on large datasets
+
+---
+
+**Last Updated:** 2025-11-01

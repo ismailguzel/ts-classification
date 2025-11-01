@@ -89,17 +89,27 @@ if mode == 'raw':
     # Filter only NON-STATIONARY series
     df_nonstat = df[df['is_stationary'] == False].copy()
     
-    print(f"✓ Filtered to {df_nonstat['id'].nunique():,} non-stationary series")
+    # Detect id column name
+    id_col = 'id' if 'id' in df_nonstat.columns else 'series_id'
+    
+    print(f"✓ Filtered to {df_nonstat[id_col].nunique():,} non-stationary series")
     
     # Take first N series
     test_series = []
     test_labels = []
     
-    for i, series_id in enumerate(df_nonstat['id'].unique()):
+    for i, series_id in enumerate(df_nonstat[id_col].unique()):
         if i >= args.n_samples:
             break
-        series_data = df_nonstat[df_nonstat['id'] == series_id].sort_values('time')
-        ts_data = series_data['value'].values
+        series_data = df_nonstat[df_nonstat[id_col] == series_id].sort_values('time')
+        
+        # Check for data or value column
+        if 'data' in series_data.columns:
+            ts_data = series_data['data'].values
+        elif 'value' in series_data.columns:
+            ts_data = series_data['value'].values
+        else:
+            ts_data = series_data.iloc[:, 2].values  # Assuming third column is data
         
         # Get primary category and map to Model 2 label
         primary_cat = series_data['primary_category'].iloc[0]

@@ -16,9 +16,9 @@ Uses raw time series with specialized time series classifiers:
 - ✅ Fast training
 - ✅ Good baseline performance
 - 🌲 **TimeSeriesForest**: Fast ensemble method
-- 🚀 **ROCKET**: State-of-the-art, very fast
+- 🚀 **ROCKET**: State-of-the-art (1000 kernels for binary)
 - ⚡ **MiniROCKET**: 10x faster than ROCKET
-- 🎯 **Arsenal**: ROCKET-based ensemble
+- 🎯 **Arsenal**: ROCKET-based ensemble (1000 kernels)
 - 🔍 **ShapeletTransform**: Pattern-based classification
 - 🏆 **HIVECOTEV2**: Most powerful (very slow)
 
@@ -29,7 +29,7 @@ Uses TSFresh extracted features with traditional ML:
 - ✅ Faster inference
 - 🌲 **Random Forest**: Robust ensemble
 - 🚀 **XGBoost**: Gradient boosting
-- ⚡ **SVM**: Linear classifier
+- ⚡ **SVM (Linear)**: Linear classifier
 
 ---
 
@@ -45,6 +45,7 @@ Uses TSFresh extracted features with traditional ML:
 
 #### 2. ROCKET
 - **Type**: Convolutional kernel transform
+- **Kernels**: 1000 (optimized for binary)
 - **Speed**: Fast ⚡⚡
 - **Accuracy**: 95-97%
 - **Use case**: Balanced performance
@@ -56,7 +57,7 @@ Uses TSFresh extracted features with traditional ML:
 - **Use case**: Best speed/accuracy ratio
 
 #### 4. Arsenal ⭐ Best Accuracy
-- **Type**: ROCKET ensemble
+- **Type**: ROCKET ensemble (1000 kernels)
 - **Speed**: Moderate ⚡
 - **Accuracy**: 96-98%
 - **Use case**: Highest accuracy
@@ -122,14 +123,15 @@ python train_model1.py --mode raw --classifier hivecote    # Research (slow)
 - `hivecote` - HIVECOTEV2 only (very slow)
 
 **Requirements:**
-- Raw data: `data/raw/unified-test/`
-- Time: 
+- Raw data: `../../../data/raw/unified-test/`
+- Time (for 1,450 samples): 
   - MiniROCKET: ~20 seconds
   - ROCKET: ~60 seconds
   - Arsenal: ~90 seconds
   - All models: ~5-10 minutes
   - HIVECOTEV2: ~30+ minutes
 - Output: `saved_models/model1_binary_classifier.pkl`
+- Parallelization: N_JOBS=-1 (uses all CPU cores)
 
 ### Training - FEATURES Mode
 
@@ -145,9 +147,10 @@ python train_model1.py --mode features --features-path ../../../data/features/se
 ```
 
 **Requirements:**
-- Features: `data/features/selected/features_binary_*.parquet`
-- Time: ~5-10 minutes
+- Features: `../../../data/features/selected/features_binary_*.parquet`
+- Time: ~5-10 minutes (after feature extraction)
 - Output: `saved_models/model1_binary_classifier.pkl`
+- Parallelization: N_JOBS=-1 (uses all CPU cores)
 
 ### Testing
 
@@ -165,29 +168,34 @@ Quick test on 100 samples to verify model works.
 
 ## 📈 Expected Performance
 
-**Target Accuracy:** 93-98% (depending on classifier)
+**Target Accuracy:** 80-90% (depending on classifier)
 
-### RAW Mode Results (1.5K test dataset)
+**Dataset:** 1,450 samples (752 stationary + 698 non-stationary)
+
+### RAW Mode Results (~1,450 test samples)
 
 | Classifier | Accuracy | Training Time | Speed | Use Case |
 |------------|----------|---------------|-------|----------|
-| TimeSeriesForest | 93-95% | ~30s | ⚡⚡⚡ | Quick baseline |
-| ROCKET | 95-97% | ~60s | ⚡⚡ | Balanced |
-| **MiniROCKET** ⭐ | 95-97% | ~20s | ⚡⚡⚡ | **Best speed/accuracy** |
-| **Arsenal** ⭐ | 96-98% | ~90s | ⚡ | **Best accuracy** |
-| Shapelet | 93-96% | ~5min | ⏱️ | Interpretable |
-| HIVECOTEV2 | 97-99% | ~30+min | 🐌 | Research only |
+| TimeSeriesForest | 80-85% | ~30s | ⚡⚡⚡ | Quick baseline |
+| ROCKET | 82-87% | ~60s | ⚡⚡ | Balanced |
+| **MiniROCKET** ⭐ | 82-87% | ~20s | ⚡⚡⚡ | **Best speed/accuracy** |
+| **Arsenal** ⭐ | 84-89% | ~90s | ⚡ | **Best accuracy** |
+| Shapelet | 80-86% | ~5min | ⏱️ | Interpretable |
+| HIVECOTEV2 | 86-91% | ~30+min | 🐌 | Research only |
 
-### FEATURES Mode Results (1.5K test dataset)
+### FEATURES Mode Results (~1,450 test samples)
 
 | Classifier | Accuracy | Training Time | Use Case |
 |------------|----------|---------------|----------|
-| Random Forest | 95-97% | ~5s | Robust baseline |
-| XGBoost | 96-98% | ~8s | Best performance |
-| SVM Linear | 94-96% | ~3s | High-dimensional |
+| Random Forest | 83-88% | ~5s | Robust baseline |
+| XGBoost | 85-90% | ~8s | Best performance |
+| SVM Linear | 82-87% | ~3s | High-dimensional |
 
-**Why high accuracy?**
-Stationary vs non-stationary is a fundamental distinction that's relatively easy to detect from time series properties.
+**Note on Performance:**
+Binary classification (stationary vs non-stationary) is relatively straightforward. The achieved accuracy depends on:
+- Data quality and diversity
+- Series length and complexity
+- Classifier choice
 
 **Recommendations:**
 - 🏃 **Need speed?** → Use MiniROCKET
@@ -201,17 +209,23 @@ Stationary vs non-stationary is a fundamental distinction that's relatively easy
 
 ### RAW Mode - Data Preparation
 
-1. **Format**: Univariate time series
-2. **Length**: Fixed to 1,500 points (pad/truncate)
-3. **Shape**: (n_samples, 1, 1500) for sktime
-4. **Split**: 80% train, 20% test (stratified)
+1. **Data Source**: Parquet files with metadata
+   - Column detection: 'series_id' or 'id'
+   - Data column: 'data' or 'value'
+   - Label from: 'is_stationary' metadata
+2. **Format**: Univariate time series
+3. **Length**: Fixed to 1,500 points (pad/truncate)
+4. **Shape**: (n_samples, 1, 1500) for sktime
+5. **Split**: 80% train, 20% test (stratified)
+6. **Preprocessing**: NaN/inf values replaced with 0
 
 ### FEATURES Mode - Data Preparation
 
-1. **Format**: Feature vectors from TSFresh
-2. **Features**: 50-150 selected features
-3. **Scaling**: StandardScaler normalization
-4. **Split**: 80% train, 20% test (stratified)
+1. **Data Source**: TSFresh extracted features
+2. **Format**: Feature vectors from TSFresh
+3. **Features**: 50-150 selected features (mutual info)
+4. **Scaling**: StandardScaler normalization
+5. **Split**: 80% train, 20% test (stratified)
 
 ### Model Selection
 
@@ -234,7 +248,9 @@ Metadata includes:
 - Training mode (raw/features)
 - Accuracy metrics
 - Data shapes and parameters
+- Fixed length (for raw mode)
 - Scaler (if features mode)
+- N_JOBS configuration
 
 ---
 
@@ -258,9 +274,9 @@ Metadata includes:
 | Aspect | RAW Mode | FEATURES Mode |
 |--------|----------|---------------|
 | Setup | ✅ Fast | ⏳ Slow (feature extraction) |
-| Training | ⚡ Fast | ⚡ Fast |
+| Training | ⚡ Fast (~5-10 min) | ⚡ Fast (~5-10 min) |
 | Inference | 🐢 Slower | ⚡⚡ Faster |
-| Accuracy | ✅ Good (93-97%) | ✅ Better (95-98%) |
+| Accuracy | ✅ Good (80-87%) | ✅ Better (83-90%) |
 | Interpretability | ❌ Limited | ✅ High |
 | Memory | 💾 Higher | 💾 Lower |
 
@@ -283,16 +299,23 @@ python extract_features.py
 python feature_selection.py --target binary
 ```
 
-**Low accuracy (<90%)**
-- Check data quality
-- Ensure balanced labels
-- Try different mode
+**Low accuracy (<75%)**
+- Check data quality and label distribution
+- Ensure balanced labels (should be ~50/50)
+- Try different classifier (Arsenal, XGBoost)
 - Increase dataset size
+- Check for NaN/inf values in data
 
 **Out of memory** (raw mode)
-- Reduce fixed_length parameter
+- Reduce fixed_length parameter (currently 1500)
 - Use features mode instead
-- Process in smaller batches
+- Data is processed in batches (BATCH_SIZE=10)
+- Check available RAM
+
+**ROCKET models fail with NumPy 2.0**
+- Error: AttributeError: np.NINF removed
+- Solution: Downgrade NumPy: `pip install "numpy<2.0"`
+- Or use TimeSeriesForest/ShapeletTransform instead
 
 ---
 
@@ -300,11 +323,36 @@ python feature_selection.py --target binary
 
 After successful Model 1 training:
 
-1. **Review Results**: Check classification report
-2. **Test Performance**: Run test_model1.py
+1. **Review Results**: Check classification report and confusion matrix
+2. **Test Performance**: Run `python test_model1.py`
 3. **Compare Modes**: Try both raw and features modes
-4. **Proceed to Model 2**: Train primary category classifier
-5. **Ensemble**: Combine with other models for hierarchical classification
+4. **Proceed to Model 2**: Train 5-class non-stationary classifier
+5. **Build Pipeline**: Combine Model 1 + Model 2 for hierarchical classification
+
+---
+
+## 🎯 Hierarchical Pipeline
+
+Model 1 is part of a hierarchical system:
+
+```
+Input Time Series
+      ↓
+[Model 1: Binary] ← YOU ARE HERE
+Is Stationary?
+      ↓
+  YES → Stationary (stop)
+      ↓
+   NO → Continue to Model 2
+      ↓
+[Model 2: 5-Class]
+What type of non-stationary?
+  0: Trend
+  1: Volatility
+  2: Stochastic
+  3: Anomaly
+  4: Structural Break
+```
 
 ---
 
@@ -313,62 +361,38 @@ After successful Model 1 training:
 - **sktime**: https://www.sktime.net/
 - **ROCKET**: Dempster et al., 2020
 - **TSFresh**: https://tsfresh.readthedocs.io/
-- **Time Series Classification**: Bagnall et al., 2017
-└── model1_metadata.pkl              # Model info
+- **ts-stationary**: Data generation library
+
+---
+
+## 🆘 Configuration
+
+### Parallelization Settings
+
+Both training files have centralized `N_JOBS` configuration:
+
+```python
+# At the top of train_model1.py
+N_JOBS = -1  # Use all available cores
 ```
 
----
+To change parallelization, edit this single variable.
 
-## 📝 Notes
+### Data Format
 
-- **Fixed Length**: All series are padded/truncated to 1,500 points
-  - Preserves most information (min length ~1,000)
-  - Enables fast training
-  - Sktime requirement
+The code automatically detects:
+- **Column names**: 'series_id' or 'id' for series identifier
+- **Data columns**: 'data' or 'value' for time series values
+- **Labels**: 'is_stationary' metadata (True/False)
 
-- **Feature Engineering**: Not needed!
-  - Models extract features automatically
-  - ROCKET uses random convolutions
-  - TSF uses intervals
+### Batch Processing
 
-- **Interpretability**: 
-  - TSF: Shows important intervals
-  - ROCKET: Black box (but fast!)
+For memory efficiency, data is loaded in batches:
+- **BATCH_SIZE**: 10 files at a time
+- Garbage collection after each batch
+- Prevents memory overflow on large datasets
 
 ---
 
-## 🐛 Troubleshooting
-
-### "Data file not found"
-```bash
-cd 02-preprocessing
-python3 create_labels.py
-```
-
-### "sktime not installed"
-```bash
-pip install sktime scikit-learn
-```
-
-### Low accuracy (<90%)
-- Check data quality
-- Try different models
-- Adjust hyperparameters
-- Increase training data
-
----
-
-## 🎯 Next Steps
-
-After Model 1 is trained:
-
-1. ✅ Verify accuracy >95%
-2. ⏭️ Train Model 2 (5-class unstationary types)
-3. ⏭️ Train Model 3a-e (subtypes)
-4. ⏭️ Build cascade pipeline
-5. ⏭️ Evaluate end-to-end performance
-
----
-
-**Last Updated:** 2025-10-30
+**Last Updated:** 2025-11-01
 

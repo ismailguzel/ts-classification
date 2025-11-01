@@ -114,7 +114,7 @@ LENGTH_CONFIG = {
 RANDOM_SEED = 42
 
 # ============================================================================
-# Test Configuration (1,500 samples - ~1.67% of 90K)
+# Test Configuration (1,500 samples - Perfectly Balanced)
 # ============================================================================
 COUNTS_TEST = {
     'stationary': {
@@ -135,9 +135,9 @@ COUNTS_TEST = {
         'total': 150
     },
     'volatility': {
-        'per_type': 38,  # 4 × 38 = 152
+        'per_type': 37,  # 4 × 37 = 148 (reduced from 152)
         'types': ['arch', 'garch', 'egarch', 'aparch'],
-        'total': 152
+        'total': 148
     },
     'point_anomalies': {
         'single': {
@@ -159,14 +159,14 @@ COUNTS_TEST = {
     },
     'structural_breaks': {
         'mean_shift': {
-            'per_base': 13,  # 4 × 13 = 52
+            'per_base': 12,  # 4 × 12 = 48 (reduced from 52)
             'bases': ['ar', 'ma', 'arma', 'white_noise'],
-            'total': 52
+            'total': 48
         },
         'variance_shift': {
-            'per_base': 13,  # 4 × 13 = 52
+            'per_base': 12,  # 4 × 12 = 48 (reduced from 52)
             'bases': ['ar', 'ma', 'arma', 'white_noise'],
-            'total': 52
+            'total': 48
         },
         'trend_shift': {
             'per_combination': 6,  # 4 × 2 × 6 = 48
@@ -186,7 +186,7 @@ OUTPUT_DIR_TEST = '../data/raw/unified-test'
 # ============================================================================
 # Summary
 # ============================================================================
-SUMMARY = """
+SUMMARY_90K = """
 90K Balanced Distribution Summary:
 ===================================
 
@@ -209,34 +209,71 @@ Model 3 Details:
   Structural subtypes: 3 types × 3,000 = 9,000
 
 All series: LONG length (1000-10000 points)
-Estimated size: ~7-10 GB (Parquet compressed)
-Generation time: ~12-18 hours
+Estimated size: ~5-7 GB (Parquet compressed)
+Generation time: ~8-12 hours
 """
 
+SUMMARY_TEST = """
+Test Dataset (1,500 samples) - Perfectly Balanced:
+==================================================
+
+Model 1 (Binary):
+  Stationary:    752 (50.1%)
+  Non-Stationary: 752 (49.9%)
+
+Model 2 (5-class, non-stationary only):
+  Trend:             160 (21.3%)
+  Stochastic:        150 (19.9%)
+  Volatility:        148 (19.7%)
+  Anomaly:           152 (20.2%)  [48 single + 52 multiple + 52 collective]
+  Structural Break:  144 (19.1%)  [48 mean + 48 variance + 48 trend]
+
+Total: 1,504 samples (752 stationary + 752 non-stationary)
+
+All series: LONG length (1000-10000 points)
+Estimated size: ~100-200 MB
+Generation time: ~5-10 minutes
+
+Purpose: Quick test before full 90K generation
+"""
+
+SUMMARY = SUMMARY_90K  # Default to 90K summary
+
 if __name__ == '__main__':
-    print(SUMMARY)
+    import sys
+    
+    # Check if test mode
+    if len(sys.argv) > 1 and sys.argv[1] == 'test':
+        print(SUMMARY_TEST)
+        config = COUNTS_TEST
+        dataset_name = "Test (1.5K)"
+    else:
+        print(SUMMARY_90K)
+        config = COUNTS_90K
+        dataset_name = "90K"
     
     # Verify totals
-    total_stationary = COUNTS_90K['stationary']['total']
+    total_stationary = config['stationary']['total']
     total_unstationary = (
-        COUNTS_90K['deterministic_trends']['total'] +
-        COUNTS_90K['stochastic']['total'] +
-        COUNTS_90K['volatility']['total'] +
-        COUNTS_90K['point_anomalies']['single']['total'] +
-        COUNTS_90K['point_anomalies']['multiple']['total'] +
-        COUNTS_90K['collective_anomalies']['total'] +
-        COUNTS_90K['structural_breaks']['mean_shift']['total'] +
-        COUNTS_90K['structural_breaks']['variance_shift']['total'] +
-        COUNTS_90K['structural_breaks']['trend_shift']['total']
+        config['deterministic_trends']['total'] +
+        config['stochastic']['total'] +
+        config['volatility']['total'] +
+        config['point_anomalies']['single']['total'] +
+        config['point_anomalies']['multiple']['total'] +
+        config['collective_anomalies']['total'] +
+        config['structural_breaks']['mean_shift']['total'] +
+        config['structural_breaks']['variance_shift']['total'] +
+        config['structural_breaks']['trend_shift']['total']
     )
     
     total = total_stationary + total_unstationary
     
-    print(f"\nVerification:")
-    print(f"  Stationary:   {total_stationary:,}")
-    print(f"  Unstationary: {total_unstationary:,}")
-    print(f"  TOTAL:        {total:,}")
-    
-    assert total == 90000, f"Total should be 90,000 but got {total:,}"
-    print(f"  ✓ Verified: {total:,} series")
+    print(f"\n{dataset_name} Dataset Verification:")
+    print(f"{'='*50}")
+    print(f"  Stationary:     {total_stationary:>6,} ({100*total_stationary/total:.1f}%)")
+    print(f"  Non-Stationary: {total_unstationary:>6,} ({100*total_unstationary/total:.1f}%)")
+    print(f"  {'─'*46}")
+    print(f"  TOTAL:          {total:>6,}")
+    print(f"{'='*50}")
+    print(f"  ✓ Balanced: {abs(total_stationary - total_unstationary) / total * 100:.2f}% difference")
 

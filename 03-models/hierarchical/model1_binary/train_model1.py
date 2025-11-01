@@ -56,6 +56,9 @@ parser.add_argument('--classifier', type=str, default='all',
 
 args = parser.parse_args()
 
+# Global n_jobs setting for all models
+N_JOBS = -1  # Use all available cores
+
 print("="*80)
 print("MODEL 1: BINARY CLASSIFICATION (Stationary vs Non-Stationary)")
 print("="*80)
@@ -63,6 +66,7 @@ print(f"Mode: {args.mode.upper()}")
 print(f"Data path: {args.data_path}")
 if args.mode == 'features':
     print(f"Features path: {args.features_path}")
+print(f"n_jobs: {N_JOBS}")
 print("="*80)
 
 # ============================================================================
@@ -90,15 +94,36 @@ if args.mode == 'raw':
     
     print(f"Found {len(files)} parquet files across categories")
     
-    # Show category distribution
+    # Show category distribution by primary category
     categories = {}
     for fp in files:
-        cat = fp.parent.name
-        categories[cat] = categories.get(cat, 0) + 1
+        # Get the primary category (first folder after unified-test or data root)
+        parts = fp.parts
+        # Find unified-test folder specifically
+        root_idx = -1
+        for i, part in enumerate(parts):
+            if part == 'unified-test' or part == 'unified':
+                root_idx = i
+                break
+        
+        if root_idx != -1 and root_idx + 1 < len(parts):
+            primary_cat = parts[root_idx + 1]  # First folder after data root
+            categories[primary_cat] = categories.get(primary_cat, 0) + 1
     
-    print("Category distribution:")
+    print("\nCategory distribution (by primary category):")
+    # Group by stationary vs non-stationary
+    stationary_count = sum(count for cat, count in categories.items() if 'stationary' in cat.lower())
+    nonstationary_count = sum(count for cat, count in categories.items() if 'stationary' not in cat.lower())
+    
+    print(f"  Stationary: {stationary_count} files")
     for cat, count in sorted(categories.items()):
-        print(f"  {cat}: {count} files")
+        if 'stationary' in cat.lower():
+            print(f"    - {cat}: {count} files")
+    
+    print(f"  Non-Stationary: {nonstationary_count} files")
+    for cat, count in sorted(categories.items()):
+        if 'stationary' not in cat.lower():
+            print(f"    - {cat}: {count} files")
     
     # Load and extract time series INCREMENTALLY (memory-efficient)
     print("\nLoading and extracting time series incrementally...")
@@ -118,34 +143,68 @@ if args.mode == 'raw':
         
         print(f"  Batch {batch_num}/{total_batches}: Processing {len(batch_files)} files...")
         
-        # Load batch
-        batch_dfs = []
+        # Process each file in the batch
         for fp in batch_files:
-            df_part = pd.read_parquet(fp)
-            batch_dfs.append(df_part)
+            try:
+                df_part = pd.read_parquet(fp)
+                
+                # Check if file has 'id' or 'series_id' column (multiple series per file)
+                id_col = None
+                if 'id' in df_part.columns:
+                    id_col = 'id'
+                elif 'series_id' in df_part.columns:
+                    id_col = 'series_id'
+                
+                if id_col:
+                    # Multiple series per file
+                    for series_id in df_part[id_col].unique():
+                        series_data = df_part[df_part[id_col] == series_id].sort_values('time')
+                        
+                        # Check for data or value column
+                        if 'data' in series_data.columns:
+                            ts_data = series_data['data'].values
+                        elif 'value' in series_data.columns:
+                            ts_data = series_data['value'].values
+                        else:
+                            ts_data = series_data.iloc[:, 0].values
+                        
+                        label = 0 if series_data['is_stationary'].iloc[0] else 1
+                        series_list.append(ts_data)
+                        labels.append(label)
+                        total_series += 1
+                else:
+                    # Single series per file (shouldn't happen with ts-stationary, but handle it)
+                    if 'time' in df_part.columns:
+                        df_part = df_part.sort_values('time')
+                    
+                    # Get data column
+                    if 'data' in df_part.columns:
+                        ts_data = df_part['data'].values
+                    elif 'value' in df_part.columns:
+                        ts_data = df_part['value'].values
+                    else:
+                        ts_data = df_part.iloc[:, 2].values  # Assume 3rd column
+                    
+                    # Get label from metadata if available
+                    if 'is_stationary' in df_part.columns:
+                        label = 0 if df_part['is_stationary'].iloc[0] else 1
+                    else:
+                        # Fallback: determine from path
+                        label = 0 if 'stationary' in str(fp).lower() else 1
+                    
+                    series_list.append(ts_data)
+                    labels.append(label)
+                    total_series += 1
+                
+                # Clean up immediately
+                del df_part
+                
+            except Exception as e:
+                print(f"  ⚠️  Error processing {fp.name}: {e}")
+                continue
         
-        # Concatenate batch
-        batch_df = pd.concat(batch_dfs, ignore_index=True)
-        
-        # Extract time series from this batch immediately
-        for series_id in batch_df['id'].unique():
-            series_data = batch_df[batch_df['id'] == series_id].sort_values('time')
-            ts_data = series_data['value'].values
-            
-            # Get label from is_stationary (True=stationary=0, False=non-stationary=1)
-            label = 0 if series_data['is_stationary'].iloc[0] else 1
-            
-            series_list.append(ts_data)
-            labels.append(label)
-        
-        batch_series_count = batch_df['id'].nunique()
-        total_series += batch_series_count
-        
-        # Clean up batch completely
-        del batch_dfs, batch_df
         gc.collect()
-        
-        print(f"  ✓ Batch {batch_num}: Extracted {batch_series_count} series (Total: {total_series})")
+        print(f"  ✓ Batch {batch_num}: Extracted series (Total: {total_series})")
     
     print(f"\n✓ Prepared {len(series_list):,} time series without loading full dataset")
 
@@ -248,6 +307,19 @@ if args.mode == 'raw':
             return series
     
     X = np.array([prepare_series(s, fixed_length) for s in series_list])
+    
+    # Check for and handle NaN values
+    nan_count = np.isnan(X).sum()
+    if nan_count > 0:
+        print(f"⚠️  Found {nan_count} NaN values in data, replacing with 0")
+        X = np.nan_to_num(X, nan=0.0)
+    
+    # Check for inf values
+    inf_count = np.isinf(X).sum()
+    if inf_count > 0:
+        print(f"⚠️  Found {inf_count} inf values in data, replacing with 0")
+        X = np.nan_to_num(X, nan=0.0, posinf=0.0, neginf=0.0)
+    
     X = X.reshape(X.shape[0], 1, X.shape[1])  # (n_samples, 1, n_timepoints)
     y = labels
     
@@ -308,7 +380,7 @@ if args.mode == 'raw':
     if args.classifier in ['all', 'tsf']:
         print("\n🌲 Training TimeSeriesForestClassifier...")
         start_time = time.time()
-        tsf = TimeSeriesForestClassifier(n_estimators=100, random_state=args.random_state, n_jobs=110)
+        tsf = TimeSeriesForestClassifier(n_estimators=100, random_state=args.random_state, n_jobs=N_JOBS)
         tsf.fit(X_train, y_train)
         train_time = time.time() - start_time
         
@@ -332,21 +404,25 @@ if args.mode == 'raw':
     # Model 2: ROCKET (SOTA)
     if args.classifier in ['all', 'rocket']:
         print("\n🚀 Training ROCKET Classifier...")
-        start_time = time.time()
-        rocket = RocketClassifier(num_kernels=1000, random_state=args.random_state, n_jobs=110)
-        rocket.fit(X_train, y_train)
-        train_time = time.time() - start_time
-        
-        y_pred = rocket.predict(X_test)
-        acc = accuracy_score(y_test, y_pred)
-        models['ROCKET'] = rocket
-        results['ROCKET'] = {
-            'accuracy': acc,
-            'train_time': train_time,
-            'predictions': y_pred
-        }
-        print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
-        print(f"  ✓ Training time: {train_time:.2f}s")
+        try:
+            start_time = time.time()
+            rocket = RocketClassifier(num_kernels=1000, random_state=args.random_state, n_jobs=N_JOBS)
+            rocket.fit(X_train, y_train)
+            train_time = time.time() - start_time
+            
+            y_pred = rocket.predict(X_test)
+            acc = accuracy_score(y_test, y_pred)
+            models['ROCKET'] = rocket
+            results['ROCKET'] = {
+                'accuracy': acc,
+                'train_time': train_time,
+                'predictions': y_pred
+            }
+            print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
+            print(f"  ✓ Training time: {train_time:.2f}s")
+        except (AttributeError, ImportError) as e:
+            print(f"  ⚠️  ROCKET not available: {str(e)[:100]}")
+            print(f"  ⚠️  This may be due to NumPy 2.0 incompatibility. Consider downgrading to numpy<2.0")
     
     # Model 3: MiniROCKET (Faster ROCKET)
     if args.classifier in ['all', 'minirocket']:
@@ -354,7 +430,7 @@ if args.mode == 'raw':
         try:
             from sktime.classification.kernel_based import MiniRocketClassifier
             start_time = time.time()
-            minirocket = MiniRocketClassifier(random_state=args.random_state, n_jobs=110)
+            minirocket = MiniRocketClassifier(random_state=args.random_state, n_jobs=N_JOBS)
             minirocket.fit(X_train, y_train)
             train_time = time.time() - start_time
             
@@ -368,27 +444,32 @@ if args.mode == 'raw':
             }
             print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
             print(f"  ✓ Training time: {train_time:.2f}s")
-        except ImportError:
-            print("  ⚠️  MiniROCKET not available in this sktime version")
+        except (ImportError, AttributeError) as e:
+            print(f"  ⚠️  MiniROCKET not available: {str(e)[:100]}")
+            print(f"  ⚠️  This may be due to NumPy 2.0 incompatibility. Consider downgrading to numpy<2.0")
     
     # Model 4: Arsenal (ROCKET ensemble)
     if args.classifier in ['all', 'arsenal']:
         print("\n🎯 Training Arsenal Classifier...")
-        start_time = time.time()
-        arsenal = Arsenal(num_kernels=1000, random_state=args.random_state, n_jobs=110)
-        arsenal.fit(X_train, y_train)
-        train_time = time.time() - start_time
-        
-        y_pred = arsenal.predict(X_test)
-        acc = accuracy_score(y_test, y_pred)
-        models['Arsenal'] = arsenal
-        results['Arsenal'] = {
-            'accuracy': acc,
-            'train_time': train_time,
-            'predictions': y_pred
-        }
-        print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
-        print(f"  ✓ Training time: {train_time:.2f}s")
+        try:
+            start_time = time.time()
+            arsenal = Arsenal(num_kernels=1000, random_state=args.random_state, n_jobs=N_JOBS)
+            arsenal.fit(X_train, y_train)
+            train_time = time.time() - start_time
+            
+            y_pred = arsenal.predict(X_test)
+            acc = accuracy_score(y_test, y_pred)
+            models['Arsenal'] = arsenal
+            results['Arsenal'] = {
+                'accuracy': acc,
+                'train_time': train_time,
+                'predictions': y_pred
+            }
+            print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
+            print(f"  ✓ Training time: {train_time:.2f}s")
+        except (ImportError, AttributeError) as e:
+            print(f"  ⚠️  Arsenal not available: {str(e)[:100]}")
+            print(f"  ⚠️  This may be due to NumPy 2.0 incompatibility. Consider downgrading to numpy<2.0")
     
     # Model 5: ShapeletTransform (Pattern-based)
     if args.classifier in ['all', 'shapelet'] and has_shapelet:
@@ -400,7 +481,7 @@ if args.mode == 'raw':
             max_shapelets=20,
             batch_size=100,
             random_state=args.random_state,
-            n_jobs=110
+            n_jobs=N_JOBS
         )
         shapelet.fit(X_train, y_train)
         train_time = time.time() - start_time
@@ -424,7 +505,7 @@ if args.mode == 'raw':
         confirm = input("  Continue? [y/N]: ")
         if confirm.lower() == 'y':
             start_time = time.time()
-            hivecote = HIVECOTEV2(random_state=args.random_state, n_jobs=110)
+            hivecote = HIVECOTEV2(random_state=args.random_state, n_jobs=N_JOBS)
             hivecote.fit(X_train, y_train)
             train_time = time.time() - start_time
             
@@ -447,7 +528,7 @@ else:
     # Model 1: Random Forest
     print("\n🌲 Training Random Forest...")
     start_time = time.time()
-    rf = RandomForestClassifier(n_estimators=200, random_state=args.random_state, n_jobs=110)
+    rf = RandomForestClassifier(n_estimators=200, random_state=args.random_state, n_jobs=N_JOBS)
     rf.fit(X_train, y_train)
     train_time = time.time() - start_time
     
@@ -466,7 +547,7 @@ else:
     if has_xgboost:
         print("\n🚀 Training XGBoost...")
         start_time = time.time()
-        xgb = XGBClassifier(n_estimators=200, random_state=args.random_state, n_jobs=110, 
+        xgb = XGBClassifier(n_estimators=200, random_state=args.random_state, n_jobs=N_JOBS, 
                            eval_metric='logloss')
         xgb.fit(X_train, y_train)
         train_time = time.time() - start_time

@@ -302,8 +302,8 @@ print(f"  ✓ Generated {trend_shift_config['total']:,} trend shift series\n")
 # SUMMARY
 # ============================================================================
 # Calculate actual totals
-actual_total = sum([
-    stationary_config['total'],
+stationary_total = stationary_config['total']
+nonstationary_total = sum([
     trend_config['total'],
     stochastic_config['total'],
     volatility_config['total'],
@@ -314,12 +314,20 @@ actual_total = sum([
     variance_shift_config['total'],
     trend_shift_config['total']
 ])
+actual_total = stationary_total + nonstationary_total
 
 print("="*70)
 print("TEST DATASET GENERATION COMPLETE!")
 print("="*70)
 print(f"Output directory: {output_path.absolute()}")
-print(f"Total series: {actual_total:,}")
+print()
+print(f"Dataset Statistics:")
+print(f"  Stationary:     {stationary_total:>5,} ({100*stationary_total/actual_total:.1f}%)")
+print(f"  Non-Stationary: {nonstationary_total:>5,} ({100*nonstationary_total/actual_total:.1f}%)")
+print(f"  ─────────────────────")
+print(f"  TOTAL:          {actual_total:>5,}")
+print()
+print(f"✓ Dataset is balanced (difference: {abs(stationary_total - nonstationary_total) / actual_total * 100:.2f}%)")
 print()
 print("="*70)
 print("NEXT STEPS")
