@@ -54,7 +54,7 @@ warnings.filterwarnings('ignore')
 parser = argparse.ArgumentParser(description='Train Model 2: Non-Stationary 5-Class Classification')
 parser.add_argument('--mode', type=str, default='raw', choices=['raw', 'features'],
                     help='Training mode: raw (sktime) or features (sklearn)')
-parser.add_argument('--data-path', type=str, default='../../../data/raw/unified-test',
+parser.add_argument('--data-path', type=str, default='../../../data/raw/unified-90k',
                     help='Path to raw time series data')
 parser.add_argument('--features-path', type=str, default='../../../data/features/selected',
                     help='Path to TSFresh features (for features mode)')
