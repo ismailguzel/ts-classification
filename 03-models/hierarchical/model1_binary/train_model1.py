@@ -57,7 +57,7 @@ parser.add_argument('--classifier', type=str, default='all',
 args = parser.parse_args()
 
 # Global n_jobs setting for all models
-N_JOBS = -1  # Use all available cores
+N_JOBS = 110  # Use all available cores
 
 print("="*80)
 print("MODEL 1: BINARY CLASSIFICATION (Stationary vs Non-Stationary)")
