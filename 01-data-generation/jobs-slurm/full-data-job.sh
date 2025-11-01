@@ -63,8 +63,13 @@ echo "Starting 90K dataset generation..."
 echo "Using 55 CPUs on ORFOZ partition"
 echo "=================================================="
 
+# Full path kullan
+SCRIPT_PATH="/arf/home/iguzel/ts-stationary/hierarchical-ts-classification/01-data-generation/generate.py"
+echo "Script path: $SCRIPT_PATH"
+echo ""
+
 # Time ve resource tracking ile çalıştır
-python generate.py
+time python -u "$SCRIPT_PATH"
 
 # Sonuçları kontrol et
 echo ""
@@ -74,7 +79,7 @@ echo "End Time: $(date)"
 echo "=================================================="
 
 # Output klasörünü kontrol et
-OUTPUT_DIR="../data/raw/unified-150k"
+OUTPUT_DIR="/arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-90k"
 if [ -d "$OUTPUT_DIR" ]; then
     echo ""
     echo "Output Directory Statistics:"
@@ -86,9 +91,11 @@ if [ -d "$OUTPUT_DIR" ]; then
     find $OUTPUT_DIR -name "*.parquet" 2>/dev/null | head -20
     echo ""
     echo "Category breakdown:"
-    for cat in stationary trend volatility stochastic anomaly structural_break; do
+    for cat in stationary deterministic_trend volatility stochastic point_anomaly collective_anomaly multi_mean_shift multi_variance_shift multi_trend_shift; do
         count=$(find $OUTPUT_DIR -name "*${cat}*.parquet" 2>/dev/null | wc -l)
-        echo "  $cat: $count files"
+        if [ $count -gt 0 ]; then
+            echo "  $cat: $count files"
+        fi
     done
 fi
 
