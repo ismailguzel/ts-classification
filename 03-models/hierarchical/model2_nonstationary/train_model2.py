@@ -17,7 +17,6 @@ Two training modes:
    - TimeSeriesForestClassifier
    - ROCKET (2000 kernels for 5-class)
    - Arsenal (ROCKET-based ensemble)
-   - ShapeletTransformClassifier (Pattern-based)
 
 2. FEATURES MODE (optional): Uses TSFresh features with sklearn classifiers
 
@@ -63,13 +62,17 @@ parser.add_argument('--test-size', type=float, default=0.2,
 parser.add_argument('--random-state', type=int, default=42,
                     help='Random state for reproducibility')
 parser.add_argument('--classifier', type=str, default='all',
-                    choices=['all', 'tsf', 'rocket', 'arsenal', 'shapelet'],
+                    choices=['all', 'tsf', 'rocket', 'arsenal'],
                     help='Specific classifier to train (default: all)')
+parser.add_argument('--n-jobs', type=int, default=110,
+                    help='Number of parallel jobs for model training (default: 110)')
 
 args = parser.parse_args()
 
+# Get n_jobs from arguments
+N_JOBS = args.n_jobs
+
 # Global n_jobs setting for all models
-N_JOBS = 110  # Use all available cores
 
 # Fast parallel loading settings
 BATCH_SIZE = 20      # Process 20 files per batch
@@ -329,12 +332,6 @@ if args.mode == 'raw':
     from sktime.classification.interval_based import TimeSeriesForestClassifier
     from sktime.classification.kernel_based import RocketClassifier
     from sktime.classification.kernel_based import Arsenal
-    try:
-        from sktime.classification.shapelet_based import ShapeletTransformClassifier
-        has_shapelet = True
-    except ImportError:
-        has_shapelet = False
-        print("⚠️  ShapeletTransformClassifier not available in this sktime version")
     
     # Pad/truncate to same length
     max_length = max(len(s) for s in series_list)
@@ -388,6 +385,14 @@ else:
     except ImportError:
         has_xgboost = False
         print("⚠️  XGBoost not installed, skipping XGBoost model")
+    
+    # Optional: CatBoost
+    try:
+        from catboost import CatBoostClassifier
+        has_catboost = True
+    except ImportError:
+        has_catboost = False
+        print("⚠️  CatBoost not installed, skipping CatBoost model")
     
     from sklearn.preprocessing import StandardScaler
     
@@ -489,32 +494,6 @@ if args.mode == 'raw':
         except (ImportError, AttributeError) as e:
             print(f"  ⚠️  Arsenal not available: {str(e)[:100]}")
             print(f"  ⚠️  This may be due to NumPy 2.0 incompatibility. Consider downgrading to numpy<2.0")
-    
-    # Model 5: ShapeletTransform (Pattern-based)
-    if args.classifier in ['all', 'shapelet'] and has_shapelet:
-        print("\n🔍 Training ShapeletTransformClassifier...")
-        print("  ⚠️  This may take longer for 5-class problem...")
-        start_time = time.time()
-        shapelet = ShapeletTransformClassifier(
-            n_shapelet_samples=200,
-            max_shapelets=20,
-            batch_size=100,
-            random_state=args.random_state,
-            n_jobs=N_JOBS
-        )
-        shapelet.fit(X_train, y_train)
-        train_time = time.time() - start_time
-        
-        y_pred = shapelet.predict(X_test)
-        acc = accuracy_score(y_test, y_pred)
-        models['Shapelet'] = shapelet
-        results['Shapelet'] = {
-            'accuracy': acc,
-            'train_time': train_time,
-            'predictions': y_pred
-        }
-        print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
-        print(f"  ✓ Training time: {train_time:.2f}s")
 
 else:
     # FEATURES MODE: Train sklearn classifiers
@@ -557,7 +536,33 @@ else:
         print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
         print(f"  ✓ Training time: {train_time:.2f}s")
     
-    # Model 3: SVM (RBF kernel for multi-class)
+    # Model 3: CatBoost (if available)
+    if has_catboost:
+        print("\n🐱 Training CatBoost...")
+        start_time = time.time()
+        cat = CatBoostClassifier(
+            iterations=200,
+            depth=6,
+            learning_rate=0.1,
+            thread_count=N_JOBS,
+            random_seed=args.random_state,
+            verbose=0
+        )
+        cat.fit(X_train, y_train)
+        train_time = time.time() - start_time
+        
+        y_pred = cat.predict(X_test)
+        acc = accuracy_score(y_test, y_pred)
+        models['CatBoost'] = cat
+        results['CatBoost'] = {
+            'accuracy': acc,
+            'train_time': train_time,
+            'predictions': y_pred
+        }
+        print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
+        print(f"  ✓ Training time: {train_time:.2f}s")
+    
+    # Model 4: SVM (RBF kernel for multi-class)
     print("\n⚡ Training SVM (RBF)...")
     start_time = time.time()
     svm = SVC(kernel='rbf', random_state=args.random_state)

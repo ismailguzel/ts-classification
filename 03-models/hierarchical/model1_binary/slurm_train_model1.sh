@@ -99,7 +99,8 @@ python -u train_model1.py \
     --mode $MODE \
     --classifier $CLASSIFIER \
     --data-path $DATA_PATH \
-    --test-size $TEST_SIZE
+    --test-size $TEST_SIZE \
+    --n-jobs ${SLURM_CPUS_PER_TASK:-110}
 
 # Training sonuçlarını kontrol et
 TRAINING_EXIT_CODE=$?

@@ -84,6 +84,16 @@ def folder_path(*parts):
     path.mkdir(parents=True, exist_ok=True)
     return str(path)
 
+# Global series-id counter to ensure uniqueness across all generator calls
+next_series_id = 1
+
+def reserve_ids(count: int) -> int:
+    """Return current global start_id and advance the counter by count."""
+    global next_series_id
+    start = next_series_id
+    next_series_id += int(count)
+    return start
+
 # ============================================================================
 # 1. STATIONARY (45,000)
 # ============================================================================
@@ -106,7 +116,8 @@ for base in noise_config['bases']:
         TimeSeriesGenerator,
         folder=folder_path("stationary", base, "long"),
         count=noise_config['per_base'],
-        length_range=LENGTH_CONFIG['long']
+        length_range=LENGTH_CONFIG['long'],
+        start_id=reserve_ids(noise_config['per_base'])
     )
     print(f"  >>> {base} completed")
 print(f"  ✓ Generated {noise_config['total']:,} stationary series\n")
@@ -135,7 +146,8 @@ for trend_type in trend_config['trend_types']:
                 kind=base,
                 count=trend_config['per_combination'],
                 length_range=LENGTH_CONFIG['long'],
-                sign=sign
+                sign=sign,
+                start_id=reserve_ids(trend_config['per_combination'])
             )
 print(f"  ✓ Generated {trend_config['total']:,} trend series\n")
 
@@ -158,7 +170,8 @@ for stype in stochastic_config['types']:
         TimeSeriesGenerator,
         folder=folder_path("stochastic", stype, "long"),
         count=stochastic_config['per_type'],
-        length_range=LENGTH_CONFIG['long']
+        length_range=LENGTH_CONFIG['long'],
+        start_id=reserve_ids(stochastic_config['per_type'])
     )
 print(f"  ✓ Generated {stochastic_config['total']:,} stochastic series\n")
 
@@ -180,7 +193,8 @@ for vtype in volatility_config['types']:
         TimeSeriesGenerator,
         folder=folder_path("volatility", vtype, "long"),
         count=volatility_config['per_type'],
-        length_range=LENGTH_CONFIG['long']
+        length_range=LENGTH_CONFIG['long'],
+        start_id=reserve_ids(volatility_config['per_type'])
     )
 print(f"  ✓ Generated {volatility_config['total']:,} volatility series\n")
 
@@ -199,7 +213,8 @@ for base in point_single_config['bases']:
             count=point_single_config['per_combination'],
             length_range=LENGTH_CONFIG['long'],
             anomaly_type='single',
-            location=location
+            location=location,
+            start_id=reserve_ids(point_single_config['per_combination'])
         )
 print(f"  ✓ Generated {point_single_config['total']:,} point anomaly (single) series\n")
 
@@ -216,7 +231,8 @@ for base in point_multiple_config['bases']:
         kind=base,
         count=point_multiple_config['per_base'],
         length_range=LENGTH_CONFIG['long'],
-        anomaly_type='multiple'
+        anomaly_type='multiple',
+        start_id=reserve_ids(point_multiple_config['per_base'])
     )
 print(f"  ✓ Generated {point_multiple_config['total']:,} point anomaly (multiple) series\n")
 
@@ -235,7 +251,8 @@ for base in collective_config['bases']:
         count=collective_config['per_base'],
         num_anomalies=n,
         anomaly_type='multiple',
-        length_range=LENGTH_CONFIG['long']
+        length_range=LENGTH_CONFIG['long'],
+        start_id=reserve_ids(collective_config['per_base'])
     )
 print(f"  ✓ Generated {collective_config['total']:,} collective anomaly series\n")
 
@@ -254,7 +271,8 @@ for base in mean_shift_config['bases']:
         count=mean_shift_config['per_base'],
         num_breaks=n,
         break_type='multiple',
-        length_range=LENGTH_CONFIG['long']
+        length_range=LENGTH_CONFIG['long'],
+        start_id=reserve_ids(mean_shift_config['per_base'])
     )
 print(f"  ✓ Generated {mean_shift_config['total']:,} mean shift series\n")
 
@@ -273,7 +291,8 @@ for base in variance_shift_config['bases']:
         count=variance_shift_config['per_base'],
         num_breaks=n,
         break_type='multiple',
-        length_range=LENGTH_CONFIG['long']
+        length_range=LENGTH_CONFIG['long'],
+        start_id=reserve_ids(variance_shift_config['per_base'])
     )
 print(f"  ✓ Generated {variance_shift_config['total']:,} variance shift series\n")
 
@@ -300,7 +319,8 @@ for base in trend_shift_config['bases']:
             change_types=change_type_samples,
             sign=sign,
             break_type='multiple',
-            length_range=LENGTH_CONFIG['long']
+            length_range=LENGTH_CONFIG['long'],
+            start_id=reserve_ids(trend_shift_config['per_combination'])
         )
 print(f"  ✓ Generated {trend_shift_config['total']:,} trend shift series\n")
 

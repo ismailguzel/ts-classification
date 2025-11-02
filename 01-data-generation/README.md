@@ -1,13 +1,16 @@
 # Data Generation
 
 This directory contains scripts to generate synthetic time series datasets using the `ts-stationary` library.
+# Data Generation
+
+This directory contains scripts to generate synthetic time series datasets using the `ts-stationary` library.
 
 ## 📁 Files
 
 | File | Purpose | Output | Runtime |
 |------|---------|--------|---------|
 | `config.py` | Configuration for all datasets | - | - |
-| `generate_test.py` | Generate 1,450 test samples | `../data/raw/unified-test/` | ~5-10 min |
+| `generate_toy.py` | Generate 1,450 test samples | `../data/raw/unified-test/` | ~5-10 min |
 | `generate.py` | Generate 90K full dataset | `../data/raw/unified-90k/` | ~8-12 hours |
 
 ## 📊 Dataset Configurations
@@ -48,7 +51,7 @@ Production-scale balanced dataset:
 
 ```bash
 cd 01-data-generation
-python generate_test.py
+python generate_toy.py
 ```
 
 This creates `../data/raw/unified-test/` with 1,450 samples for quick testing.

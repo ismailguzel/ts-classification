@@ -1,0 +1,37 @@
+# Changelog
+
+## 2025-11-02 - ID integrity, features pipeline, Model 2 boost
+
+### Added
+- Global unique `series_id` at data generation via upstream `start_id` support; wired through generation scripts. Added `01-data-generation/verify_ids.py` to validate uniqueness across parquet files.
+- Deterministic file ordering in `02-preprocessing/extract_features.py` using `sorted()` for reproducible `--max-files` behavior.
+- Features-mode training enhancements:
+	- Model 1: integrated XGBoost and CatBoost (optional) alongside RF/SVM.
+	- Model 2: integrated CatBoost (optional) alongside RF/SVM/XGBoost.
+
+### Changed
+- Removed ad-hoc `series_id` remapping from feature extraction; uniqueness now enforced at source during generation.
+
+### Notes
+- CatBoost is optional (not pinned in requirements); when not installed, training scripts will skip it with a clear message.
+- Use `02-preprocessing/feature_selection.py --target all` to produce both binary and primary selected feature sets consumed by Model 1 and Model 2 feature pipelines.
+
+## 2025-11-01 - Minimal, focused updates
+
+These updates keep the code clean and only address real needs observed on TRUBA.
+
+### Added
+- `--n-jobs` CLI parameter to control training parallelism:
+	- `03-models/hierarchical/model1_binary/train_model1.py`
+	- `03-models/hierarchical/model2_nonstationary/train_model2.py`
+- SLURM scripts now pass `--n-jobs ${SLURM_CPUS_PER_TASK}` so CPU allocation is respected:
+	- `03-models/hierarchical/model1_binary/slurm_train_model1.sh`
+	- `03-models/hierarchical/model2_nonstationary/slurm_train_model2.sh`
+
+### Fixed
+- Dependency compatibility pinned in `requirements.txt` to avoid known issues with ROCKET/Arsenal:
+	- `numpy<2.0`, `scikit-learn<1.6`, `sktime<0.32`, `pandas<2.3`, `pyarrow<18`
+
+### Notes
+- No changes to data loading logic; existing PyArrow + ThreadPoolExecutor kept as-is.
+- No broad refactor; focus is on stability and HPC flexibility only.

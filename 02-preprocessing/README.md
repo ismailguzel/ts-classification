@@ -78,10 +78,13 @@ python feature_selection.py \
 - `all`: All targets
 
 **Output:**
-- `features_binary_mutual_info.parquet`: Selected features for binary classification
-- `features_primary_mutual_info.parquet`: Selected features for primary classification
-- `features_sub_mutual_info.parquet`: Selected features for sub-category classification
-- `feature_names_*.txt`: Lists of selected feature names
+- Legacy (kept for reference):
+  - `features_binary_mutual_info.parquet`, `features_primary_mutual_info.parquet`, `features_sub_mutual_info.parquet`
+  - `feature_names_*.txt`
+- Standardized per-target directories (for training):
+  - `../data/features/selected/binary/{features.parquet, labels.parquet}`
+  - `../data/features/selected/primary/{features.parquet, labels.parquet}`
+  - `../data/features/selected/sub/{features.parquet, labels.parquet}`
 
 ---
 
@@ -227,3 +230,17 @@ pip install -r ../requirements.txt
 - TSFresh Documentation: https://tsfresh.readthedocs.io/
 - Feature Engineering Guide: https://tsfresh.readthedocs.io/en/latest/text/feature_extraction.html
 - Feature Selection: https://tsfresh.readthedocs.io/en/latest/text/feature_selection.html
+
+
+python extract_features.py --input ../data/raw/unified-test --output ../data/features/unified-test/allfeatures
+
+
+python feature_selection.py --input ../data/features/unified-test/allfeatures --output ../data/features/unified-test/selected --method mutual_info --n-features 100 --target all
+
+
+# Train on all extracted features (no selection)
+python train_model1.py --mode features --features-path ../../../data/features/unified-test/allfeatures
+
+
+# Train on selected binary features (recommended for Model 1)
+python train_model1.py --mode features --features-path ../../../data/features/unified-test/selected/binary

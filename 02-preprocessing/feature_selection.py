@@ -208,29 +208,58 @@ class FeatureSelector:
         return X_selected, features
     
     def save_selected_features(self, X, labels_df, features, output_path, target):
-        """Save selected features."""
+        """Save selected features and standardized files."""
         output_path = Path(output_path)
         output_path.mkdir(parents=True, exist_ok=True)
-        
-        # Save selected features
+
+        # Save legacy selected features file
         features_file = output_path / f'features_{target}_{self.method}.parquet'
         print(f"\nSaving selected features to: {features_file}")
         X.reset_index().to_parquet(features_file, index=False)
-        
-        # Save labels
+
+        # Save legacy labels file
         labels_file = output_path / f'labels_{target}.parquet'
         if not labels_file.exists():
             print(f"Saving labels to: {labels_file}")
             labels_df.to_parquet(labels_file, index=False)
-        
+
         # Save feature names
         feature_names_file = output_path / f'feature_names_{target}_{self.method}.txt'
         print(f"Saving feature names to: {feature_names_file}")
         with open(feature_names_file, 'w') as f:
             for feature in features:
                 f.write(f"{feature}\n")
-        
-        print(f"\n✅ Selected features saved successfully!")
+
+        # --- Standardized output for model training ---
+        # Save into per-target subdirectory to avoid overwriting when target=all
+        std_dir = output_path / target
+        std_dir.mkdir(parents=True, exist_ok=True)
+
+        # Save features.parquet (only selected features, with id)
+        std_features_file = std_dir / 'features.parquet'
+        print(f"Saving standardized features to: {std_features_file}")
+        X_std = X.reset_index()
+        X_std.to_parquet(std_features_file, index=False)
+
+        # Save labels.parquet (only id and target column)
+        std_labels_file = std_dir / 'labels.parquet'
+        print(f"Saving standardized labels to: {std_labels_file}")
+        # Ensure 'id' is present
+        if 'id' not in labels_df.columns:
+            labels_df = labels_df.reset_index()
+        # Only keep id and target column
+        if target == 'binary':
+            label_cols = ['id', 'is_stationary']
+        elif target == 'primary':
+            label_cols = ['id', 'primary_category']
+        elif target == 'sub':
+            label_cols = ['id', 'sub_category']
+        else:
+            label_cols = ['id'] + [col for col in labels_df.columns if col != 'id']
+        labels_df_std = labels_df[label_cols]
+        labels_df_std.to_parquet(std_labels_file, index=False)
+
+        print(f"\n✅ Selected features and standardized files saved successfully!")
 
 
 def main():
