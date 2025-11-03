@@ -8,79 +8,53 @@ This is the first level of the hierarchical classification system.
 
 ---
 
-## 🔄 Training Modes
+## Training Modes
 
 ### Mode 1: RAW (Default) - sktime classifiers
-Uses raw time series with specialized time series classifiers:
-- ✅ No feature engineering needed
-- ✅ Fast training
-- ✅ Good baseline performance
-- 🌲 **TimeSeriesForest**: Fast ensemble method
-- 🚀 **ROCKET**: State-of-the-art (1000 kernels for binary)
-- 🎯 **Arsenal**: ROCKET-based ensemble (1000 kernels)
-- 🔍 **ShapeletTransform**: Pattern-based classification
+Uses raw time series with time series classifiers:
+- TimeSeriesForest
+- ROCKET
+- Arsenal
+- ShapeletTransform
 
 ### Mode 2: FEATURES - sklearn classifiers
 Uses TSFresh extracted features with traditional ML:
-- ✅ Potentially higher accuracy
-- ✅ More interpretable features
-- ✅ Faster inference
-- 🌲 **Random Forest**: Robust ensemble
-- 🚀 **XGBoost**: Gradient boosting
-- ⚡ **SVM (Linear)**: Linear classifier
+- Random Forest
+- XGBoost
+- SVM (Linear)
 
 ---
 
-## 📊 Models Available
+## Models Available
 
 ### RAW Mode (sktime)
 
 #### 1. TimeSeriesForest
-- **Type**: Interval-based ensemble
-- **Speed**: Fast ⚡⚡⚡
-- **Accuracy**: 93-95%
-- **Use case**: Quick baseline
+- Interval-based ensemble
 
 #### 2. ROCKET
-- **Type**: Convolutional kernel transform
-- **Kernels**: 1000 (optimized for binary)
-- **Speed**: Fast ⚡⚡
-- **Accuracy**: 95-97%
-- **Use case**: Balanced performance
+- Convolutional kernel transform
 
-#### 3. Arsenal ⭐ Best Accuracy
-- **Type**: ROCKET ensemble (1000 kernels)
-- **Speed**: Moderate ⚡
-- **Accuracy**: 96-98%
-- **Use case**: Highest accuracy
+#### 3. Arsenal
+- ROCKET ensemble
 
 #### 4. ShapeletTransform
-- **Type**: Pattern-based
-- **Speed**: Slow ⏱️
-- **Accuracy**: 93-96%
-- **Use case**: Interpretable patterns
+- Pattern-based
 
 ### FEATURES Mode (sklearn)
 
 #### 1. Random Forest
-- **Type**: Decision tree ensemble
-- **Speed**: Fast ⚡
-- **Use case**: Robust baseline
+- Decision tree ensemble
 
 #### 2. XGBoost
-- **Type**: Gradient boosting
-- **Speed**: Fast ⚡⚡
-- **Performance**: Excellent
-- **Use case**: Best performance
+- Gradient boosting
 
 #### 3. SVM (Linear)
-- **Type**: Support vector machine
-- **Speed**: Fast ⚡
-- **Use case**: High-dimensional features
+- Support vector machine
 
 ---
 
-## 🚀 Usage
+## Usage
 
 ### Training - RAW Mode (Default)
 
@@ -97,22 +71,16 @@ python train_model1.py --mode raw --classifier tsf         # Quick baseline
 python train_model1.py --mode raw --classifier shapelet    # Pattern-based
 ```
 
-**Available classifiers:**
-- `all` - Train all models (default)
-- `tsf` - TimeSeriesForest only
-- `rocket` - ROCKET only
-- `arsenal` - Arsenal only ⭐ **Recommended for accuracy**
-- `shapelet` - ShapeletTransform only
+Available classifiers:
+- `all` (default)
+- `tsf`
+- `rocket`
+- `arsenal`
+- `shapelet`
 
-**Requirements:**
+Requirements:
 - Raw data: `../../../data/raw/unified-test/`
-- Time (for 1,450 samples): 
-  - TimeSeriesForest: ~30 seconds
-  - ROCKET: ~60 seconds
-  - Arsenal: ~90 seconds
-  - All models: ~3-5 minutes
 - Output: `saved_models/model1_binary_classifier.pkl`
-- Parallelization: N_JOBS=-1 (uses all CPU cores)
 
 ### Training - FEATURES Mode
 
@@ -127,11 +95,9 @@ cd ../03-models/hierarchical/model1_binary
 python train_model1.py --mode features --features-path ../../../data/features/selected
 ```
 
-**Requirements:**
+Requirements:
 - Features: `../../../data/features/selected/features_binary_*.parquet`
-- Time: ~5-10 minutes (after feature extraction)
 - Output: `saved_models/model1_binary_classifier.pkl`
-- Parallelization: N_JOBS=-1 (uses all CPU cores)
 
 ### Testing
 
@@ -143,50 +109,17 @@ python test_model1.py
 python test_model1.py --n-samples 500
 ```
 
-Quick test on 100 samples to verify model works.
+Quick test on a subset to verify model works.
 
 ---
 
-## 📈 Expected Performance
-
-**Target Accuracy:** 80-90% (depending on classifier)
-
-**Dataset:** 1,450 samples (752 stationary + 698 non-stationary)
-
-### RAW Mode Results (~1,450 test samples)
-
-| Classifier | Accuracy | Training Time | Speed | Use Case |
-|------------|----------|---------------|-------|----------|
-| TimeSeriesForest | 80-85% | ~30s | ⚡⚡⚡ | Quick baseline |
-| ROCKET | 82-87% | ~60s | ⚡⚡ | Balanced |
-| **Arsenal** ⭐ | 84-89% | ~90s | ⚡ | **Best accuracy** |
-| Shapelet | 80-86% | ~5min | ⏱️ | Interpretable |
-
-### FEATURES Mode Results (~1,450 test samples)
-
-| Classifier | Accuracy | Training Time | Use Case |
-|------------|----------|---------------|----------|
-| Random Forest | 83-88% | ~5s | Robust baseline |
-| XGBoost | 85-90% | ~8s | Best performance |
-| SVM Linear | 82-87% | ~3s | High-dimensional |
-
-**Note on Performance:**
-Binary classification (stationary vs non-stationary) is relatively straightforward. The achieved accuracy depends on:
-- Data quality and diversity
-- Series length and complexity
-- Classifier choice
-
-**Recommendations:**
--  **Need accuracy?** → Use Arsenal or XGBoost (features)
-- ⚖️ **Balanced?** → Use ROCKET
-- 🏃 **Need speed?** → Use TimeSeriesForest or ROCKET
-- 🔬 **Research?** → Compare all models
+<!-- Expected performance and recommendations removed to keep README usage-focused. -->
 
 ---
 
-## 🔧 Technical Details
+## Technical Details
 
-### RAW Mode - Data Preparation
+RAW Mode - Data Preparation
 
 1. **Data Source**: Parquet files with metadata
    - Column detection: 'series_id' or 'id'
@@ -198,7 +131,7 @@ Binary classification (stationary vs non-stationary) is relatively straightforwa
 5. **Split**: 80% train, 20% test (stratified)
 6. **Preprocessing**: NaN/inf values replaced with 0
 
-### FEATURES Mode - Data Preparation
+FEATURES Mode - Data Preparation
 
 1. **Data Source**: TSFresh extracted features
 2. **Format**: Feature vectors from TSFresh
@@ -206,7 +139,7 @@ Binary classification (stationary vs non-stationary) is relatively straightforwa
 4. **Scaling**: StandardScaler normalization
 5. **Split**: 80% train, 20% test (stratified)
 
-### Model Selection
+Model Selection
 
 Script automatically:
 1. Trains multiple models (depending on mode)
@@ -214,7 +147,7 @@ Script automatically:
 3. Saves best performing model
 4. Stores metadata (mode, params, scaler, etc.)
 
-### Output Files
+Output Files
 
 ```
 saved_models/

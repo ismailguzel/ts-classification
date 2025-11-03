@@ -1,13 +1,8 @@
 """
-90K Balanced Dataset Configuration
-====================================
+Balanced dataset configuration for synthetic time series generation.
 
-Generates 90,000 series for flat vs hierarchical comparison:
-- 45K Stationary
-- 45K Unstationary (9K per semantic group)
-
-All data uses LONG length (1000-10000 points) to satisfy
-structural break constraints.
+Includes full (90K) and test (~1.5K) distributions with category-wise
+breakdowns. All series use LONG length (1000–10000).
 """
 
 # Exact counts for 90K balanced distribution
@@ -209,13 +204,11 @@ Model 3 Details:
   Structural subtypes: 3 types × 3,000 = 9,000
 
 All series: LONG length (1000-10000 points)
-Estimated size: ~5-7 GB (Parquet compressed)
-Generation time: ~8-12 hours
 """
 
 SUMMARY_TEST = """
-Test Dataset (1,500 samples) - Perfectly Balanced:
-==================================================
+Test Dataset (1,500 samples) - Balanced:
+========================================
 
 Model 1 (Binary):
   Stationary:    752 (50.1%)
@@ -231,8 +224,6 @@ Model 2 (5-class, non-stationary only):
 Total: 1,504 samples (752 stationary + 752 non-stationary)
 
 All series: LONG length (1000-10000 points)
-Estimated size: ~100-200 MB
-Generation time: ~5-10 minutes
 
 Purpose: Quick test before full 90K generation
 """

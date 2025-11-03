@@ -1,20 +1,15 @@
 """
-Feature Selection Script
-========================
-
-Selects relevant features from TSFresh extracted features using various methods.
+Select relevant features from TSFresh outputs using multiple methods.
 
 Usage:
     python feature_selection.py --input ../data/features --output ../data/features/selected
 
 Methods:
-    - Variance threshold: Remove low-variance features
-    - Correlation: Remove highly correlated features
+    - Variance threshold: remove low-variance features
+    - Correlation: remove highly correlated features
     - Statistical tests: Chi-square, ANOVA F-test
     - Mutual information: MI-based selection
     - Feature importance: Random Forest importance
-
-Time: ~30-60 minutes
 """
 
 import sys

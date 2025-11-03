@@ -1,6 +1,6 @@
 # Hierarchical Time Series Classification
 
-A comprehensive pipeline for hierarchical classification of time series data using TSFresh feature engineering and machine learning models.
+A pipeline for hierarchical classification of time series data using TSFresh feature engineering and machine learning models.
 
 ## 🎯 Project Overview
 
@@ -10,12 +10,10 @@ This project implements a hierarchical classification system for time series dat
 2. **Level 2 (5-Class)**: Trend, Volatility, Stochastic, Anomaly, Structural Break
 
 ### Key Features
-- ✅ Automated time series generation (150K samples)
-- ✅ Two training modes: RAW (sktime) or FEATURES (TSFresh + sklearn)
-- ✅ Dual-mode architecture for flexibility
-- ✅ Hierarchical classification (2 levels implemented)
-- ✅ Comprehensive evaluation metrics
-- ✅ Production-ready code (~1,400+ lines)
+- Automated time series generation
+- Two training modes: RAW (sktime) or FEATURES (TSFresh + sklearn)
+- Hierarchical classification (2 levels implemented)
+- Evaluation with standard metrics
 
 ---
 
@@ -24,10 +22,9 @@ This project implements a hierarchical classification system for time series dat
 ```
 hierarchical-ts-classification/
 ├── 01-data-generation/          # Data generation
-│   ├── generate.py              # Main dataset generation (150K)
-│   ├── generate_test.py         # Test dataset (1.5K)
-│   ├── config.py                # Main dataset configuration
-│   └── config_test.py           # Test dataset configuration
+│   ├── generate.py              # Main dataset generation (90K)
+│   ├── generate_toy.py          # Test dataset (~1.5K)
+│   └── config.py                # Dataset configuration (full + test)
 │
 ├── 02-preprocessing/            # Feature engineering (OPTIONAL)
 │   ├── extract_features.py     # TSFresh feature extraction
@@ -74,9 +71,9 @@ pip install -r requirements.txt
 ```bash
 # Generate test dataset (small, for quick testing)
 cd 01-data-generation
-python generate_test.py
+python generate_toy.py
 
-# OR generate full 150K dataset (takes 12-18 hours)
+# OR generate full dataset
 python generate.py
 ```
 
@@ -119,6 +116,22 @@ python train_model1.py
 python test_model1.py
 ```
 
+### 7. Smoke Test (optional)
+
+```bash
+# Basic (raw mode). Uses full dataset if available; falls back to test dataset.
+bash smoke_test.sh
+
+# Features mode
+bash smoke_test.sh --mode features
+
+# Include Model 2 quick check
+bash smoke_test.sh --with-model2
+
+# Customize
+bash smoke_test.sh --data-path data/raw/unified-test --n-samples 50 --classifier tsf
+```
+
 ---
 
 ## 📊 Pipeline Overview
@@ -130,7 +143,7 @@ python test_model1.py
 
 ### Stage 2: Feature Engineering (OPTIONAL)
 - Extract time series features using **TSFresh** (for FEATURES mode)
-- 200-800 features per series (configurable)
+- Feature set size configurable
 - Statistical, temporal, frequency, and complexity features
 - **Not needed for RAW mode** - models work directly on time series
 
@@ -143,10 +156,8 @@ python test_model1.py
 ### Stage 4: Model Training
 - **Dual-mode architecture**: RAW (sktime) or FEATURES (sklearn)
 - Hierarchical classification: Model 1 (binary) → Model 2 (5-class)
-- **RAW mode classifiers**: 
-  - TimeSeriesForest, ROCKET, MiniROCKET ⭐
-  - Arsenal ⭐, ShapeletTransform, HIVECOTEV2
-- **FEATURES mode classifiers**: Random Forest, XGBoost, SVM
+- RAW mode classifiers: TimeSeriesForest, ROCKET, Arsenal, others
+- FEATURES mode classifiers: Random Forest, XGBoost, SVM
 - Cross-validation and performance evaluation
 
 ### Stage 5: Evaluation
@@ -188,41 +199,31 @@ python train_model1.py --mode features --classifier xgboost --features-path /pat
 
 ---
 
-## 📈 Expected Results
-
-### Model 1: Binary Classification (Stationary vs Non-Stationary)
-- **Accuracy**: 93-98%
-- **Training Time**: 30-120 seconds
-- **Dataset**: 15,000 test samples
-
-### Model 2: 5-Class Classification (Non-Stationary Types)
-- **Accuracy**: 80-92%
-- **Training Time**: 60-180 seconds
-- **Dataset**: ~7,500 non-stationary samples
+<!-- Expected results and runtime estimates intentionally omitted to keep README usage-focused. -->
 
 ---
 
-## 🛠️ Dependencies
+## Dependencies
 
 Core dependencies:
 
 ```
-tsfresh>=0.20.0          # Feature engineering
-scikit-learn>=1.3.0      # Machine learning
-sktime>=0.24.0           # Time series algorithms
-pandas>=2.0.0            # Data manipulation
-numpy>=1.24.0            # Numerical computing
+tsfresh>=0.20.0
+scikit-learn>=1.3.0
+sktime>=0.24.0
+pandas>=2.0.0
+numpy>=1.24.0
 ```
 
 For complete list, see `requirements.txt`.
 
 ---
 
-## 📚 Documentation
+## Documentation
 
 - **01-data-generation/**: See individual script docstrings
 - **02-preprocessing/**: See [02-preprocessing/README.md](02-preprocessing/README.md)
-- **03-models/**: See [03-models/hierarchical/MODEL1_QUICKSTART.md](03-models/hierarchical/MODEL1_QUICKSTART.md)
+- **03-models/**: See model-specific READMEs under `03-models/hierarchical/`
 
 ---
 

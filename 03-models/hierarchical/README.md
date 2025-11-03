@@ -54,7 +54,7 @@ Bu klasör, hiyerarşik zaman serisi sınıflandırma sistemi için eğitim scri
                    └────────┘ └─────┘ └──────┘ └──────┘ └────────┘
 ```
 
-## 🚀 Hızlı Başlangıç
+## Hızlı Başlangıç
 
 ### Lokal Ortamda (Test/Development)
 
@@ -68,9 +68,9 @@ cd model2_nonstationary
 python train_model2.py --mode raw --classifier minirocket
 ```
 
-### TRUBA Cluster (Production)
+### TRUBA Cluster
 
-**En kolay yol - İnteraktif helper kullanın**:
+İnteraktif helper kullanın:
 
 ```bash
 cd /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical
@@ -83,7 +83,7 @@ Script size şunları sorar:
 
 Ardından otomatik olarak job'ları submit eder.
 
-## 📊 Model Özellikleri
+## Model Özellikleri
 
 ### Model 1: Binary Classification
 
@@ -91,9 +91,7 @@ Ardından otomatik olarak job'ları submit eder.
 |--------|-------|
 | **Task** | Stationary vs Non-Stationary |
 | **Classes** | 2 (Binary) |
-| **Accuracy** | 93-98% |
-| **Training Time** | 20 dk - 5 saat (classifier'a göre) |
-| **Recommended** | MiniROCKET ⭐ (hız) veya Arsenal ⭐ (doğruluk) |
+| **Task** | Stationary vs Non-Stationary |
 
 **Kullanılabilir Classifiers**:
 - TimeSeriesForest (baseline)
@@ -109,9 +107,7 @@ Ardından otomatik olarak job'ları submit eder.
 |--------|-------|
 | **Task** | Non-Stationary Type Classification |
 | **Classes** | 5 (Trend/Volatility/Stochastic/Anomaly/Structural) |
-| **Accuracy** | 80-92% |
-| **Training Time** | 30 dk - 10 saat (classifier'a göre) |
-| **Recommended** | MiniROCKET ⭐ (hız) veya Arsenal ⭐ (doğruluk) |
+| **Task** | Non-Stationary Type Classification |
 
 **5 Classes**:
 0. **Trend**: Deterministic trend patterns
@@ -152,7 +148,7 @@ TSFresh features ile çalışır. sklearn classifiers kullanır.
 
 ```bash
 # Önce features extract edin
-cd ../../02-feature-engineering
+cd ../../02-preprocessing
 python extract_features.py
 
 # Sonra FEATURES mode ile eğitin
@@ -165,31 +161,9 @@ python train_model1.py --mode features --features-path ../../../data/features/se
 - ✅ Feature importance analysis
 - ✅ Daha hızlı inference (features pre-computed)
 
-## 📈 Performans Karşılaştırması
+<!-- Performance comparison removed to keep documentation usage-focused. -->
 
-### Hız vs Doğruluk (Model 1, 150K dataset)
-
-| Classifier | Accuracy | Training Time | Speed Rating | Recommendation |
-|-----------|----------|---------------|--------------|----------------|
-| MiniROCKET | 95-97% | ~25 min | ⚡⚡⚡⚡⚡ | ⭐ **Hız için en iyi** |
-| ROCKET | 95-97% | ~1 hour | ⚡⚡⚡⚡ | Good balance |
-| Arsenal | 96-98% | ~1.5 hour | ⚡⚡⚡ | ⭐ **Doğruluk için en iyi** |
-| TimeSeriesForest | 93-95% | ~40 min | ⚡⚡⚡⚡ | Baseline |
-| Shapelet | 93-96% | ~2 hour | ⚡⚡ | Interpretable |
-| HIVECOTEV2 | 97-99% | ~5 hour | ⚡ | Most powerful |
-
-### Hız vs Doğruluk (Model 2, 150K non-stationary samples)
-
-| Classifier | Accuracy | Training Time | Speed Rating | Recommendation |
-|-----------|----------|---------------|--------------|----------------|
-| MiniROCKET | 84-87% | ~45 min | ⚡⚡⚡⚡⚡ | ⭐ **Hız için en iyi** |
-| ROCKET | 85-88% | ~2 hour | ⚡⚡⚡⚡ | Good balance |
-| Arsenal | 86-90% | ~2.5 hour | ⚡⚡⚡ | ⭐ **Doğruluk için en iyi** |
-| TimeSeriesForest | 80-85% | ~1 hour | ⚡⚡⚡⚡ | Baseline |
-| Shapelet | 82-86% | ~3 hour | ⚡⚡ | Interpretable |
-| HIVECOTEV2 | 88-92% | ~10 hour | ⚡ | Most powerful |
-
-## 💡 Kullanım Önerileri
+## Kullanım Önerileri
 
 ### Test/Prototype İçin
 
@@ -198,8 +172,7 @@ python train_model1.py --mode features --features-path ../../../data/features/se
 python train_model1.py --mode raw --classifier minirocket
 python train_model2.py --mode raw --classifier minirocket
 
-# Total time: ~1 saat
-# Accuracy: Model 1: ~95-97%, Model 2: ~84-87%
+# Quick experiment configuration
 ```
 
 ### Production İçin
@@ -209,8 +182,7 @@ python train_model2.py --mode raw --classifier minirocket
 python train_model1.py --mode raw --classifier arsenal
 python train_model2.py --mode raw --classifier arsenal
 
-# Total time: ~4 saat
-# Accuracy: Model 1: ~96-98%, Model 2: ~86-90%
+# Higher-capacity configuration
 ```
 
 ### Tüm Classifiers'ı Karşılaştırmak İçin
@@ -220,8 +192,7 @@ python train_model2.py --mode raw --classifier arsenal
 python train_model1.py --mode raw --classifier all
 python train_model2.py --mode raw --classifier all
 
-# Total time: ~15 saat (tüm modeller)
-# 6 farklı classifier'ın sonuçlarını karşılaştırabilirsiniz
+# Train all and compare
 ```
 
 ## 📚 Daha Fazla Bilgi

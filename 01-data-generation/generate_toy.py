@@ -1,19 +1,14 @@
 """
-Test Dataset Generation Script (1,500 samples)
-===============================================
+Generate the test dataset (1,500 samples) to validate the pipeline.
 
-Quick test to verify all generation code works correctly.
-Uses the EXACT SAME logic as generate.py, just with smaller counts.
-Run this script from the 01-data-generation directory.
+- Mirrors the logic in `generate.py` with reduced counts
+- Working directory: run from `01-data-generation`
 
 Usage:
-    python generate_test.py
+    python generate_toy.py
 
-Output:
-    ../data/raw/unified-test/*.parquet
-
-Time: ~5-10 minutes
-Size: ~100-200 MB
+Output structure root:
+    ../data/raw/unified-test/
 """
 
 from pathlib import Path
@@ -78,7 +73,18 @@ print()
 
 # Helper function
 def folder_path(*parts):
-    """Create folder path and ensure it exists."""
+    """Create and return a folder path under the configured output root.
+
+    Parameters
+    ----------
+    *parts : str
+        Subdirectory names to be joined under the output root.
+
+    Returns
+    -------
+    str
+        Absolute (string) path of the ensured directory.
+    """
     path = output_path.joinpath(*parts)
     path.mkdir(parents=True, exist_ok=True)
     return str(path)
@@ -87,7 +93,21 @@ def folder_path(*parts):
 next_series_id = 1
 
 def reserve_ids(count: int) -> int:
-    """Return current global start_id and advance the counter by count."""
+    """Reserve and return a contiguous block start for `series_id` values.
+
+    Ensures global uniqueness of `series_id` across all generator calls by
+    advancing a shared counter.
+
+    Parameters
+    ----------
+    count : int
+        Number of consecutive ids to reserve.
+
+    Returns
+    -------
+    int
+        The starting id for the reserved block.
+    """
     global next_series_id
     start = next_series_id
     next_series_id += int(count)

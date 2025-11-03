@@ -1,18 +1,14 @@
 """
-90K Dataset Generation Script
-==============================
+Generate the full (90K) synthetic time series dataset.
 
-Uses ts-stationary library to generate balanced 90K dataset.
-Run this script from the 01-data-generation directory.
+- Source library: `ts-stationary`
+- Working directory: run from `01-data-generation`
 
 Usage:
     python generate.py
 
-Output:
-    ../data/raw/unified-90k/*.parquet
-
-Time: ~8-12 hours
-Size: ~5-7 GB
+Output structure root:
+    ../data/raw/unified-90k/
 """
 
 from pathlib import Path
@@ -79,7 +75,18 @@ print()
 
 # Helper function
 def folder_path(*parts):
-    """Create folder path and ensure it exists."""
+    """Create and return a folder path under the configured output root.
+
+    Parameters
+    ----------
+    *parts : str
+        Subdirectory names to be joined under the output root.
+
+    Returns
+    -------
+    str
+        Absolute (string) path of the ensured directory.
+    """
     path = output_path.joinpath(*parts)
     path.mkdir(parents=True, exist_ok=True)
     return str(path)
@@ -88,7 +95,21 @@ def folder_path(*parts):
 next_series_id = 1
 
 def reserve_ids(count: int) -> int:
-    """Return current global start_id and advance the counter by count."""
+    """Reserve and return a contiguous block start for `series_id` values.
+
+    Ensures global uniqueness of `series_id` across all generator calls by
+    advancing a shared counter.
+
+    Parameters
+    ----------
+    count : int
+        Number of consecutive ids to reserve.
+
+    Returns
+    -------
+    int
+        The starting id for the reserved block.
+    """
     global next_series_id
     start = next_series_id
     next_series_id += int(count)

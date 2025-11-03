@@ -1,20 +1,15 @@
 """
-TSFresh Feature Engineering Script
-===================================
+Extract TSFresh features for hierarchical classification.
 
-Extracts time series features using TSFresh library for hierarchical classification.
-Run this script from the 02-preprocessing directory.
+Run from the `02-preprocessing` directory.
 
 Usage:
-    python extract_features.py --input ../data/raw/unified-150k --output ../data/features
+    python extract_features.py --input ../data/raw/unified-90k --output ../data/features
 
-Features:
-    - Comprehensive: ~800 features per time series
-    - Efficient: Only extracts relevant features (optional feature selection)
-    - Optimized: Minimal computation settings for balanced classification
-
-Time: ~2-4 hours for 150K series
-Size: ~5-8 GB feature matrix
+Outputs under the specified `--output` directory:
+    - features.parquet
+    - labels.parquet
+    - feature_names.txt
 """
 
 import sys

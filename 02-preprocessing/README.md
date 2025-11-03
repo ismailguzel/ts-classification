@@ -4,7 +4,7 @@ Data preprocessing and feature engineering pipeline.
 
 ## Overview
 
-⚠️ **Note**: Preprocessing is **OPTIONAL**. Models support both RAW (sktime) and FEATURES (sklearn) modes.
+⚠️ Note: Preprocessing is optional. Modeller RAW (sktime) veya FEATURES (sklearn) modlarında çalıştırılabilir.
 
 This directory contains scripts for:
 1. **Feature Extraction**: Extract time series features using TSFresh
@@ -27,35 +27,28 @@ This directory contains scripts for:
 
 ### 1. Extract Features with TSFresh
 
-Extract comprehensive time series features:
-
 ```bash
-# Extract features with efficient settings (recommended)
+# Extract features with efficient settings
 python extract_features.py \
-    --input ../data/raw/unified-150k \
+    --input ../data/raw/unified-90k \
     --output ../data/features \
     --feature-set efficient \
     --n-jobs 4
 ```
 
-**Options:**
-- `--feature-set`: Choose from `minimal`, `efficient`, `comprehensive`
-  - `minimal`: ~20 features, fast (~30 min)
-  - `efficient`: ~200 features, balanced (~2 hours) ⭐ **Recommended**
-  - `comprehensive`: ~800 features, slow (~4-6 hours)
-- `--n-jobs`: Number of parallel processes (default: 4)
+Options:
+- `--feature-set`: `minimal`, `efficient`, `comprehensive`
+- `--n-jobs`: Number of parallel processes
 
-**Output:**
-- `../data/features/features.parquet`: Extracted features
-- `../data/features/labels.parquet`: Original labels
-- `../data/features/feature_names.txt`: List of feature names
+Output:
+- `../data/features/features.parquet`
+- `../data/features/labels.parquet`
+- `../data/features/feature_names.txt`
 
 ### 2. Feature Selection
 
-Select most relevant features for each classification task:
-
 ```bash
-# Select features using mutual information (recommended)
+# Select features using mutual information
 python feature_selection.py \
     --input ../data/features \
     --output ../data/features/selected \
@@ -64,20 +57,20 @@ python feature_selection.py \
     --target all
 ```
 
-**Methods:**
-- `variance`: Remove low variance and correlated features
-- `correlation`: Remove highly correlated features
+Methods:
+- `variance`: remove low variance and correlated features
+- `correlation`: remove highly correlated features
 - `statistical`: ANOVA F-test based selection
-- `mutual_info`: Mutual information based selection ⭐ **Recommended**
+- `mutual_info`: mutual information based selection
 - `importance`: Random Forest feature importance
 
-**Targets:**
-- `binary`: Stationary vs non-stationary
-- `primary`: Primary category (AR, MA, ARMA, etc.)
-- `sub`: Sub-category (specific types)
-- `all`: All targets
+Targets:
+- `binary`: stationary vs non-stationary
+- `primary`: primary category
+- `sub`: sub-category
+- `all`: all targets
 
-**Output:**
+Output:
 - Legacy (kept for reference):
   - `features_binary_mutual_info.parquet`, `features_primary_mutual_info.parquet`, `features_sub_mutual_info.parquet`
   - `feature_names_*.txt`
@@ -88,41 +81,41 @@ python feature_selection.py \
 
 ---
 
-## 📊 Feature Engineering with TSFresh
+## Feature Engineering with TSFresh
 
 TSFresh extracts hundreds of time series features including:
 
-### Statistical Features
+Statistical features
 - Mean, median, standard deviation
 - Quantiles, min, max, range
 - Skewness, kurtosis
 
-### Temporal Features
+Temporal features
 - Autocorrelation (various lags)
 - Partial autocorrelation
 - Trend strength
 - Seasonality
 
-### Frequency Domain
+Frequency domain
 - FFT coefficients
 - Power spectral density
 - Spectral entropy
 
-### Complexity
+Complexity
 - Approximate entropy
 - Sample entropy
 - Lempel-Ziv complexity
 
-### Change Detection
+Change detection
 - Mean/variance changes
 - Linear trends
 - Number of peaks
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
-### Feature Extraction Settings
+Feature extraction settings
 
 Edit feature sets in `extract_features.py`:
 
@@ -140,7 +133,7 @@ from tsfresh.feature_extraction import ComprehensiveFCParameters
 settings = ComprehensiveFCParameters()
 ```
 
-### Feature Selection Thresholds
+Feature selection thresholds
 
 Adjust thresholds in `feature_selection.py`:
 
@@ -157,21 +150,11 @@ n_features = 100  # Default
 
 ---
 
-## 📈 Expected Results
-
-### Feature Extraction
-- **Time**: 2-4 hours (efficient settings, 150K series)
-- **Size**: ~5-8 GB feature matrix
-- **Features**: ~200 features per series
-
-### Feature Selection
-- **Time**: 30-60 minutes
-- **Features**: 50-150 selected features
-- **Improvement**: Faster training, better generalization
+<!-- Expected performance/results section removed to keep README usage-focused. -->
 
 ---
 
-## 🔧 Dependencies
+## Dependencies
 
 Install required packages:
 
@@ -187,38 +170,38 @@ pip install -r ../requirements.txt
 
 ---
 
-## 💡 Tips
+## Tips
 
-1. **Start with efficient settings**: Balance between speed and performance
-2. **Use feature selection**: Reduces overfitting and speeds up training
-3. **Parallel processing**: Use `--n-jobs` to speed up extraction
-4. **Memory management**: Process in batches if running out of memory
-5. **Feature importance**: Analyze which features are most important for your task
-
----
-
-## 📝 Notes
-
-- TSFresh automatically handles missing values
-- Features are normalized/scaled during extraction
-- Selected features are specific to each classification task
-- Can extract custom features by modifying settings
+1. Prefer `efficient` settings for a balanced feature set
+2. Use feature selection to reduce dimensionality
+3. Parallelize with `--n-jobs`
+4. Use chunked processing to manage memory
+5. Inspect feature importance for insights
 
 ---
 
-## 🆘 Troubleshooting
+## Notes
 
-**Out of memory?**
+- TSFresh handles missing values with imputation steps
+- Scaling/normalization is not applied here by default (apply in modeling if needed)
+- Selected features are specific to target choice
+- You can customize feature sets in the script
+
+---
+
+## Troubleshooting
+
+Out of memory?
 - Reduce `--n-jobs` parameter
 - Use `minimal` feature set
 - Process data in smaller batches
 
-**Too slow?**
+Throughput issues?
 - Increase `--n-jobs` (up to CPU cores)
 - Use `minimal` or `efficient` settings
 - Consider sampling for initial experiments
 
-**Poor feature quality?**
+Poor feature quality?
 - Try different feature selection methods
 - Increase `--n-features` parameter
 - Use `comprehensive` settings for more features
