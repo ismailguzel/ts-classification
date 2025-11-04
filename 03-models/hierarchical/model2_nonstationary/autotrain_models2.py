@@ -1,17 +1,13 @@
 """
-AutoTrain Model 2 (Multiclass 5): Non-Stationary Primary Categories
-===================================================================
+AutoTrain Model 2 (5-Class, Features Mode): Primary Category Classification
+===========================================================================
 
-Trains an automatic tabular learner using extracted features via:
-- engine=autogluon  → AutoGluon Tabular (multiclass)
-- engine=pycaret    → PyCaret Classification (multiclass)
+This script mirrors train_model2.py FEATURES mode, but uses AutoML engines:
+- engine=autogluon → AutoGluon Tabular (multiclass)
+- engine=pycaret   → PyCaret Classification (multiclass)
 
-Input features are loaded from --features-path with robust fallbacks.
-Outputs are saved under saved_models/ with engine-specific artifacts and
-common metadata for reproducibility.
-
-Classes (label → name):
-  0: Trend, 1: Volatility, 2: Stochastic, 3: Anomaly, 4: Structural Break
+Only FEATURES-BASED TRAINING is implemented here (no RAW mode).
+Inputs/outputs/categorization follow train_model2.py conventions.
 """
 
 import argparse
@@ -38,57 +34,67 @@ CATEGORY_MAPPING = {
 
 CLASS_NAMES = ['Trend', 'Volatility', 'Stochastic', 'Anomaly', 'Structural Break']
 
-
 def load_features_and_labels_primary(features_path: Path):
     """
-    Load primary-category features and labels for 5-class classification.
+    Load primary-category features/labels for 5-class classification (FEATURES mode).
 
-    Priority order:
-      1) primary/features.parquet + primary/labels.parquet
-      2) features.parquet + labels.parquet (root standard)
-      3) features_primary_mutual_info.parquet + labels_primary.parquet (legacy)
+    Priority order (aligned with train_model2.py expectations):
+      1) features_primary_mutual_info.parquet + labels_primary.parquet (legacy but common)
+      2) primary/features.parquet + primary/labels.parquet (standardized)
+      3) features.parquet + labels.parquet (root, if includes primary_category)
 
-    Filters to non-stationary rows based on 'is_stationary' == False in labels.
-    Maps 'primary_category' via CATEGORY_MAPPING → y in {0..4}.
+    Filters to non-stationary rows if 'is_stationary' exists in labels.
+    Maps 'primary_category' via CATEGORY_MAPPING to integer labels 0..4.
     """
-    # 1) Standard in primary/
-    feat_file = features_path / "primary" / "features.parquet"
-    lab_file = features_path / "primary" / "labels.parquet"
+    # 1) Legacy common path (train_model2.py default)
+    feat_file = features_path / "features_primary_mutual_info.parquet"
+    lab_file = features_path / "labels_primary.parquet"
 
-    # 2) Standard at root
+    # 2) Standardized primary/
+    if not (feat_file.exists() and lab_file.exists()):
+        feat_file = features_path / "primary" / "features.parquet"
+        lab_file = features_path / "primary" / "labels.parquet"
+
+    # 3) Root standard (must contain primary_category)
     if not (feat_file.exists() and lab_file.exists()):
         feat_file = features_path / "features.parquet"
         lab_file = features_path / "labels.parquet"
 
-    # 3) Legacy names
-    if not (feat_file.exists() and lab_file.exists()):
-        feat_file = features_path / "features_primary_mutual_info.parquet"
-        lab_file = features_path / "labels_primary.parquet"
-
     if not (feat_file.exists() and lab_file.exists()):
         raise FileNotFoundError(
-            f"Could not find primary features/labels under {features_path}. Tried standard and legacy names."
+            f"Could not find primary features/labels under {features_path}."
         )
 
+    print(f"✓ Using features file: {feat_file}")
+    print(f"✓ Using labels file  : {lab_file}")
     X_df = pd.read_parquet(feat_file)
     y_df = pd.read_parquet(lab_file)
+    print(f"  Features shape: {X_df.shape}")
+    print(f"  Labels shape  : {y_df.shape}")
+    print(f"  Label columns : {list(y_df.columns)}")
 
     if "id" in X_df.columns:
         X_df = X_df.set_index("id")
 
-    if "is_stationary" not in y_df.columns or "primary_category" not in y_df.columns:
-        raise ValueError("labels must include 'is_stationary' and 'primary_category' columns.")
+    if "primary_category" not in y_df.columns:
+        raise ValueError("labels must include 'primary_category' column.")
 
-    # Filter to non-stationary only
-    nonstat_mask = (y_df["is_stationary"] == False)
-    X_df = X_df[nonstat_mask]
-    y_df = y_df[nonstat_mask]
+    # Optional non-stationary filter
+    if "is_stationary" in y_df.columns:
+        nonstat_mask = (y_df["is_stationary"] == False)
+        X_df = X_df[nonstat_mask]
+        y_df = y_df[nonstat_mask]
 
     if len(X_df) == 0:
-        raise ValueError("No non-stationary samples found after filtering.")
+        raise ValueError("No samples found after filtering.")
 
-    # Map categories to labels
-    y = y_df["primary_category"].map(CATEGORY_MAPPING).astype(int).values
+    # Map labels
+    cat = y_df["primary_category"].astype(str).str.lower()
+    mapped = cat.map(CATEGORY_MAPPING)
+    if mapped.isna().any():
+        unknown = sorted(cat[mapped.isna()].unique().tolist())
+        raise ValueError(f"Unknown primary_category values: {unknown}")
+    y = mapped.astype(int).values
 
     return X_df, y
 
@@ -221,7 +227,7 @@ def train_pycaret(X_train_df: pd.DataFrame, y_train: np.ndarray, X_test_df: pd.D
 
 
 def main():
-    parser = argparse.ArgumentParser(description="AutoTrain Model 2 (5-class) with AutoGluon or PyCaret")
+    parser = argparse.ArgumentParser(description="AutoTrain Model 2 (5-class, FEATURES mode) with AutoGluon or PyCaret")
     parser.add_argument("--engine", type=str, required=True, choices=["autogluon", "pycaret"],
                         help="AutoML engine to use")
     parser.add_argument("--features-path", type=str, default="../../../data/features/selected",
@@ -253,7 +259,7 @@ def main():
         return
 
     # Load data
-    print("\n[1/4] Loading primary features and labels...")
+    print("\n[1/4] Loading primary features and labels (FEATURES mode)...")
     X_df, y = load_features_and_labels_primary(features_path)
     print(f"✓ Features: {X_df.shape}")
     print(f"✓ Samples : {len(y)}")
