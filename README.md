@@ -136,10 +136,9 @@ bash submit_training.sh
 
 See individual README files for detailed options and parameters.
 
-```bash
+**Smoke Test**:
 ```bash
 bash smoke_test.sh
-```
 ```
 
 ---
