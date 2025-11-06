@@ -97,11 +97,11 @@ python generate.py      # Full dataset (90K samples)
 ```bash
 # Model 1: Binary Classification
 cd ../03-models/hierarchical/model1_binary
-python train_model1.py --mode raw --classifier minirocket
+python train_model1.py --mode raw --classifier rocket
 
 # Model 2: 5-Class Classification
 cd ../model2_nonstationary
-python train_model2.py --mode raw --classifier minirocket
+python train_model2.py --mode raw --classifier rocket
 ```
 
 ### 4. Test Models

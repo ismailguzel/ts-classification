@@ -94,10 +94,9 @@ Ardından otomatik olarak job'ları submit eder.
 | **Task** | Stationary vs Non-Stationary |
 
 **Kullanılabilir Classifiers**:
-- TimeSeriesForest (baseline)
+- TimeSeriesForest (baseline, fast)
 - ROCKET (good balance)
-- MiniROCKET ⭐ (10x faster than ROCKET)
-- Arsenal ⭐ (ensemble, best accuracy)
+- Arsenal (ensemble, best accuracy)
 - ShapeletTransform (interpretable)
 - HIVECOTEV2 (most powerful, very slow)
 
@@ -117,12 +116,9 @@ Ardından otomatik olarak job'ları submit eder.
 4. **Structural Break**: Sudden regime changes
 
 **Kullanılabilir Classifiers**:
-- TimeSeriesForest (baseline)
+- TimeSeriesForest (baseline, fast)
 - ROCKET (2000 kernels for 5-class)
-- MiniROCKET ⭐ (fastest)
-- Arsenal ⭐ (2000 kernels, best accuracy)
-- ShapeletTransform (interpretable)
-- HIVECOTEV2 (most powerful, very slow)
+- Arsenal (2000 kernels, best accuracy)
 
 ## Training Modes
 
@@ -133,7 +129,7 @@ Her iki model de **dual-mode** desteği sunar:
 Raw time series ile çalışır. sktime classifiers kullanır.
 
 ```bash
-python train_model1.py --mode raw --classifier minirocket
+python train_model1.py --mode raw --classifier rocket
 ```
 
 **Avantajlar**:
@@ -141,6 +137,8 @@ python train_model1.py --mode raw --classifier minirocket
 - Direkt zaman serisi üzerinde çalışır
 - sktime'ın güçlü classifiers'ı
 - Daha az preprocessing
+
+**Available Classifiers**: `tsf`, `rocket`, `arsenal`, `all`
 
 ### 2. FEATURES Mode (Optional)
 
@@ -199,9 +197,9 @@ python autotrain_models1.py --engine pycaret \
 ### Test/Prototype İçin
 
 ```bash
-# Hızlı test için MiniROCKET kullanın
-python train_model1.py --mode raw --classifier minirocket
-python train_model2.py --mode raw --classifier minirocket
+# Hızlı test için TimeSeriesForest veya ROCKET kullanın
+python train_model1.py --mode raw --classifier tsf
+python train_model2.py --mode raw --classifier tsf
 ```
 
 ### Production İçin
@@ -241,14 +239,14 @@ Eğitilen modelleri test dataseti üzerinde değerlendirin:
 # Test Model 1
 cd model1_binary
 python test_model1.py \
-    --model-path saved_models/model1_binary_minirocket_*.pkl \
+    --model-path saved_models/model1_binary_rocket_*.pkl \
     --data-path ../../../data/raw/unified-test \
     --output-path results/
 
 # Test Model 2
 cd ../model2_nonstationary
 python test_model2.py \
-    --model-path saved_models/model2_nonstationary_minirocket_*.pkl \
+    --model-path saved_models/model2_nonstationary_rocket_*.pkl \
     --data-path ../../../data/raw/unified-test \
     --output-path results/
 ```
