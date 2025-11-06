@@ -124,7 +124,7 @@ Ardından otomatik olarak job'ları submit eder.
 - ShapeletTransform (interpretable)
 - HIVECOTEV2 (most powerful, very slow)
 
-## 🎛️ Training Modes
+## Training Modes
 
 Her iki model de **dual-mode** desteği sunar:
 
@@ -137,10 +137,10 @@ python train_model1.py --mode raw --classifier minirocket
 ```
 
 **Avantajlar**:
-- ✅ Feature engineering gerektirmez
-- ✅ Direkt zaman serisi üzerinde çalışır
-- ✅ sktime'ın güçlü classifiers'ı
-- ✅ Daha az preprocessing
+- Feature engineering gerektirmez
+- Direkt zaman serisi üzerinde çalışır
+- sktime'ın güçlü classifiers'ı
+- Daha az preprocessing
 
 ### 2. FEATURES Mode (Optional)
 
@@ -157,9 +157,40 @@ python train_model1.py --mode features --features-path ../../../data/features/se
 ```
 
 **Avantajlar**:
-- ✅ Traditional ML (RandomForest, XGBoost, SVM)
-- ✅ Feature importance analysis
-- ✅ Daha hızlı inference (features pre-computed)
+- Traditional ML (RandomForest, XGBoost, SVM)
+- Feature importance analysis
+- Daha hızlı inference (features pre-computed)
+
+### 3. AutoTrain Mode (AutoML)
+
+Otomatik model seçimi ve hiperparametre optimizasyonu için AutoML framework'leri kullanır.
+
+```bash
+# AutoGluon ile
+cd model1_binary
+python autotrain_models1.py --engine autogluon \
+    --features-path ../../../data/features/selected \
+    --time-limit 3600 --presets medium_quality_faster_train
+
+# PyCaret ile
+python autotrain_models1.py --engine pycaret \
+    --features-path ../../../data/features/selected \
+    --folds 5
+```
+
+**Desteklenen Engines**:
+- `autogluon`: AutoGluon Tabular (ensemble + stacking)
+- `pycaret`: PyCaret Classification (20+ model karşılaştırma)
+
+**Avantajlar**:
+- Otomatik model seçimi ve hyperparameter tuning
+- Ensemble ve stacking modelleri
+- Minimal manual tuning gereksinimi
+- Production-ready model artifacts
+
+**Gereksinimler**:
+- Önceden extract edilmiş features (FEATURES mode preprocessing gerekli)
+- AutoGluon veya PyCaret kurulu olmalı
 
 <!-- Performance comparison removed to keep documentation usage-focused. -->
 
@@ -171,8 +202,6 @@ python train_model1.py --mode features --features-path ../../../data/features/se
 # Hızlı test için MiniROCKET kullanın
 python train_model1.py --mode raw --classifier minirocket
 python train_model2.py --mode raw --classifier minirocket
-
-# Quick experiment configuration
 ```
 
 ### Production İçin
@@ -181,8 +210,6 @@ python train_model2.py --mode raw --classifier minirocket
 # En iyi doğruluk için Arsenal kullanın
 python train_model1.py --mode raw --classifier arsenal
 python train_model2.py --mode raw --classifier arsenal
-
-# Higher-capacity configuration
 ```
 
 ### Tüm Classifiers'ı Karşılaştırmak İçin
@@ -191,9 +218,46 @@ python train_model2.py --mode raw --classifier arsenal
 # Hepsini eğitin ve en iyisini seçin
 python train_model1.py --mode raw --classifier all
 python train_model2.py --mode raw --classifier all
-
-# Train all and compare
 ```
+
+### AutoML ile Hızlı Baseline
+
+```bash
+# AutoGluon ile otomatik model seçimi
+cd model1_binary
+python autotrain_models1.py --engine autogluon \
+    --features-path ../../../data/features/selected
+
+cd ../model2_nonstationary
+python autotrain_models2.py --engine autogluon \
+    --features-path ../../../data/features/selected
+```
+
+## Testing Models
+
+Eğitilen modelleri test dataseti üzerinde değerlendirin:
+
+```bash
+# Test Model 1
+cd model1_binary
+python test_model1.py \
+    --model-path saved_models/model1_binary_minirocket_*.pkl \
+    --data-path ../../../data/raw/unified-test \
+    --output-path results/
+
+# Test Model 2
+cd ../model2_nonstationary
+python test_model2.py \
+    --model-path saved_models/model2_nonstationary_minirocket_*.pkl \
+    --data-path ../../../data/raw/unified-test \
+    --output-path results/
+```
+
+Test scriptleri şunları hesaplar:
+- Accuracy, Precision, Recall, F1-Score
+- Confusion matrix
+- Per-class metrics
+- Classification report
 
 ## 📚 Daha Fazla Bilgi
 

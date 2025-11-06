@@ -2,7 +2,7 @@
 
 A pipeline for hierarchical classification of time series data using TSFresh feature engineering and machine learning models.
 
-## 🎯 Project Overview
+## Project Overview
 
 This project implements a hierarchical classification system for time series data:
 
@@ -10,10 +10,14 @@ This project implements a hierarchical classification system for time series dat
 2. **Level 2 (5-Class)**: Trend, Volatility, Stochastic, Anomaly, Structural Break
 
 ### Key Features
-- Automated time series generation
-- Two training modes: RAW (sktime) or FEATURES (TSFresh + sklearn)
-- Hierarchical classification (2 levels implemented)
-- Evaluation with standard metrics
+- Automated time series generation (test: 1.5K, full: 90K samples)
+- Three training approaches:
+  - **RAW mode**: Direct time series classification with sktime (MiniROCKET, Arsenal, etc.)
+  - **FEATURES mode**: TSFresh features + sklearn classifiers (XGBoost, SVM, etc.)
+  - **AutoTrain mode**: AutoML with AutoGluon or PyCaret
+- Hierarchical two-stage classification pipeline
+- TRUBA/HPC support with SLURM scripts
+- Comprehensive evaluation and testing tools
 
 ---
 
@@ -23,8 +27,10 @@ This project implements a hierarchical classification system for time series dat
 hierarchical-ts-classification/
 ├── 01-data-generation/          # Data generation
 │   ├── generate.py              # Main dataset generation (90K)
-│   ├── generate_toy.py          # Test dataset (~1.5K)
-│   └── config.py                # Dataset configuration (full + test)
+│   ├── generate_toy.py          # Test dataset (1.5K)
+│   ├── verify_ids.py            # Data integrity verification
+│   ├── config.py                # Dataset configuration (full + test)
+│   └── jobs-slurm/              # TRUBA SLURM scripts
 │
 ├── 02-preprocessing/            # Feature engineering (OPTIONAL)
 │   ├── extract_features.py     # TSFresh feature extraction
@@ -33,14 +39,21 @@ hierarchical-ts-classification/
 │
 ├── 03-models/hierarchical/      # Hierarchical models
 │   ├── model1_binary/           # Level 1: Binary (Stat vs Non-stat)
-│   │   ├── train_model1.py      # Dual-mode training
+│   │   ├── train_model1.py      # Dual-mode training (RAW/FEATURES)
+│   │   ├── autotrain_models1.py # AutoML training (AutoGluon/PyCaret)
 │   │   ├── test_model1.py       # Testing script
+│   │   ├── slurm_train_model1.sh # TRUBA SLURM script
 │   │   └── README.md            # Documentation
 │   │
-│   └── model2_nonstationary/    # Level 2: 5-Class (Non-stat types)
-│       ├── train_model2.py      # Dual-mode training
-│       ├── test_model2.py       # Testing script
-│       └── README.md            # Documentation
+│   ├── model2_nonstationary/    # Level 2: 5-Class (Non-stat types)
+│   │   ├── train_model2.py      # Dual-mode training (RAW/FEATURES)
+│   │   ├── autotrain_models2.py # AutoML training (AutoGluon/PyCaret)
+│   │   ├── test_model2.py       # Testing script
+│   │   ├── slurm_train_model2.sh # TRUBA SLURM script
+│   │   └── README.md            # Documentation
+│   │
+│   ├── submit_training.sh       # Interactive SLURM job helper
+│   └── TRUBA_TRAINING_GUIDE.md  # Complete HPC guide
 │
 ├── data/                        # Data storage
 │   ├── raw/                     # Raw time series
@@ -53,7 +66,7 @@ hierarchical-ts-classification/
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Installation
 
@@ -66,57 +79,118 @@ cd hierarchical-ts-classification
 pip install -r requirements.txt
 ```
 
-### 2. Generate Data
+### 2. Smoke Test (Verify Setup)
 
 ```bash
-# Generate test dataset (small, for quick testing)
+# Verify installation and setup
+bash smoke_test.sh
+
+# With options
+bash smoke_test.sh --mode features --with-model2
+```
+
+### 3. Generate Data
+
+```bash
+# Generate test dataset (1,450 samples, recommended for development)
 cd 01-data-generation
 python generate_toy.py
 
-# OR generate full dataset
+# Verify data integrity
+python verify_ids.py --data-path ../data/raw/unified-test
+
+# OR generate full dataset (90,000 samples, for production)
 python generate.py
 ```
 
-### 3. Extract Features
+### 4. Train Models (RAW Mode - Recommended)
+
+RAW mode works directly on time series without feature extraction:
 
 ```bash
-# Extract TSFresh features
-cd ../02-preprocessing
+# Train Model 1 (Binary: Stationary vs Non-Stationary)
+cd ../03-models/hierarchical/model1_binary
+python train_model1.py --mode raw --classifier minirocket
+
+# Test Model 1
+python test_model1.py \
+    --model-path saved_models/model1_binary_minirocket_*.pkl \
+    --data-path ../../../data/raw/unified-test
+
+# Train Model 2 (5-Class: Non-Stationary Types)
+cd ../model2_nonstationary
+python train_model2.py --mode raw --classifier minirocket
+
+# Test Model 2
+python test_model2.py \
+    --model-path saved_models/model2_nonstationary_minirocket_*.pkl \
+    --data-path ../../../data/raw/unified-test
+```
+
+### 5. Alternative: FEATURES Mode (Optional)
+
+Use TSFresh features with traditional ML classifiers:
+
+```bash
+# Step 5a: Extract Features
+cd 02-preprocessing
 python extract_features.py \
     --input ../data/raw/unified-test \
     --output ../data/features \
     --feature-set efficient \
     --n-jobs 4
-```
 
-### 4. Select Features
-
-```bash
-# Select relevant features
+# Step 5b: Select Features
 python feature_selection.py \
     --input ../data/features \
     --output ../data/features/selected \
     --method mutual_info \
     --n-features 100 \
     --target all
-```
 
-### 5. Train Models
-
-```bash
-# Train binary classification model
+# Step 5c: Train with Features
 cd ../03-models/hierarchical/model1_binary
-python train_model1.py
+python train_model1.py --mode features \
+    --classifier xgboost \
+    --features-path ../../../data/features/selected
 ```
 
-### 6. Evaluate
+### 6. Alternative: AutoTrain Mode (AutoML)
+
+Automated model selection and hyperparameter optimization:
 
 ```bash
-# Test trained model
-python test_model1.py
+# Prerequisites: Extract and select features first (see step 5a-5b)
+
+# AutoGluon (recommended for best performance)
+cd 03-models/hierarchical/model1_binary
+python autotrain_models1.py --engine autogluon \
+    --features-path ../../../data/features/selected \
+    --time-limit 3600
+
+# PyCaret (for model comparison)
+python autotrain_models1.py --engine pycaret \
+    --features-path ../../../data/features/selected \
+    --folds 5
 ```
 
-### 7. Smoke Test (optional)
+### 7. TRUBA/HPC Usage
+
+For large-scale training on TRUBA cluster:
+
+```bash
+# Interactive job submission
+cd 03-models/hierarchical
+bash submit_training.sh
+
+# Or submit directly
+cd model1_binary
+sbatch slurm_train_model1.sh
+```
+
+See `03-models/hierarchical/TRUBA_TRAINING_GUIDE.md` for detailed HPC setup.
+
+### 8. Smoke Test (Full Validation)
 
 ```bash
 # Basic (raw mode). Uses full dataset if available; falls back to test dataset.
@@ -134,68 +208,128 @@ bash smoke_test.sh --data-path data/raw/unified-test --n-samples 50 --classifier
 
 ---
 
-## 📊 Pipeline Overview
+## Pipeline Overview
 
 ### Stage 1: Data Generation
 - Generate synthetic time series data using `ts-stationary` library
-- Two levels: Stationary vs Non-Stationary (binary), then 5-class non-stationary classification
-- Categories: deterministic_trends, volatility, stochastic, anomalies, structural_breaks
+- Two datasets: Test (1,450 samples) and Full (90,000 samples)
+- Categories: stationary, deterministic_trends, volatility, stochastic, anomalies, structural_breaks
+- Verification with `verify_ids.py` for data integrity
 
-### Stage 2: Feature Engineering (OPTIONAL)
-- Extract time series features using **TSFresh** (for FEATURES mode)
-- Feature set size configurable
+### Stage 2: Feature Engineering (OPTIONAL - for FEATURES/AutoTrain modes)
+- Extract time series features using **TSFresh**
+- Feature set size configurable (minimal/efficient/comprehensive)
 - Statistical, temporal, frequency, and complexity features
 - **Not needed for RAW mode** - models work directly on time series
 
-### Stage 3: Feature Selection (OPTIONAL)
+### Stage 3: Feature Selection (OPTIONAL - for FEATURES/AutoTrain modes)
 - Multiple selection methods: mutual information, statistical tests, importance
 - Reduce dimensionality while maintaining performance
-- Task-specific feature selection
-- **Only for FEATURES mode**
+- Task-specific feature selection (binary, primary, sub)
+- Creates standardized output structure per task
 
-### Stage 4: Model Training
-- **Dual-mode architecture**: RAW (sktime) or FEATURES (sklearn)
-- Hierarchical classification: Model 1 (binary) → Model 2 (5-class)
-- RAW mode classifiers: TimeSeriesForest, ROCKET, Arsenal, others
-- FEATURES mode classifiers: Random Forest, XGBoost, SVM
-- Cross-validation and performance evaluation
+### Stage 4: Model Training (Three Approaches)
 
-### Stage 5: Evaluation
+#### A. RAW Mode (Recommended)
+- Direct time series classification with sktime
+- Classifiers: TimeSeriesForest, ROCKET, MiniROCKET, Arsenal, ShapeletTransform
+- No feature engineering required
+- Fast and effective
+
+#### B. FEATURES Mode
+- Traditional ML with TSFresh features
+- Classifiers: Random Forest, XGBoost, SVM
+- Feature importance analysis
+- Interpretable features
+
+#### C. AutoTrain Mode (AutoML)
+- Automated model selection and hyperparameter optimization
+- Engines: AutoGluon (ensemble/stacking) or PyCaret (model comparison)
+- Requires pre-extracted features
+- Best for production-ready models
+
+### Stage 5: Hierarchical Classification
+- **Model 1 (Binary)**: Classify as Stationary (0) or Non-Stationary (1)
+- **Model 2 (5-Class)**: If Non-Stationary, classify into:
+  - 0: Trend
+  - 1: Volatility
+  - 2: Stochastic
+  - 3: Anomaly
+  - 4: Structural Break
+
+### Stage 6: Evaluation
+- Test scripts for each model (`test_model1.py`, `test_model2.py`)
 - Comprehensive metrics: accuracy, precision, recall, F1-score
 - Confusion matrices and classification reports
 - Per-class performance analysis
 
 ---
 
-## 🔧 Configuration
+## Configuration
 
 ### Data Generation
 
-Edit `01-data-generation/config.py` or `config_test.py` to customize:
+Edit `01-data-generation/config.py` to customize:
 
-- Dataset size per category
+- Dataset size per category (COUNTS_90K for full, COUNTS_TEST for test)
 - Time series length (min/max)
 - Generation parameters
+- Random seed for reproducibility
 
-### Feature Extraction (Optional - for FEATURES mode)
+Verify data with:
+```bash
+python verify_ids.py --data-path ../data/raw/unified-test
+```
+
+### Feature Extraction (Optional - for FEATURES/AutoTrain modes)
 
 Choose feature set in `02-preprocessing/extract_features.py`:
 
 - `minimal`: ~20 features, fast
-- `efficient`: ~200 features, balanced ⭐ **Recommended**
+- `efficient`: ~200 features, balanced (Recommended)
 - `comprehensive`: ~800 features, slow
 
 ### Model Training
 
+#### RAW Mode
 All training scripts support command-line arguments:
 
 ```bash
-# RAW mode (default)
-python train_model1.py --mode raw --classifier rocket
+# RAW mode (default, recommended)
+python train_model1.py --mode raw --classifier minirocket
 
-# FEATURES mode
-python train_model1.py --mode features --classifier xgboost --features-path /path/to/features
+# Available classifiers: tsf, rocket, minirocket, arsenal, shapelet, hivecote
 ```
+
+#### FEATURES Mode
+```bash
+# FEATURES mode (traditional ML)
+python train_model1.py --mode features \
+    --classifier xgboost \
+    --features-path /path/to/features
+
+# Available classifiers: rf, xgboost, svm
+```
+
+#### AutoTrain Mode
+```bash
+# AutoGluon (ensemble + stacking)
+python autotrain_models1.py --engine autogluon \
+    --features-path /path/to/features \
+    --time-limit 3600
+
+# PyCaret (model comparison)
+python autotrain_models1.py --engine pycaret \
+    --features-path /path/to/features \
+    --folds 5
+```
+
+### TRUBA/HPC Configuration
+
+For cluster training, see:
+- `03-models/hierarchical/TRUBA_TRAINING_GUIDE.md`: Complete HPC setup guide
+- `submit_training.sh`: Interactive job submission helper
+- `slurm_train_model*.sh`: Individual SLURM scripts
 
 ---
 
@@ -208,22 +342,90 @@ python train_model1.py --mode features --classifier xgboost --features-path /pat
 Core dependencies:
 
 ```
+# Time series and ML
 tsfresh>=0.20.0
 scikit-learn>=1.3.0
 sktime>=0.24.0
 pandas>=2.0.0
 numpy>=1.24.0
+
+# Optional (AutoTrain mode)
+autogluon.tabular>=0.8.0
+pycaret>=3.0.0
 ```
 
 For complete list, see `requirements.txt`.
+
+Install all:
+```bash
+pip install -r requirements.txt
+```
+
+Install with AutoML support:
+```bash
+pip install -r requirements.txt
+pip install autogluon.tabular pycaret
+```
 
 ---
 
 ## Documentation
 
-- **01-data-generation/**: See individual script docstrings
-- **02-preprocessing/**: See [02-preprocessing/README.md](02-preprocessing/README.md)
-- **03-models/**: See model-specific READMEs under `03-models/hierarchical/`
+### Quick Reference
+- **Main README**: Project overview and quick start (this file)
+- **Data Generation**: `01-data-generation/README.md`
+- **Preprocessing**: `02-preprocessing/README.md`
+- **Model Training**: `03-models/hierarchical/README.md`
+- **Model 1 (Binary)**: `03-models/hierarchical/model1_binary/README.md`
+- **Model 2 (5-Class)**: `03-models/hierarchical/model2_nonstationary/README.md`
+- **TRUBA/HPC Guide**: `03-models/hierarchical/TRUBA_TRAINING_GUIDE.md`
+
+### Training Modes Comparison
+
+| Mode | Input | Classifiers | Preprocessing | Use Case |
+|------|-------|-------------|---------------|----------|
+| RAW | Time series | sktime (ROCKET, Arsenal, etc.) | None | Quick start, best baseline |
+| FEATURES | TSFresh features | sklearn (XGBoost, SVM, etc.) | Feature extraction | Interpretability, feature analysis |
+| AutoTrain | TSFresh features | AutoML (AutoGluon, PyCaret) | Feature extraction | Production, automated optimization |
+
+### Example Workflows
+
+#### Quick Development Workflow (RAW mode)
+```bash
+# 1. Generate test data
+cd 01-data-generation && python generate_toy.py
+
+# 2. Train Model 1
+cd ../03-models/hierarchical/model1_binary
+python train_model1.py --mode raw --classifier minirocket
+
+# 3. Test Model 1
+python test_model1.py --model-path saved_models/model1_binary_minirocket_*.pkl
+```
+
+#### Production Workflow (AutoTrain mode)
+```bash
+# 1. Generate full dataset
+cd 01-data-generation && python generate.py
+
+# 2. Extract and select features
+cd ../02-preprocessing
+python extract_features.py --input ../data/raw/unified-90k --output ../data/features
+python feature_selection.py --input ../data/features --output ../data/features/selected
+
+# 3. Train with AutoML
+cd ../03-models/hierarchical/model1_binary
+python autotrain_models1.py --engine autogluon --features-path ../../../data/features/selected
+```
+
+#### TRUBA/HPC Workflow
+```bash
+# 1. Generate data on HPC
+cd 01-data-generation/jobs-slurm && sbatch full-data-job.sh
+
+# 2. Submit training jobs
+cd ../../03-models/hierarchical && bash submit_training.sh
+```
 
 ---
 

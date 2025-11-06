@@ -45,7 +45,19 @@ Output:
 - `../data/features/labels.parquet`
 - `../data/features/feature_names.txt`
 
-### 2. Feature Selection
+## Feature Selection
+
+### Available Methods
+
+| Method | Description | Best For |
+|--------|-------------|----------|
+| `mutual_info` | Mutual Information | Non-linear relationships |
+| `statistical` | ANOVA F-test | Linear relationships |
+| `importance` | Random Forest | Feature importance ranking |
+| `correlation` | Correlation-based | Removing redundant features |
+| `variance` | Low variance removal | Preprocessing |
+
+### Usage
 
 ```bash
 # Select features using mutual information
@@ -57,27 +69,37 @@ python feature_selection.py \
     --target all
 ```
 
-Methods:
-- `variance`: remove low variance and correlated features
-- `correlation`: remove highly correlated features
-- `statistical`: ANOVA F-test based selection
-- `mutual_info`: mutual information based selection
-- `importance`: Random Forest feature importance
+### Target Options
 
-Targets:
-- `binary`: stationary vs non-stationary
-- `primary`: primary category
-- `sub`: sub-category
-- `all`: all targets
+- `all`: Select features for all tasks (binary + primary + sub)
+- `binary`: Binary classification only (stationary vs non-stationary)
+- `primary`: Primary category classification (5 classes)
+- `sub`: Sub-category classification (detailed types)
 
-Output:
-- Legacy (kept for reference):
-  - `features_binary_mutual_info.parquet`, `features_primary_mutual_info.parquet`, `features_sub_mutual_info.parquet`
-  - `feature_names_*.txt`
-- Standardized per-target directories (for training):
-  - `../data/features/selected/binary/{features.parquet, labels.parquet}`
-  - `../data/features/selected/primary/{features.parquet, labels.parquet}`
-  - `../data/features/selected/sub/{features.parquet, labels.parquet}`
+### Output Structure
+
+Feature selection creates standardized directories:
+
+```
+data/features/selected/
+├── binary/
+│   ├── features.parquet       # Selected features for binary task
+│   ├── labels.parquet          # Binary labels
+│   └── feature_names.txt       # List of selected feature names
+├── primary/
+│   ├── features.parquet        # Selected features for primary task
+│   ├── labels.parquet          # Primary category labels
+│   └── feature_names.txt
+└── sub/
+    ├── features.parquet
+    ├── labels.parquet
+    └── feature_names.txt
+```
+
+Legacy files (kept for backward compatibility):
+- `features_binary_mutual_info.parquet`
+- `features_primary_mutual_info.parquet`
+- `features_sub_mutual_info.parquet`
 
 ---
 

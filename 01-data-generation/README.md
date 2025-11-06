@@ -98,7 +98,7 @@ Each `.parquet` file contains:
 - `primary_category`: String (trend, volatility, stochastic, anomaly, structural_break)
 - `sub_category`: String (specific subtype)
 
-## 🔧 Configuration Details
+## Configuration Details
 
 ### Series Length
 All series use **LONG** length: 1,000 - 10,000 points
@@ -111,16 +111,41 @@ This ensures:
 ### Random Seed
 Fixed seed (42) for reproducibility across all generations.
 
+### Customizing Dataset Counts
+
+All dataset configurations are defined in `config.py`. To customize:
+
+```python
+# Edit config.py to adjust dataset sizes
+COUNTS_90K = {
+    'stationary': {'total': 45000},  # Increase/decrease as needed
+    'deterministic_trends': {'total': 9000},
+    'volatility': {'total': 9000},
+    'stochastic': {'total': 9000},
+    'anomalies': {'total': 9000},
+    'structural_breaks': {'total': 9000},
+}
+
+# View current configuration
+python -c "from config import COUNTS_90K; import pprint; pprint.pprint(COUNTS_90K)"
+```
+
+Key configuration parameters:
+- `RANDOM_SEED`: 42 (for reproducibility)
+- `LENGTH_CONFIG`: {'long': (1000, 10000)} (time series length range)
+- `COUNTS_90K`: Full dataset distribution (90,000 samples)
+- `COUNTS_TEST`: Test dataset distribution (1,450 samples)
+
 ### Category Mapping
 
 **Primary Categories (Model 2):**
-- `trend` → Deterministic trends (linear, quadratic, cubic, exponential, damped)
-- `volatility` → ARCH/GARCH patterns
-- `stochastic` → Random walk, ARIMA processes
-- `anomaly` → Point and collective anomalies
-- `structural_break` → Mean, variance, trend shifts
+- `trend`: Deterministic trends (linear, quadratic, cubic, exponential, damped)
+- `volatility`: ARCH/GARCH patterns
+- `stochastic`: Random walk, ARIMA processes
+- `anomaly`: Point and collective anomalies
+- `structural_break`: Mean, variance, trend shifts
 
-## 📊 Verification
+## Verification
 
 After generation, verify the dataset:
 
@@ -130,9 +155,45 @@ python -c "from config import COUNTS_TEST; print('Test dataset configured for:',
 
 # Check full dataset
 python -c "from config import COUNTS_90K; print('Full dataset configured for:', sum([v['total'] if 'total' in v else sum([vv['total'] for vv in v.values()]) for v in COUNTS_90K.values()]), 'samples')"
+
+# Verify unique series IDs
+python verify_ids.py --data-path ../data/raw/unified-test
+
+# Expected output:
+# All series_ids are globally unique
+# Total unique IDs: 1450
 ```
 
-## 💡 Tips
+### What verify_ids.py checks:
+
+- **Global uniqueness**: Ensures no duplicate series_ids across all files
+- **ID conflicts**: Detects if same ID appears in multiple categories
+- **Data integrity**: Validates parquet files can be read
+- **Coverage**: Confirms all expected categories have data
+
+## TRUBA/HPC Usage
+
+For large-scale generation on TRUBA cluster:
+
+```bash
+# Submit SLURM job for full dataset
+cd jobs-slurm
+sbatch full-data-job.sh
+
+# Check job status
+squeue -u $USER
+
+# View logs (real-time)
+tail -f logs/generate_90k_*.out
+tail -f logs/generate_90k_*.err
+
+# Check completed job logs
+ls -lh logs/
+```
+
+See `../03-models/hierarchical/TRUBA_TRAINING_GUIDE.md` for detailed HPC setup and configuration.
+
+## Tips
 
 1. **Start with test dataset** - Always test with 1,450 samples first
 2. **Check disk space** - Full dataset needs ~10 GB free space
@@ -140,7 +201,7 @@ python -c "from config import COUNTS_90K; print('Full dataset configured for:', 
 4. **Reproducible** - Fixed random seed ensures identical results
 5. **Metadata rich** - All series include category labels in metadata
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 **Error: ts-stationary not found**
 ```bash
@@ -157,6 +218,17 @@ pip install ts-stationary
 - Use SSD if available
 - Consider using test dataset only
 
+**SLURM job fails on TRUBA**
+```bash
+# Check error logs
+cat jobs-slurm/logs/generate_90k_*.err
+
+# Common issues:
+# - Out of memory: Increase --mem in SLURM script
+# - Timeout: Increase --time in SLURM script
+# - Module not found: Check conda environment activation
+```
+
 ---
 
-**Last Updated:** 2025-11-01
+**Last Updated:** 2025-11-06
