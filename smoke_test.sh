@@ -63,7 +63,7 @@ if [ "$MODE" = "raw" ]; then
       echo "⚠️  Full dataset not found, using test dataset: $DATA_PATH"
     else
       echo "❌ Error: Training data not found at $DATA_PATH"
-      echo "   Generate data first: cd 01-data-generation && python generate_toy.py (or generate.py)"
+      echo "   Generate data first: cd 01-data-generation && python generate.py --scale test"
       exit 1
     fi
   fi

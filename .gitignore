@@ -25,6 +25,9 @@ ENV/
 logs/
 *.log
 
+# CatBoost info
+catboost_info/
+
 # Coverage / test
 .coverage
 coverage/

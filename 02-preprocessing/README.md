@@ -30,10 +30,17 @@ This directory contains scripts for:
 ```bash
 # Extract features with efficient settings
 python extract_features.py \
-    --input ../data/raw/unified-90k \
+    --input ../data/raw/unified-test \
     --output ../data/features \
     --feature-set efficient \
     --n-jobs 4
+
+# For larger datasets
+python extract_features.py \
+    --input ../data/raw/unified-5k \
+    --output ../data/features/unified-5k \
+    --feature-set efficient \
+    --n-jobs 8
 ```
 
 Options:

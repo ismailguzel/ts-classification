@@ -1,22 +1,29 @@
 """
-Generate the full (90K) synthetic time series dataset.
-
-- Source library: `ts-stationary`
-- Working directory: run from `01-data-generation`
+Generate synthetic time series datasets at different scales.
 
 Usage:
-    python generate.py
+    python generate.py --scale test   # ~1.5K samples
+    python generate.py --scale 5k     # ~5K samples
+    python generate.py --scale 10k    # ~10K samples
+    python generate.py --scale 20k    # ~20K samples
+    python generate.py --scale 30k    # ~30K samples
+    python generate.py --scale 50k    # ~50K samples
+    python generate.py --scale 75k    # ~75K samples
+    python generate.py --scale 90k    # 90K samples (default)
+    python generate.py --scale 120k   # ~120K samples
+    python generate.py --scale 150k   # ~150K samples
+    python generate.py --scale 200k   # ~200K samples
 
-Output structure root:
-    ../data/raw/unified-90k/
+Output: ../data/raw/unified-{scale}/
 """
 
 from pathlib import Path
 import random
 import numpy as np
+import argparse
 
 # Import configuration
-from config import COUNTS_90K, LENGTH_CONFIG, RANDOM_SEED, OUTPUT_DIR
+from config import SCALE_CONFIGS, LENGTH_CONFIG, RANDOM_SEED, get_output_dir, print_scale_summary
 
 # Import ts-stationary library
 from timeseries_dataset_generator import TimeSeriesGenerator
@@ -52,20 +59,32 @@ from timeseries_dataset_generator.generators import (
     generate_trend_shift_dataset,
 )
 
-print("✓ ts-stationary library imported successfully")
+print("ts-stationary library imported successfully")
+
+# Parse arguments
+parser = argparse.ArgumentParser(description='Generate synthetic time series dataset')
+parser.add_argument('--scale', type=str, default='90k',
+                    choices=['test', '5k', '10k', '20k', '30k', '50k', '75k', '90k', '120k', '150k', '200k'],
+                    help='Dataset scale (default: 90k)')
+args = parser.parse_args()
+
+# Load configuration for selected scale
+COUNTS = SCALE_CONFIGS[args.scale]
+output_path = Path(get_output_dir(args.scale))
 
 # Set random seeds
 random.seed(RANDOM_SEED)
 np.random.seed(RANDOM_SEED)
 
 # Create output directory
-output_path = Path(OUTPUT_DIR)
-print(f">>> Creating output directory: {output_path.absolute()}")
+print(f"Creating output directory: {output_path.absolute()}")
 output_path.mkdir(parents=True, exist_ok=True)
-print(f">>> Directory created successfully: {output_path.exists()}")
+
+# Print configuration summary
+print_scale_summary(args.scale, COUNTS)
 
 print("="*70)
-print("90K DATASET GENERATION STARTING")
+print(f"{args.scale.upper()} DATASET GENERATION STARTING")
 print("="*70)
 print(f"Random Seed: {RANDOM_SEED}")
 print(f"Output Directory: {output_path.absolute()}")
@@ -122,7 +141,7 @@ print("="*70)
 print("[1/10] Generating STATIONARY series (45,000)...")
 print(">>> First category starting NOW")
 print("="*70)
-noise_config = COUNTS_90K['stationary']
+noise_config = COUNTS['stationary']
 
 generators = {
     "ar": generate_ar_dataset,
@@ -147,7 +166,7 @@ print(f"  ✓ Generated {noise_config['total']:,} stationary series\n")
 # 2. DETERMINISTIC TRENDS (9,000)
 # ============================================================================
 print("[2/10] Generating DETERMINISTIC TRENDS (9,000)...")
-trend_config = COUNTS_90K['deterministic_trends']
+trend_config = COUNTS['deterministic_trends']
 
 trend_generators = {
     'linear': generate_linear_trend_dataset,
@@ -176,7 +195,7 @@ print(f"  ✓ Generated {trend_config['total']:,} trend series\n")
 # 3. STOCHASTIC (9,000)
 # ============================================================================
 print("[3/10] Generating STOCHASTIC series (9,000)...")
-stochastic_config = COUNTS_90K['stochastic']
+stochastic_config = COUNTS['stochastic']
 
 stochastic_generators = {
     "random_walk": generate_random_walk_dataset,
@@ -200,7 +219,7 @@ print(f"  ✓ Generated {stochastic_config['total']:,} stochastic series\n")
 # 4. VOLATILITY (9,000)
 # ============================================================================
 print("[4/10] Generating VOLATILITY series (9,000)...")
-volatility_config = COUNTS_90K['volatility']
+volatility_config = COUNTS['volatility']
 
 volatility_generators = {
     "arch": generate_arch_dataset,
@@ -223,7 +242,7 @@ print(f"  ✓ Generated {volatility_config['total']:,} volatility series\n")
 # 5. POINT ANOMALIES - SINGLE (3,000)
 # ============================================================================
 print("[5/10] Generating POINT ANOMALIES - SINGLE (3,000)...")
-point_single_config = COUNTS_90K['point_anomalies']['single']
+point_single_config = COUNTS['point_anomalies']['single']
 
 for base in point_single_config['bases']:
     for location in point_single_config['locations']:
@@ -243,7 +262,7 @@ print(f"  ✓ Generated {point_single_config['total']:,} point anomaly (single) 
 # 6. POINT ANOMALIES - MULTIPLE (3,000)
 # ============================================================================
 print("[6/10] Generating POINT ANOMALIES - MULTIPLE (3,000)...")
-point_multiple_config = COUNTS_90K['point_anomalies']['multiple']
+point_multiple_config = COUNTS['point_anomalies']['multiple']
 
 for base in point_multiple_config['bases']:
     generate_point_anomaly_dataset(
@@ -261,7 +280,7 @@ print(f"  ✓ Generated {point_multiple_config['total']:,} point anomaly (multip
 # 7. COLLECTIVE ANOMALIES (3,000)
 # ============================================================================
 print("[7/10] Generating COLLECTIVE ANOMALIES (3,000)...")
-collective_config = COUNTS_90K['collective_anomalies']
+collective_config = COUNTS['collective_anomalies']
 
 for base in collective_config['bases']:
     n = random.randint(2, 4)
@@ -281,7 +300,7 @@ print(f"  ✓ Generated {collective_config['total']:,} collective anomaly series
 # 8. STRUCTURAL BREAKS - MEAN SHIFT (3,000)
 # ============================================================================
 print("[8/10] Generating STRUCTURAL BREAKS - MEAN SHIFT (3,000)...")
-mean_shift_config = COUNTS_90K['structural_breaks']['mean_shift']
+mean_shift_config = COUNTS['structural_breaks']['mean_shift']
 
 for base in mean_shift_config['bases']:
     n = random.randint(2, 4)
@@ -301,7 +320,7 @@ print(f"  ✓ Generated {mean_shift_config['total']:,} mean shift series\n")
 # 9. STRUCTURAL BREAKS - VARIANCE SHIFT (3,000)
 # ============================================================================
 print("[9/10] Generating STRUCTURAL BREAKS - VARIANCE SHIFT (3,000)...")
-variance_shift_config = COUNTS_90K['structural_breaks']['variance_shift']
+variance_shift_config = COUNTS['structural_breaks']['variance_shift']
 
 for base in variance_shift_config['bases']:
     n = random.randint(2, 4)
@@ -321,7 +340,7 @@ print(f"  ✓ Generated {variance_shift_config['total']:,} variance shift series
 # 10. STRUCTURAL BREAKS - TREND SHIFT (3,000)
 # ============================================================================
 print("[10/10] Generating STRUCTURAL BREAKS - TREND SHIFT (3,000)...")
-trend_shift_config = COUNTS_90K['structural_breaks']['trend_shift']
+trend_shift_config = COUNTS['structural_breaks']['trend_shift']
 
 change_types = ['direction_change', 'magnitude_change', 'direction_and_magnitude_change']
 
@@ -348,17 +367,26 @@ print(f"  ✓ Generated {trend_shift_config['total']:,} trend shift series\n")
 # ============================================================================
 # SUMMARY
 # ============================================================================
+total_generated = sum([
+    COUNTS['stationary']['total'],
+    COUNTS['deterministic_trends']['total'],
+    COUNTS['stochastic']['total'],
+    COUNTS['volatility']['total'],
+    COUNTS['point_anomalies']['single']['total'],
+    COUNTS['point_anomalies']['multiple']['total'],
+    COUNTS['collective_anomalies']['total'],
+    COUNTS['structural_breaks']['mean_shift']['total'],
+    COUNTS['structural_breaks']['variance_shift']['total'],
+    COUNTS['structural_breaks']['trend_shift']['total']
+])
+
 print("="*70)
-print("DATASET GENERATION COMPLETE!")
+print("DATASET GENERATION COMPLETE")
 print("="*70)
+print(f"Scale:            {args.scale.upper()}")
+print(f"Total series:     {total_generated:,}")
 print(f"Output directory: {output_path.absolute()}")
-print(f"Total series: 90,000")
-print()
 print("="*70)
-print("NEXT STEPS")
-print("="*70)
-print("\nTraining Models:")
-print("  • Model 1 (Binary): cd ../03-models/hierarchical/model1_binary && python train_model1.py")
 print("  • Model 2 (5-class): cd ../03-models/hierarchical/model2_nonstationary && python train_model2.py")
 print("\nOptional - Feature Engineering:")
 print("  • TSFresh features: cd ../02-preprocessing && python extract_features.py")

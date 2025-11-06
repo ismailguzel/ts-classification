@@ -9,69 +9,98 @@ This directory contains scripts to generate synthetic time series datasets using
 
 | File | Purpose | Output |
 |------|---------|--------|
-| `config.py` | Configuration for all datasets | - |
-| `generate_toy.py` | Generate ~1.5K test samples | `../data/raw/unified-test/` |
-| `generate.py` | Generate 90K full dataset | `../data/raw/unified-90k/` |
+| `config.py` | Configuration for all dataset scales | - |
+| `generate.py` | Generate datasets at any scale | `../data/raw/unified-{scale}/` |
+| `verify_ids.py` | Verify data integrity | - |
 
-## 📊 Dataset Configurations
+## Available Dataset Scales
 
-### 1. Test Dataset (1,450 samples)
-**Config:** `COUNTS_TEST` in `config.py`
+Strategic progression from 1.5K to 200K samples:
 
+```bash
+# View all available scales
+python config.py
+
+# Available scales:
+# test, 5k, 10k, 20k, 30k, 50k, 75k, 90k, 120k, 150k, 200k
+```
+
+## Dataset Configurations
+
+### Test Dataset (1,530 samples)
 Perfect for quick testing and model development:
-- **Stationary:** 752 samples (51.8%)
-- **Non-Stationary:** 698 samples (48.2%)
-  - Trend: 160 (22.9%)
-  - Stochastic: 150 (21.5%)
-  - Volatility: 148 (21.2%)
-  - Anomaly: 120 (17.2%)
-  - Structural Break: 120 (17.2%)
+- **Stationary:** 765 samples (50%)
+- **Non-Stationary:** 765 samples (50%)
+  - Trend: 160 (20.9%)
+  - Stochastic: 150 (19.6%)
+  - Volatility: 148 (19.3%)
+  - Anomaly: 152 (19.9%)
+  - Structural Break: 144 (18.8%)
 
-**Size:** ~100-200 MB  
 **Use case:** Model development, quick iterations, debugging
 
-### 2. Full Dataset (90K samples)
-**Config:** `COUNTS_90K` in `config.py`
+### Full Dataset Scales (5K - 200K)
+Production-scale balanced datasets with consistent 50/50 split:
 
-Production-scale balanced dataset:
-- **Stationary:** 45,000 samples (50%)
-- **Non-Stationary:** 45,000 samples (50%)
-  - Trend: 9,000 (20%)
-  - Stochastic: 9,000 (20%)
-  - Volatility: 9,000 (20%)
-  - Anomaly: 9,000 (20%)
-  - Structural Break: 9,000 (20%)
+| Scale | Total Samples | Stationary | Non-Stationary |
+|-------|---------------|------------|----------------|
+| 5k    | ~5,000        | 2,520      | 2,520          |
+| 10k   | ~10,000       | 4,995      | 4,995          |
+| 20k   | ~20,000       | 9,990      | 9,990          |
+| 30k   | ~30,000       | 14,985     | 14,985         |
+| 50k   | ~50,000       | 25,020     | 25,020         |
+| 75k   | ~75,000       | 37,485     | 37,485         |
+| **90k** | **90,000** | **45,000** | **45,000**     |
+| 120k  | ~120,000      | 59,985     | 59,985         |
+| 150k  | ~150,000      | 75,015     | 75,015         |
+| 200k  | ~200,000      | 99,990     | 99,990         |
 
-**Size:** ~5-7 GB (Parquet compressed)  
-**Use case:** Final training, production models, benchmarking
+All non-stationary data equally distributed across 5 classes:
+- Trend: 20%
+- Stochastic: 20%
+- Volatility: 20%
+- Anomaly: 20%
+- Structural Break: 20%
 
-## 🚀 Usage
+**Use case:** Scaling experiments, learning curve analysis, production training
+
+## Usage
 
 ### Generate Test Dataset (Recommended First)
 
 ```bash
 cd 01-data-generation
-python generate_toy.py
+python generate.py --scale test
 ```
 
-This creates `../data/raw/unified-test/` with 1,450 samples for quick testing.
+This creates `../data/raw/unified-test/` with 1,530 samples for quick testing.
 
-### Generate Full 90K Dataset
+### Generate Datasets at Different Scales
 
 ```bash
-cd 01-data-generation
-python generate.py
-```
+# Small scale (fast, for experimentation)
+python generate.py --scale 5k    # ~5 minutes
+python generate.py --scale 10k   # ~10 minutes
 
-This creates `../data/raw/unified-90k/` with 90,000 samples.
+# Medium scale
+python generate.py --scale 20k
+python generate.py --scale 50k
+
+# Large scale (baseline)
+python generate.py --scale 90k   # ~60-90 minutes
+
+# Extra large scale (for scaling experiments)
+python generate.py --scale 150k
+python generate.py --scale 200k
+```
 
 <!-- Runtime/size estimates removed to keep usage-focused. -->
 
-## 📝 Generated Data Structure
+## Generated Data Structure
 
 ```
 data/raw/
-├── unified-test/              # 1,450 samples
+├── unified-test/              # 1,530 samples
 │   ├── stationary/
 │   │   ├── ar/
 │   │   │   └── long.parquet   # Multiple series per file
@@ -86,7 +115,10 @@ data/raw/
 │   ├── multi_*_shift/
 │   └── ...
 │
-└── unified-90k/               # 90K samples (same structure)
+├── unified-5k/                # 5K samples (same structure)
+├── unified-10k/               # 10K samples
+├── unified-90k/               # 90K samples (baseline)
+└── unified-200k/              # 200K samples
     └── ...
 ```
 
@@ -113,28 +145,19 @@ Fixed seed (42) for reproducibility across all generations.
 
 ### Customizing Dataset Counts
 
-All dataset configurations are defined in `config.py`. To customize:
+View current configurations:
 
-```python
-# Edit config.py to adjust dataset sizes
-COUNTS_90K = {
-    'stationary': {'total': 45000},  # Increase/decrease as needed
-    'deterministic_trends': {'total': 9000},
-    'volatility': {'total': 9000},
-    'stochastic': {'total': 9000},
-    'anomalies': {'total': 9000},
-    'structural_breaks': {'total': 9000},
-}
+```bash
+# List all available scales
+python config.py
 
-# View current configuration
-python -c "from config import COUNTS_90K; import pprint; pprint.pprint(COUNTS_90K)"
+# View detailed breakdown for a specific scale
+python config.py 5k
+python config.py 90k
+python config.py 200k
 ```
 
-Key configuration parameters:
-- `RANDOM_SEED`: 42 (for reproducibility)
-- `LENGTH_CONFIG`: {'long': (1000, 10000)} (time series length range)
-- `COUNTS_90K`: Full dataset distribution (90,000 samples)
-- `COUNTS_TEST`: Test dataset distribution (1,450 samples)
+All configurations are defined in `config.py` using the `create_scaled_config()` function with a scale factor based on the 90K baseline.
 
 ### Category Mapping
 
@@ -150,18 +173,16 @@ Key configuration parameters:
 After generation, verify the dataset:
 
 ```bash
-# Check test dataset
-python -c "from config import COUNTS_TEST; print('Test dataset configured for:', sum([v['total'] if 'total' in v else sum([vv['total'] for vv in v.values()]) for v in COUNTS_TEST.values()]), 'samples')"
-
-# Check full dataset
-python -c "from config import COUNTS_90K; print('Full dataset configured for:', sum([v['total'] if 'total' in v else sum([vv['total'] for vv in v.values()]) for v in COUNTS_90K.values()]), 'samples')"
-
 # Verify unique series IDs
 python verify_ids.py --data-path ../data/raw/unified-test
 
 # Expected output:
 # All series_ids are globally unique
-# Total unique IDs: 1450
+# Total unique IDs: 1530
+
+# For other scales
+python verify_ids.py --data-path ../data/raw/unified-5k
+python verify_ids.py --data-path ../data/raw/unified-90k
 ```
 
 ### What verify_ids.py checks:
@@ -176,30 +197,41 @@ python verify_ids.py --data-path ../data/raw/unified-test
 For large-scale generation on TRUBA cluster:
 
 ```bash
-# Submit SLURM job for full dataset
+# Submit SLURM job (with scale parameter)
 cd jobs-slurm
-sbatch full-data-job.sh
+
+# Generate test dataset (1.5K samples)
+sbatch full-data-job.sh test
+
+# Generate 90K dataset (default/baseline)
+sbatch full-data-job.sh 90k
+
+# Generate 200K dataset
+sbatch full-data-job.sh 200k
 
 # Check job status
 squeue -u $USER
 
 # View logs (real-time)
-tail -f logs/generate_90k_*.out
-tail -f logs/generate_90k_*.err
+tail -f logs/generate_*.out
+tail -f logs/generate_*.err
 
 # Check completed job logs
 ls -lh logs/
 ```
 
+**Note**: The SLURM script now accepts scale as first argument. Default is 90k if not specified.
+
 See `../03-models/hierarchical/TRUBA_TRAINING_GUIDE.md` for detailed HPC setup and configuration.
 
 ## Tips
 
-1. **Start with test dataset** - Always test with 1,450 samples first
-2. **Check disk space** - Full dataset needs ~10 GB free space
+1. **Start with test dataset** - Always test with test scale (1.5K samples) first
+2. **Check disk space** - Large datasets need ~10 GB+ free space (200K scale needs ~20 GB)
 3. **Monitor progress** - Generation scripts show progress bars
 4. **Reproducible** - Fixed random seed ensures identical results
 5. **Metadata rich** - All series include category labels in metadata
+6. **Strategic scaling** - Use smaller scales for prototyping, larger for final experiments
 
 ## Troubleshooting
 
@@ -221,7 +253,10 @@ pip install ts-stationary
 **SLURM job fails on TRUBA**
 ```bash
 # Check error logs
-cat jobs-slurm/logs/generate_90k_*.err
+cat jobs-slurm/logs/generate_*.err
+
+# Check output logs
+cat jobs-slurm/logs/generate_*.out
 
 # Common issues:
 # - Out of memory: Increase --mem in SLURM script

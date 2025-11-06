@@ -21,7 +21,7 @@ Input Time Series
 ```
 
 ### Key Features
-- Synthetic time series generation (test: 1.5K, full: 90K samples)
+- Synthetic time series generation (scalable: 1.5K to 200K samples)
 - Three training modes: RAW (sktime), FEATURES (sklearn), AutoTrain (AutoML)
 - Hierarchical two-stage classification
 - TRUBA/HPC support
@@ -33,10 +33,9 @@ Input Time Series
 ```
 hierarchical-ts-classification/
 ├── 01-data-generation/          # Data generation
-│   ├── generate.py              # Main dataset generation (90K)
-│   ├── generate_toy.py          # Test dataset (1.5K)
+│   ├── generate.py              # Scalable dataset generation (5K-200K)
 │   ├── verify_ids.py            # Data integrity verification
-│   ├── config.py                # Dataset configuration (full + test)
+│   ├── config.py                # Dataset configuration (11 scales)
 │   └── jobs-slurm/              # TRUBA SLURM scripts
 │
 ├── 02-preprocessing/            # Feature engineering (OPTIONAL)
@@ -87,9 +86,19 @@ pip install -r requirements.txt
 
 ```bash
 cd 01-data-generation
-python generate_toy.py  # Test dataset (1.5K samples)
-# OR
-python generate.py      # Full dataset (90K samples)
+
+# Generate test dataset (recommended for quick testing)
+python generate.py --scale test  # 1.5K samples
+
+# Generate larger datasets (strategic progression)
+python generate.py --scale 5k    # 5K samples
+python generate.py --scale 10k   # 10K samples
+python generate.py --scale 20k   # 20K samples
+python generate.py --scale 90k   # 90K samples (baseline)
+python generate.py --scale 200k  # 200K samples
+
+# See all available scales
+python config.py
 ```
 
 ### 3. Train Models
@@ -148,8 +157,8 @@ bash smoke_test.sh
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │ 1. DATA GENERATION (01-data-generation/)                       │
-│    • generate_toy.py → Test dataset (1.5K)                     │
-│    • generate.py → Full dataset (90K)                          │
+│    • generate.py → Scalable datasets (test/5k/10k/.../200k)   │
+│    • config.py → 11 scale presets (1.5K to 200K)              │
 │    • verify_ids.py → Data integrity check                      │
 └─────────────────────────────────────────────────────────────────┘
                               ↓

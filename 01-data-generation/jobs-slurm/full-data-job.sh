@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH --job-name=ts_gen_90k
-#SBATCH --output=logs/generate_90k_%j.out
-#SBATCH --error=logs/generate_90k_%j.err
+#SBATCH --job-name=ts_gen
+#SBATCH --output=logs/generate_%j.out
+#SBATCH --error=logs/generate_%j.err
 #SBATCH --partition=orfoz
 #SBATCH --reservation=test
 #SBATCH -N 1
@@ -11,15 +11,19 @@
 #SBATCH --time=20:00:00
 #SBATCH --account=iguzel
 
+# Accept scale as first argument (default: 90k)
+SCALE="${1:-90k}"
+
 # Job bilgisi
 echo "=================================================="
-echo "TRUBA Time Series Generation - 90K Dataset"
+echo "TRUBA Time Series Generation - $SCALE Dataset"
 echo "=================================================="
 echo "Job ID: $SLURM_JOB_ID"
 echo "Job Name: $SLURM_JOB_NAME"
 echo "Node: $SLURM_NODELIST"
 echo "Partition: $SLURM_JOB_PARTITION"
 echo "CPUs: $SLURM_CPUS_PER_TASK"
+echo "Scale: $SCALE"
 echo "Start Time: $(date)"
 echo "=================================================="
 
@@ -52,25 +56,26 @@ python -c "import numpy; print(f'NumPy: {numpy.__version__}')"
 python -c "import pandas; print(f'Pandas: {pandas.__version__}')"
 python -c "import timeseries_dataset_generator; print('ts-stationary: OK')"
 
-# Config'i göster
+# Config'i göster (specific scale)
 echo ""
-echo "Configuration:"
-python config.py
+echo "Configuration for scale: $SCALE"
+python config.py "$SCALE"
 
 # Data generation başlat
 echo ""
 echo "=================================================="
-echo "Starting 90K dataset generation..."
+echo "Starting $SCALE dataset generation..."
 echo "Using 55 CPUs on ORFOZ partition"
 echo "=================================================="
 
 # Full path kullan
 SCRIPT_PATH="/arf/home/iguzel/ts-stationary/hierarchical-ts-classification/01-data-generation/generate.py"
 echo "Script path: $SCRIPT_PATH"
+echo "Scale: $SCALE"
 echo ""
 
 # Time ve resource tracking ile çalıştır
-time python -u "$SCRIPT_PATH"
+time python -u "$SCRIPT_PATH" --scale "$SCALE"
 
 # Sonuçları kontrol et
 echo ""
@@ -80,7 +85,7 @@ echo "End Time: $(date)"
 echo "=================================================="
 
 # Output klasörünü kontrol et
-OUTPUT_DIR="/arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-90k"
+OUTPUT_DIR="/arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-${SCALE}"
 if [ -d "$OUTPUT_DIR" ]; then
     echo ""
     echo "Output Directory Statistics:"

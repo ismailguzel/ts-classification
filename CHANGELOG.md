@@ -1,5 +1,41 @@
 # Changelog
 
+All notable changes to the Hierarchical Time Series Classification project.
+
+---
+
+## 2025-11-06 - Scalable Dataset Architecture
+
+### Major Refactoring
+- **Unified data generation**: Merged `generate_toy.py` into `generate.py` with `--scale` parameter
+- **11 scale presets**: test (1.5K), 5k, 10k, 20k, 30k, 50k, 75k, 90k, 120k, 150k, 200k
+- **Dynamic configuration**: `create_scaled_config()` function generates proportional configs from 90K baseline
+- **SLURM integration**: Updated `full-data-job.sh` to accept scale as argument (`sbatch full-data-job.sh [scale]`)
+
+### Enhanced
+- **Config CLI**: `python config.py [scale]` now shows detailed breakdown with 5-class distribution
+- **Documentation**: Complete rewrite of all README files to reflect scalable architecture
+- **Strategic scaling guide**: Recommended progression for accuracy vs scale experiments
+
+### Removed
+- `generate_toy.py` (functionality moved to `generate.py --scale test`)
+- Python cache files (`__pycache__/`)
+- Backup files (`*.backup`)
+
+### Migration Guide
+**Old → New Commands:**
+- `python generate_toy.py` → `python generate.py --scale test`
+- `python generate.py` → `python generate.py --scale 90k`
+- `sbatch full-data-job.sh` → `sbatch full-data-job.sh 90k`
+
+**Benefits:**
+- Single source of truth for data generation
+- Easy scaling experiments (5K → 200K)
+- Consistent proportions across all scales
+- Simplified maintenance
+
+---
+
 ## 2025-11-02 - ID integrity, features pipeline, Model 2 boost
 
 ### Added

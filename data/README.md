@@ -8,7 +8,16 @@ This directory contains all data files for the project.
 data/
 ├── raw/                    # Raw generated time series data
 │   ├── unified-test/       # Test dataset (~1.5K samples)
-│   └── unified-90k/        # Full dataset (~90K samples)
+│   ├── unified-5k/         # Small dataset (~5K samples)
+│   ├── unified-10k/        # (~10K samples)
+│   ├── unified-20k/        # (~20K samples)
+│   ├── unified-30k/        # (~30K samples)
+│   ├── unified-50k/        # (~50K samples)
+│   ├── unified-75k/        # (~75K samples)
+│   ├── unified-90k/        # (~90K samples)
+│   ├── unified-120k/       # (~120K samples)
+│   ├── unified-150k/       # (~150K samples)
+│   └── unified-200k/       # Large dataset (~200K samples)
 │
 ├── processed/              # Processed/cleaned data
 │   └── [future use]
@@ -73,11 +82,17 @@ Selected by `02-preprocessing/feature_selection.py`:
 ```bash
 cd ../01-data-generation
 
-# Test dataset (quick)
-python generate_toy.py
+# Test dataset (quick start - 1.5K samples)
+python generate.py --scale test
 
-# Full dataset
-python generate.py
+# Small-scale experiment (5K samples)
+python generate.py --scale 5k
+
+# Full-scale dataset (200K samples)
+python generate.py --scale 200k
+
+# See all available scales
+python config.py
 ```
 
 ### Extract Features
