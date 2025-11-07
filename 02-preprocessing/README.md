@@ -43,6 +43,16 @@ python extract_features.py \
     --n-jobs 8
 ```
 
+```
+cd ../02-preprocessing/ && python -u extract_features.py     --input ./data/raw/unified-20k     --output ../data/features/unified-20k/allfeatures     --chunk-size 30  --feature-set efficient     --n-jobs 110 2>&1 | tee extraction-20k.out
+
+python extract_dask.py --input ../data/raw/uni
+fied-20k --output ../data/features/allfeatures-dask --n-workers 55 --
+threads-per-worker 1 --memory-limit=0
+
+
+```
+
 Options:
 - `--feature-set`: `minimal`, `efficient`, `comprehensive`
 - `--n-jobs`: Number of parallel processes
@@ -69,12 +79,15 @@ Output:
 ```bash
 # Select features using mutual information
 python feature_selection.py \
-    --input ../data/features \
-    --output ../data/features/selected \
+    --input ../data/features/allfeatures-dask \
+    --output ../data/features/selected-dask \
     --method mutual_info \
     --n-features 100 \
     --target all
 ```
+
+cd ../02-preprocessing/ && python -u feature_selection.py     --input ../data/features/unified-20k/allfeatures     --output ../data/features/unified-20k/selected  --method mutual_info   --n-features 100  --target all  2>&1 | tee selection-20k.out
+
 
 ### Target Options
 

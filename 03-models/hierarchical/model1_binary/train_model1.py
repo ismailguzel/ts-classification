@@ -36,6 +36,8 @@ import warnings
 import pyarrow.parquet as pq
 from concurrent.futures import ThreadPoolExecutor
 import gc
+import json
+from datetime import datetime
 warnings.filterwarnings('ignore')
 
 # Parse arguments
@@ -65,11 +67,17 @@ parser.add_argument('--shuffle-files', action='store_true',
                     help='Shuffle file order before loading (recommended when using --balance)')
 parser.add_argument('--seed', type=int, default=42,
                     help='Random seed for shuffling')
+parser.add_argument('--output-dir', type=str, default=None,
+                    help='Directory to store structured metrics and predictions')
 
 args = parser.parse_args()
 
 # Get n_jobs from arguments
 N_JOBS = args.n_jobs
+
+OUTPUT_DIR = Path(args.output_dir).resolve() if args.output_dir else None
+if OUTPUT_DIR:
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 # Fast parallel loading settings
 BATCH_SIZE = 20      # Process 20 files per batch (increased from 10)
@@ -84,6 +92,19 @@ if args.mode == 'features':
     print(f"Features path: {args.features_path}")
 print(f"n_jobs: {N_JOBS}")
 print("="*80)
+
+CLASS_NAMES = ['Stationary', 'Non-Stationary']
+
+
+def safe_predict_proba(model, X):
+    """Safely obtain predict_proba output when available."""
+    if hasattr(model, 'predict_proba'):
+        try:
+            return model.predict_proba(X)
+        except Exception as exc:  # pragma: no cover - defensive
+            print(f"    ⚠️  predict_proba unavailable: {exc}")
+            return None
+    return None
 
 # ============================================================================
 # Fast Parallel Data Loading Function (PyArrow + ThreadPoolExecutor)
@@ -117,7 +138,7 @@ def load_single_file(fp):
             series_data = df[df['series_id'] == series_id].sort_values('time')
             ts_data = series_data['data'].values
             label = 0 if series_data['is_stationary'].iloc[0] else 1
-            series_list.append((ts_data, label))
+            series_list.append((series_id, ts_data, label))
         
         return series_list
         
@@ -142,12 +163,13 @@ def load_parquet_files_parallel(files, batch_size=BATCH_SIZE, n_workers=N_WORKER
         n_workers: Number of parallel I/O threads
     
     Returns:
-        tuple: (series_list, labels) - Ready for train/test split
+        tuple: (series_list, labels, series_ids) - Ready for train/test split
     """
     print(f"\n⚡ Fast parallel loading with PyArrow (batch_size={batch_size}, workers={n_workers})")
     
     all_series = []
     all_labels = []
+    all_ids = []
     class_counts = {0: 0, 1: 0}
 
     # Determine target limits
@@ -172,7 +194,7 @@ def load_parquet_files_parallel(files, batch_size=BATCH_SIZE, n_workers=N_WORKER
             
             # Collect results
             for series_list in results:
-                for ts_data, label in series_list:
+                for series_id, ts_data, label in series_list:
                     # Apply balanced or capped sampling if requested
                     if balance and per_class is not None:
                         # Keep until per-class cap reached
@@ -181,25 +203,28 @@ def load_parquet_files_parallel(files, batch_size=BATCH_SIZE, n_workers=N_WORKER
                         class_counts[label] += 1
                         all_series.append(ts_data)
                         all_labels.append(label)
+                        all_ids.append(series_id)
                     elif target_total is not None:
                         if len(all_series) >= target_total:
                             break
                         all_series.append(ts_data)
                         all_labels.append(label)
+                        all_ids.append(series_id)
                     else:
                         all_series.append(ts_data)
                         all_labels.append(label)
+                        all_ids.append(series_id)
 
                 # Early stop after finishing inner loop if limit reached
                 if target_total is not None:
                     if balance and per_class is not None:
                         if class_counts[0] >= per_class and class_counts[1] >= per_class:
                             print(f"\n  ✓ Reached balanced target: {class_counts}")
-                            return all_series, all_labels
+                            return all_series, all_labels, all_ids
                     else:
                         if len(all_series) >= target_total:
                             print(f"\n  ✓ Reached max series target: {len(all_series)}")
-                            return all_series[:target_total], all_labels[:target_total]
+                            return all_series[:target_total], all_labels[:target_total], all_ids[:target_total]
             
             # Show progress
             print(f"  ✓ Batch {batch_num}: Total series so far: {len(all_series):,}")
@@ -207,7 +232,7 @@ def load_parquet_files_parallel(files, batch_size=BATCH_SIZE, n_workers=N_WORKER
             # Memory cleanup every batch
             gc.collect()
     
-    return all_series, all_labels
+    return all_series, all_labels, all_ids
 print("="*80)
 
 # ============================================================================
@@ -273,7 +298,7 @@ if args.mode == 'raw':
             print(f"    - {cat}: {count} files")
     
     # Load time series with fast parallel loading (PyArrow + ThreadPoolExecutor)
-    series_list, labels = load_parquet_files_parallel(
+    series_list, labels, series_ids = load_parquet_files_parallel(
         files,
         batch_size=BATCH_SIZE,
         n_workers=N_WORKERS,
@@ -292,6 +317,8 @@ if args.mode == 'raw':
         print("  Class distribution after sampling:")
         for _v, _c in zip(v, c):
             print(f"    {'stationary' if _v==0 else 'non-stationary':>15}: {_c}")
+
+    sample_ids = np.array(series_ids)
 
 else:
     # FEATURES MODE: Load TSFresh features
@@ -380,6 +407,7 @@ else:
     # Store for later use
     X_features = X_df.values
     series_list = None  # Not used in features mode
+    sample_ids = X_df.index.to_numpy()
 
 # Check label distribution
 labels = np.array(labels)
@@ -484,9 +512,17 @@ else:
 # ============================================================================
 
 print("\n[4/6] Splitting data...")
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=args.test_size, random_state=args.random_state, stratify=y
+X_train, X_test, y_train, y_test, train_ids, test_ids = train_test_split(
+    X,
+    y,
+    sample_ids,
+    test_size=args.test_size,
+    random_state=args.random_state,
+    stratify=y
 )
+
+train_ids = np.array(train_ids)
+test_ids = np.array(test_ids)
 
 print(f"Train set: {len(X_train):,} samples")
 print(f"Test set:  {len(X_test):,} samples")
@@ -513,18 +549,25 @@ if args.mode == 'raw':
         train_time = time.time() - start_time
         
         y_pred = tsf.predict(X_test)
+        y_train_pred = tsf.predict(X_train)
         acc = accuracy_score(y_test, y_pred)
+        train_acc = accuracy_score(y_train, y_train_pred)
+        y_proba = safe_predict_proba(tsf, X_test)
         models['TimeSeriesForest'] = tsf
         results['TimeSeriesForest'] = {
             'accuracy': acc,
+            'train_accuracy': train_acc,
             'train_time': train_time,
-            'predictions': y_pred
+            'predictions': y_pred,
+            'train_predictions': y_train_pred,
+            'probabilities': y_proba
         }
         print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
+        print(f"  ✓ Train Accuracy: {train_acc:.4f} ({100*train_acc:.2f}%)")
         print(f"  ✓ Training time: {train_time:.2f}s")
         
         # Memory cleanup
-        del tsf, y_pred
+        del tsf, y_pred, y_train_pred, y_proba
         import gc
         gc.collect()
         print("  ✓ Memory cleaned")
@@ -539,14 +582,21 @@ if args.mode == 'raw':
             train_time = time.time() - start_time
             
             y_pred = rocket.predict(X_test)
+            y_train_pred = rocket.predict(X_train)
             acc = accuracy_score(y_test, y_pred)
+            train_acc = accuracy_score(y_train, y_train_pred)
+            y_proba = safe_predict_proba(rocket, X_test)
             models['ROCKET'] = rocket
             results['ROCKET'] = {
                 'accuracy': acc,
+                'train_accuracy': train_acc,
                 'train_time': train_time,
-                'predictions': y_pred
+                'predictions': y_pred,
+                'train_predictions': y_train_pred,
+                'probabilities': y_proba
             }
             print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
+            print(f"  ✓ Train Accuracy: {train_acc:.4f} ({100*train_acc:.2f}%)")
             print(f"  ✓ Training time: {train_time:.2f}s")
         except (AttributeError, ImportError) as e:
             print(f"  ⚠️  ROCKET not available: {str(e)[:100]}")
@@ -562,14 +612,21 @@ if args.mode == 'raw':
             train_time = time.time() - start_time
             
             y_pred = arsenal.predict(X_test)
+            y_train_pred = arsenal.predict(X_train)
             acc = accuracy_score(y_test, y_pred)
+            train_acc = accuracy_score(y_train, y_train_pred)
+            y_proba = safe_predict_proba(arsenal, X_test)
             models['Arsenal'] = arsenal
             results['Arsenal'] = {
                 'accuracy': acc,
+                'train_accuracy': train_acc,
                 'train_time': train_time,
-                'predictions': y_pred
+                'predictions': y_pred,
+                'train_predictions': y_train_pred,
+                'probabilities': y_proba
             }
             print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
+            print(f"  ✓ Train Accuracy: {train_acc:.4f} ({100*train_acc:.2f}%)")
             print(f"  ✓ Training time: {train_time:.2f}s")
         except (ImportError, AttributeError) as e:
             print(f"  ⚠️  Arsenal not available: {str(e)[:100]}")
@@ -586,14 +643,21 @@ else:
     train_time = time.time() - start_time
     
     y_pred = rf.predict(X_test)
+    y_train_pred = rf.predict(X_train)
     acc = accuracy_score(y_test, y_pred)
+    train_acc = accuracy_score(y_train, y_train_pred)
+    y_proba = safe_predict_proba(rf, X_test)
     models['RandomForest'] = rf
     results['RandomForest'] = {
         'accuracy': acc,
+        'train_accuracy': train_acc,
         'train_time': train_time,
-        'predictions': y_pred
+        'predictions': y_pred,
+        'train_predictions': y_train_pred,
+        'probabilities': y_proba
     }
     print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
+    print(f"  ✓ Train Accuracy: {train_acc:.4f} ({100*train_acc:.2f}%)")
     print(f"  ✓ Training time: {train_time:.2f}s")
     
     # Model 2: XGBoost (if available)
@@ -606,14 +670,21 @@ else:
         train_time = time.time() - start_time
         
         y_pred = xgb.predict(X_test)
+        y_train_pred = xgb.predict(X_train)
         acc = accuracy_score(y_test, y_pred)
+        train_acc = accuracy_score(y_train, y_train_pred)
+        y_proba = safe_predict_proba(xgb, X_test)
         models['XGBoost'] = xgb
         results['XGBoost'] = {
             'accuracy': acc,
+            'train_accuracy': train_acc,
             'train_time': train_time,
-            'predictions': y_pred
+            'predictions': y_pred,
+            'train_predictions': y_train_pred,
+            'probabilities': y_proba
         }
         print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
+        print(f"  ✓ Train Accuracy: {train_acc:.4f} ({100*train_acc:.2f}%)")
         print(f"  ✓ Training time: {train_time:.2f}s")
     
     # Model 4: CatBoost (if available)
@@ -632,32 +703,46 @@ else:
         train_time = time.time() - start_time
         
         y_pred = cat.predict(X_test)
+        y_train_pred = cat.predict(X_train)
         acc = accuracy_score(y_test, y_pred)
+        train_acc = accuracy_score(y_train, y_train_pred)
+        y_proba = safe_predict_proba(cat, X_test)
         models['CatBoost'] = cat
         results['CatBoost'] = {
             'accuracy': acc,
+            'train_accuracy': train_acc,
             'train_time': train_time,
-            'predictions': y_pred
+            'predictions': y_pred,
+            'train_predictions': y_train_pred,
+            'probabilities': y_proba
         }
         print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
+        print(f"  ✓ Train Accuracy: {train_acc:.4f} ({100*train_acc:.2f}%)")
         print(f"  ✓ Training time: {train_time:.2f}s")
     
     # Model 3: SVM (fast linear kernel for large feature sets)
     print("\n⚡ Training SVM (Linear)...")
     start_time = time.time()
-    svm = SVC(kernel='linear', random_state=args.random_state)
+    svm = SVC(kernel='linear', random_state=args.random_state, probability=True)
     svm.fit(X_train, y_train)
     train_time = time.time() - start_time
     
     y_pred = svm.predict(X_test)
+    y_train_pred = svm.predict(X_train)
     acc = accuracy_score(y_test, y_pred)
+    train_acc = accuracy_score(y_train, y_train_pred)
+    y_proba = safe_predict_proba(svm, X_test)
     models['SVM_Linear'] = svm
     results['SVM_Linear'] = {
         'accuracy': acc,
+        'train_accuracy': train_acc,
         'train_time': train_time,
-        'predictions': y_pred
+        'predictions': y_pred,
+        'train_predictions': y_train_pred,
+        'probabilities': y_proba
     }
     print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
+    print(f"  ✓ Train Accuracy: {train_acc:.4f} ({100*train_acc:.2f}%)")
     print(f"  ✓ Training time: {train_time:.2f}s")
 # ============================================================================
 # 5. Evaluate and Compare
@@ -666,26 +751,134 @@ else:
 print("\n[6/6] Evaluation Results")
 print("=" * 80)
 
+metrics_payload = {
+    'mode': args.mode,
+    'timestamp_utc': datetime.utcnow().isoformat(timespec='seconds'),
+    'n_train': int(len(X_train)),
+    'n_test': int(len(X_test)),
+    'train_sample_ids': train_ids.tolist(),
+    'test_sample_ids': test_ids.tolist(),
+    'class_names': CLASS_NAMES,
+    'models': {}
+}
+
+prediction_frames = []
+
 for model_name, result in results.items():
     print(f"\n📊 {model_name}")
     print("-" * 80)
-    print(f"Accuracy: {result['accuracy']:.4f} ({100*result['accuracy']:.2f}%)")
-    print(f"Training Time: {result['train_time']:.2f}s")
-    
-    print("\nClassification Report:")
-    print(classification_report(
-        y_test, 
-        result['predictions'],
-        target_names=['Stationary', 'Non-Stationary'],
+    acc = float(result['accuracy'])
+    train_acc_value = result.get('train_accuracy', np.nan)
+    train_acc = float(train_acc_value) if train_acc_value is not None else np.nan
+    train_time = float(result['train_time'])
+    print(f"Accuracy      : {acc:.4f} ({100*acc:.2f}%)")
+    if not np.isnan(train_acc):
+        print(f"Train Accuracy: {train_acc:.4f} ({100*train_acc:.2f}%)")
+    print(f"Training Time : {train_time:.2f}s")
+
+    y_pred = np.array(result['predictions'])
+    y_train_pred = np.array(result.get('train_predictions', []))
+    y_proba = result.get('probabilities')
+
+    report_text = classification_report(
+        y_test,
+        y_pred,
+        target_names=CLASS_NAMES,
         digits=4
-    ))
-    
+    )
+    print("\nClassification Report:")
+    print(report_text)
+
+    cm = confusion_matrix(y_test, y_pred)
     print("\nConfusion Matrix:")
-    cm = confusion_matrix(y_test, result['predictions'])
     print(f"                   Predicted")
     print(f"                   Stat    Non-Stat")
     print(f"Actual Stat        {cm[0,0]:4d}    {cm[0,1]:4d}")
     print(f"       Non-Stat    {cm[1,0]:4d}    {cm[1,1]:4d}")
+
+    report_dict = classification_report(
+        y_test,
+        y_pred,
+        target_names=CLASS_NAMES,
+        output_dict=True,
+        zero_division=0
+    )
+    if y_train_pred.size:
+        train_report_dict = classification_report(
+            y_train,
+            y_train_pred,
+            target_names=CLASS_NAMES,
+            output_dict=True,
+            zero_division=0
+        )
+        train_cm = confusion_matrix(y_train, y_train_pred).tolist()
+    else:
+        train_report_dict = {}
+        train_cm = []
+
+    misclassified_mask = (y_pred != y_test)
+    misclassified_count = int(np.sum(misclassified_mask))
+
+    model_metrics = {
+        'train_time_sec': train_time,
+        'test_accuracy': acc,
+        'train_accuracy': None if np.isnan(train_acc) else train_acc,
+        'classification_report': report_dict,
+        'confusion_matrix': cm.tolist(),
+        'train_classification_report': train_report_dict,
+        'train_confusion_matrix': train_cm,
+        'misclassified_count': misclassified_count,
+        'probability_available': y_proba is not None
+    }
+
+    if y_proba is not None:
+        model_metrics['probability_shape'] = list(np.shape(y_proba))
+
+    metrics_payload['models'][model_name] = model_metrics
+
+    pred_df = pd.DataFrame({
+        'sample_id': test_ids,
+        'true_label': y_test,
+        'predicted_label': y_pred,
+        'model_name': model_name
+    })
+
+    if y_proba is not None:
+        proba_array = np.asarray(y_proba)
+        for idx, cls_name in enumerate(CLASS_NAMES):
+            col_name = f"prob_{cls_name.lower().replace(' ', '_')}"
+            pred_df[col_name] = proba_array[:, idx]
+
+    prediction_frames.append(pred_df)
+
+if prediction_frames:
+    predictions_df = pd.concat(prediction_frames, ignore_index=True)
+    misclassified_df = predictions_df[predictions_df['true_label'] != predictions_df['predicted_label']].copy()
+else:
+    predictions_df = pd.DataFrame()
+    misclassified_df = pd.DataFrame()
+
+artifacts = {}
+
+if OUTPUT_DIR:
+    metrics_path = OUTPUT_DIR / f"model1_{args.mode}_metrics.json"
+    artifacts['metrics_json'] = str(metrics_path)
+
+    if not predictions_df.empty:
+        predictions_path = OUTPUT_DIR / f"model1_{args.mode}_predictions.csv"
+        predictions_df.to_csv(predictions_path, index=False)
+        artifacts['predictions_csv'] = str(predictions_path)
+
+        if not misclassified_df.empty:
+            misclassified_path = OUTPUT_DIR / f"model1_{args.mode}_misclassified.csv"
+            misclassified_df.to_csv(misclassified_path, index=False)
+            artifacts['misclassified_csv'] = str(misclassified_path)
+
+    metrics_payload['artifacts'] = artifacts
+    with open(metrics_path, 'w', encoding='utf-8') as f:
+        json.dump(metrics_payload, f, indent=2)
+else:
+    metrics_payload['artifacts'] = artifacts
 
 # ============================================================================
 # 6. Save Best Model
@@ -722,7 +915,7 @@ metadata = {
     'train_time': results[best_model_name]['train_time'],
     'n_train': len(X_train),
     'n_test': len(X_test),
-    'classes': ['Stationary', 'Non-Stationary'],
+    'classes': CLASS_NAMES,
 }
 
 # Add mode-specific metadata
@@ -732,6 +925,9 @@ if args.mode == 'raw':
 elif args.mode == 'features':
     metadata['n_features'] = X.shape[1]
     metadata['scaler'] = scaler
+
+if OUTPUT_DIR:
+    metadata['metrics_output_dir'] = str(OUTPUT_DIR)
 
 metadata_path = model_dir / 'model1_metadata.pkl'
 with open(metadata_path, 'wb') as f:
@@ -758,99 +954,4 @@ if args.mode == 'raw':
     print("\nTip: Try features mode for potentially better performance:")
     print("  python train_model1.py --mode features --features-path ../../../data/features/selected")
 print("=" * 80)
-
-# ============================================================================
-# 5. Evaluate and Compare
-# ============================================================================
-
-print("\n[6/6] Evaluation Results")
-print("=" * 70)
-
-for model_name, result in results.items():
-    print(f"\n📊 {model_name}")
-    print("-" * 70)
-    print(f"Accuracy: {result['accuracy']:.4f} ({100*result['accuracy']:.2f}%)")
-    print(f"Training Time: {result['train_time']:.2f}s")
-    
-    print("\nClassification Report:")
-    print(classification_report(
-        y_test, 
-        result['predictions'],
-        target_names=['Stationary', 'Unstationary'],
-        digits=4
-    ))
-    
-    print("\nConfusion Matrix:")
-    cm = confusion_matrix(y_test, result['predictions'])
-    print(f"                 Predicted")
-    print(f"                 Stat  Unstat")
-    print(f"Actual Stat      {cm[0,0]:4d}  {cm[0,1]:4d}")
-    print(f"       Unstat    {cm[1,0]:4d}  {cm[1,1]:4d}")
-
-# ============================================================================
-# 6. Save Best Model
-# ============================================================================
-
-print("\n" + "=" * 70)
-print("SAVING BEST MODEL")
-print("=" * 70)
-
-# Select best model based on accuracy
-best_model_name = max(results, key=lambda x: results[x]['accuracy'])
-best_model = models[best_model_name]
-best_accuracy = results[best_model_name]['accuracy']
-
-print(f"\n🏆 Best Model: {best_model_name}")
-print(f"   Accuracy: {best_accuracy:.4f} ({100*best_accuracy:.2f}%)")
-
-# Save model
-model_dir = Path('saved_models')
-model_dir.mkdir(exist_ok=True)
-
-model_path = model_dir / 'model1_binary_classifier.pkl'
-with open(model_path, 'wb') as f:
-    pickle.dump(best_model, f)
-
-print(f"\n✓ Model saved to: {model_path}")
-
-# Save metadata
-
-metadata = {
-    'model_name': best_model_name,
-    'accuracy': best_accuracy,
-    'train_time': results[best_model_name]['train_time'],
-    'n_train': len(X_train),
-    'n_test': len(X_test),
-    'classes': ['Stationary', 'Unstationary'],
-}
-
-# Add mode-specific metadata
-if args.mode == 'raw':
-    metadata['fixed_length'] = fixed_length
-    metadata['feature_shape'] = X.shape[1:]
-elif args.mode == 'features':
-    metadata['n_features'] = X.shape[1]
-    metadata['scaler'] = scaler
-
-metadata_path = model_dir / 'model1_metadata.pkl'
-with open(metadata_path, 'wb') as f:
-    pickle.dump(metadata, f)
-
-print(f"✓ Metadata saved to: {metadata_path}")
-
-# ============================================================================
-# Summary
-# ============================================================================
-
-print("\n" + "=" * 70)
-print("✅ MODEL 1 TRAINING COMPLETE!")
-print("=" * 70)
-print(f"\nBest Model: {best_model_name}")
-print(f"Accuracy: {100*best_accuracy:.2f}%")
-print(f"Saved to: {model_path}")
-print("\nNext steps:")
-print("  1. Review classification report above")
-print("  2. If accuracy is good (>90%), proceed to Model 2")
-print("  3. Train Model 2 (5-class unstationary types)")
-print("=" * 70)
 

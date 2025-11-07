@@ -92,7 +92,16 @@ python generate.py --scale 90k   # ~60-90 minutes
 # Extra large scale (for scaling experiments)
 python generate.py --scale 150k
 python generate.py --scale 200k
+
+### Generate with Logging
+
+```bash
+# Generate with output logging
+python -u generate.py --scale 20k 2>&1 | tee generation-20k.out
 ```
+```
+
+
 
 <!-- Runtime/size estimates removed to keep usage-focused. -->
 

@@ -1,0 +1,162 @@
+================================================================================
+MODEL 1: BINARY CLASSIFICATION (Stationary vs Non-Stationary)
+================================================================================
+Mode: RAW
+Data path: ../../../data/raw/unified-20k
+n_jobs: 110
+================================================================================
+================================================================================
+
+[1/6] Loading raw time series data...
+Found 77 parquet files across categories
+
+Category distribution (by primary category):
+  Stationary: 0 files
+  Non-Stationary: 0 files
+
+⚡ Fast parallel loading with PyArrow (batch_size=20, workers=16)
+  Batch 1/4: Processing 20 files...
+  ✓ Batch 1: Total series so far: 3,408
+  Batch 2/4: Processing 20 files...
+  ✓ Batch 2: Total series so far: 5,324
+  Batch 3/4: Processing 20 files...
+  ✓ Batch 3: Total series so far: 8,522
+  Batch 4/4: Processing 17 files...
+  ✓ Batch 4: Total series so far: 19,147
+
+✓ Loaded 19,147 time series (parallel PyArrow loading)
+  Labels: 19,147
+  Memory-efficient: No full dataset loaded at once
+
+Label distribution:
+  0: Stationary       9,988 (52.2%)
+  1: Non-Stationary   9,159 (47.8%)
+
+[3/6] Converting to sktime format...
+Series length range: 1000 - 9999
+⚠️  Found 19500 NaN values in data, replacing with 0
+✓ X shape: (19147, 1, 1500)
+✓ y shape: (19147,)
+
+[4/6] Splitting data...
+Train set: 15,317 samples
+Test set:  3,830 samples
+
+[5/6] Training models...
+--------------------------------------------------------------------------------
+
+🌲 Training TimeSeriesForestClassifier...
+  ✓ Accuracy: 0.8204 (82.04%)
+  ✓ Train Accuracy: 1.0000 (100.00%)
+  ✓ Training time: 25.05s
+  ✓ Memory cleaned
+
+🚀 Training ROCKET Classifier...
+  ✓ Accuracy: 0.8125 (81.25%)
+  ✓ Train Accuracy: 0.8370 (83.70%)
+  ✓ Training time: 16.13s
+
+🎯 Training Arsenal Classifier...
+  ✓ Accuracy: 0.8131 (81.31%)
+  ✓ Train Accuracy: 0.8358 (83.58%)
+  ✓ Training time: 154.17s
+
+[6/6] Evaluation Results
+================================================================================
+
+📊 TimeSeriesForest
+--------------------------------------------------------------------------------
+Accuracy      : 0.8204 (82.04%)
+Train Accuracy: 1.0000 (100.00%)
+Training Time : 25.05s
+
+Classification Report:
+                precision    recall  f1-score   support
+
+    Stationary     0.7628    0.9515    0.8468      1998
+Non-Stationary     0.9275    0.6774    0.7830      1832
+
+      accuracy                         0.8204      3830
+     macro avg     0.8452    0.8144    0.8149      3830
+  weighted avg     0.8416    0.8204    0.8163      3830
+
+
+Confusion Matrix:
+                   Predicted
+                   Stat    Non-Stat
+Actual Stat        1901      97
+       Non-Stat     591    1241
+
+📊 ROCKET
+--------------------------------------------------------------------------------
+Accuracy      : 0.8125 (81.25%)
+Train Accuracy: 0.8370 (83.70%)
+Training Time : 16.13s
+
+Classification Report:
+                precision    recall  f1-score   support
+
+    Stationary     0.7477    0.9670    0.8433      1998
+Non-Stationary     0.9470    0.6441    0.7667      1832
+
+      accuracy                         0.8125      3830
+     macro avg     0.8474    0.8055    0.8050      3830
+  weighted avg     0.8430    0.8125    0.8067      3830
+
+
+Confusion Matrix:
+                   Predicted
+                   Stat    Non-Stat
+Actual Stat        1932      66
+       Non-Stat     652    1180
+
+📊 Arsenal
+--------------------------------------------------------------------------------
+Accuracy      : 0.8131 (81.31%)
+Train Accuracy: 0.8358 (83.58%)
+Training Time : 154.17s
+
+Classification Report:
+                precision    recall  f1-score   support
+
+    Stationary     0.7421    0.9835    0.8459      1998
+Non-Stationary     0.9721    0.6272    0.7624      1832
+
+      accuracy                         0.8131      3830
+     macro avg     0.8571    0.8053    0.8042      3830
+  weighted avg     0.8521    0.8131    0.8060      3830
+
+
+Confusion Matrix:
+                   Predicted
+                   Stat    Non-Stat
+Actual Stat        1965      33
+       Non-Stat     683    1149
+
+================================================================================
+SAVING BEST MODEL
+================================================================================
+
+🏆 Best Model: TimeSeriesForest
+   Accuracy: 0.8204 (82.04%)
+
+✓ Model saved to: saved_models/model1_binary_classifier.pkl
+✓ Metadata saved to: saved_models/model1_metadata.pkl
+
+================================================================================
+✅ MODEL 1 TRAINING COMPLETE!
+================================================================================
+
+Mode: RAW
+Best Model: TimeSeriesForest
+Accuracy: 82.04%
+Saved to: saved_models/model1_binary_classifier.pkl
+
+Next steps:
+  1. Review classification report above
+  2. Test model: python test_model1.py
+  3. If accuracy is good (>90%), proceed to Model 2 (primary categories)
+
+Tip: Try features mode for potentially better performance:
+  python train_model1.py --mode features --features-path ../../../data/features/selected
+================================================================================

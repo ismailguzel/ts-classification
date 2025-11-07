@@ -25,6 +25,8 @@ import warnings
 from pathlib import Path
 import pickle
 import time
+import json
+from datetime import datetime
 
 import numpy as np
 import pandas as pd
@@ -32,6 +34,35 @@ from sklearn.metrics import accuracy_score, classification_report, confusion_mat
 from sklearn.model_selection import train_test_split
 
 warnings.filterwarnings("ignore")
+
+CLASS_NAMES = ['Stationary', 'Non-Stationary']
+
+
+def safe_predict_proba(model, X):
+    """Return predict_proba output when available; otherwise None."""
+    if hasattr(model, 'predict_proba'):
+        try:
+            return model.predict_proba(X)
+        except Exception:
+            return None
+    return None
+
+
+def align_probability_matrix(proba, class_labels):
+    """Align probability outputs to expected class label order."""
+    if proba is None:
+        return None
+    if isinstance(proba, pd.DataFrame):
+        aligned_cols = []
+        for label in class_labels:
+            if label in proba.columns:
+                aligned_cols.append(label)
+            elif str(label) in proba.columns:
+                aligned_cols.append(str(label))
+        if aligned_cols:
+            proba = proba[aligned_cols]
+        return proba.to_numpy()
+    return np.asarray(proba)
 
 
 def load_features_and_labels(features_path: Path):
@@ -150,6 +181,7 @@ def train_pycaret(X_train_df: pd.DataFrame, y_train: np.ndarray, X_test_df: pd.D
     train_df = X_train_df.copy()
     train_df[label_col] = y_train
 
+    start_time = time.time()
     # PyCaret setup (PyCaret 3.x doesn't accept 'silent')
     setup(data=train_df, target=label_col, fold=folds, session_id=42, verbose=False)
     best_model = compare_models()  # picks best based on default metric
@@ -206,11 +238,14 @@ def train_pycaret(X_train_df: pd.DataFrame, y_train: np.ndarray, X_test_df: pd.D
         except Exception:
             pass
 
+    train_time = time.time() - start_time
+
     return {
         "model_path": str(save_path / "model.pkl"),
         "save_path": save_path,
         "test_accuracy": test_acc,
         "train_accuracy": train_acc,
+        "train_time": train_time,
         "engine": "pycaret",
         "problem_name": problem_name,
     }
@@ -224,6 +259,8 @@ def main():
                         help="Path to features directory")
     parser.add_argument("--test-size", type=float, default=0.2, help="Test size for train/test split")
     parser.add_argument("--random-state", type=int, default=42, help="Random state")
+    parser.add_argument("--output-dir", type=str, default=None,
+                        help="Optional directory for structured metrics and predictions")
 
     # AutoGluon specific
     parser.add_argument("--time-limit", type=int, default=3600, help="Training time limit (seconds)")
@@ -234,6 +271,10 @@ def main():
     parser.add_argument("--folds", type=int, default=5, help="Number of CV folds for PyCaret")
 
     args = parser.parse_args()
+
+    output_dir = Path(args.output_dir).resolve() if args.output_dir else None
+    if output_dir:
+        output_dir.mkdir(parents=True, exist_ok=True)
 
     print("=" * 80)
     print("MODEL 1 AUTOTRAIN - Binary Classification")
@@ -254,12 +295,18 @@ def main():
     print(f"✓ Features: {X_df.shape}")
     print(f"✓ Samples : {len(y)}")
 
+    class_labels = sorted(np.unique(y))
+    class_names_ordered = [CLASS_NAMES[int(lbl)] for lbl in class_labels]
+
     # Split
     print("\n[2/4] Train/Test split...")
     X_train_df, X_test_df, y_train, y_test = train_test_split(
         X_df, y, test_size=args.test_size, random_state=args.random_state, stratify=y
     )
     print(f"Train: {len(X_train_df):,}  Test: {len(X_test_df):,}")
+
+    train_ids = X_train_df.index.to_numpy()
+    test_ids = X_test_df.index.to_numpy()
 
     # Train
     print("\n[3/4] Training...")
@@ -302,21 +349,39 @@ def main():
     print("=" * 80)
     test_accuracy = res.get("test_accuracy")
     train_accuracy = res.get("train_accuracy")
+    train_time_value = res.get("train_time")
     print(f"Test Accuracy : {test_accuracy:.4f} ({100*test_accuracy:.2f}%)")
     if train_accuracy is not None:
         print(f"Train Accuracy: {train_accuracy:.4f} ({100*train_accuracy:.2f}%)")
+    if train_time_value is not None:
+        print(f"Train Time    : {train_time_value:.2f}s")
 
-    # Compute full report using engine-independent prediction if possible
+    y_pred = None
+    y_train_pred = None
+    y_proba = None
+    y_train_proba = None
+    cm = None
+    cm_tr = None
+    test_report_dict = {}
+    train_report_dict = {}
+    predictions_df = pd.DataFrame()
+    misclassified_df = pd.DataFrame()
+    misclassified_count = 0
+    probability_available = False
+
     try:
         if res["engine"] == "autogluon":
             predictor = res["predictor"]
             y_pred = predictor.predict(X_test_df)
-            y_pred_train = predictor.predict(X_train_df)
+            y_train_pred = predictor.predict(X_train_df)
+            y_proba = align_probability_matrix(predictor.predict_proba(X_test_df), class_labels)
+            y_train_proba = align_probability_matrix(predictor.predict_proba(X_train_df), class_labels)
         else:
-            # For PyCaret we already produced y_pred in train function; recompute for report
             from pycaret.classification import load_model, predict_model
+
             model_dir = Path(res["save_path"]) / "model"
             model_loaded = load_model(str(model_dir))
+
             preds_df = predict_model(model_loaded, data=X_test_df)
             if "Label" in preds_df.columns:
                 y_pred = preds_df["Label"].astype(int).values
@@ -324,34 +389,153 @@ def main():
                 y_pred = preds_df["prediction_label"].astype(int).values
             else:
                 y_pred = model_loaded.predict(X_test_df)
+
             preds_df_train = predict_model(model_loaded, data=X_train_df)
             if "Label" in preds_df_train.columns:
-                y_pred_train = preds_df_train["Label"].astype(int).values
+                y_train_pred = preds_df_train["Label"].astype(int).values
             elif "prediction_label" in preds_df_train.columns:
-                y_pred_train = preds_df_train["prediction_label"].astype(int).values
+                y_train_pred = preds_df_train["prediction_label"].astype(int).values
             else:
-                y_pred_train = model_loaded.predict(X_train_df)
-        # Test report
-        print("\nTest Classification Report:")
-        print(classification_report(y_test, y_pred, target_names=["Stationary", "Non-Stationary"], digits=4))
-        print("\nTest Confusion Matrix:")
-        cm = confusion_matrix(y_test, y_pred)
-        print(f"                   Predicted")
-        print(f"                   Stat    Non-Stat")
-        print(f"Actual Stat        {cm[0,0]:4d}    {cm[0,1]:4d}")
-        print(f"       Non-Stat    {cm[1,0]:4d}    {cm[1,1]:4d}")
+                y_train_pred = model_loaded.predict(X_train_df)
 
-        # Train report
-        print("\nTrain Classification Report:")
-        print(classification_report(y_train, y_pred_train, target_names=["Stationary", "Non-Stationary"], digits=4))
-        print("\nTrain Confusion Matrix:")
-        cm_tr = confusion_matrix(y_train, y_pred_train)
-        print(f"                   Predicted")
-        print(f"                   Stat    Non-Stat")
-        print(f"Actual Stat        {cm_tr[0,0]:4d}    {cm_tr[0,1]:4d}")
-        print(f"       Non-Stat    {cm_tr[1,0]:4d}    {cm_tr[1,1]:4d}")
-    except Exception:
-        pass
+            y_proba = align_probability_matrix(safe_predict_proba(model_loaded, X_test_df), class_labels)
+            y_train_proba = align_probability_matrix(safe_predict_proba(model_loaded, X_train_df), class_labels)
+
+        if hasattr(y_pred, "to_numpy"):
+            y_pred = y_pred.to_numpy()
+        if hasattr(y_train_pred, "to_numpy"):
+            y_train_pred = y_train_pred.to_numpy()
+
+        if y_pred is not None:
+            y_pred = np.asarray(y_pred)
+            y_train_pred = np.asarray(y_train_pred) if y_train_pred is not None else None
+
+            report_text = classification_report(
+                y_test,
+                y_pred,
+                target_names=class_names_ordered,
+                digits=4
+            )
+            print("\nTest Classification Report:")
+            print(report_text)
+
+            cm = confusion_matrix(y_test, y_pred)
+            print("\nTest Confusion Matrix:")
+            print(f"                   Predicted")
+            print(f"                   Stat    Non-Stat")
+            print(f"Actual Stat        {cm[0,0]:4d}    {cm[0,1]:4d}")
+            print(f"       Non-Stat    {cm[1,0]:4d}    {cm[1,1]:4d}")
+
+            test_report_dict = classification_report(
+                y_test,
+                y_pred,
+                target_names=class_names_ordered,
+                output_dict=True,
+                zero_division=0
+            )
+
+            if y_train_pred is not None:
+                print("\nTrain Classification Report:")
+                print(classification_report(
+                    y_train,
+                    y_train_pred,
+                    target_names=class_names_ordered,
+                    digits=4
+                ))
+
+                cm_tr = confusion_matrix(y_train, y_train_pred)
+                print("\nTrain Confusion Matrix:")
+                print(f"                   Predicted")
+                print(f"                   Stat    Non-Stat")
+                print(f"Actual Stat        {cm_tr[0,0]:4d}    {cm_tr[0,1]:4d}")
+                print(f"       Non-Stat    {cm_tr[1,0]:4d}    {cm_tr[1,1]:4d}")
+
+                train_report_dict = classification_report(
+                    y_train,
+                    y_train_pred,
+                    target_names=class_names_ordered,
+                    output_dict=True,
+                    zero_division=0
+                )
+
+            predictions_df = pd.DataFrame({
+                "sample_id": test_ids,
+                "true_label": y_test,
+                "predicted_label": y_pred,
+            })
+
+            if y_proba is not None:
+                prob_array = np.asarray(y_proba)
+                if prob_array.ndim == 1:
+                    prob_array = prob_array.reshape(-1, 1)
+                probability_available = prob_array.ndim == 2 and prob_array.shape[1] == len(class_names_ordered)
+                if probability_available:
+                    for idx, cls_name in enumerate(class_names_ordered):
+                        col_name = f"prob_{cls_name.lower().replace(' ', '_').replace('-', '_')}"
+                        predictions_df[col_name] = prob_array[:, idx]
+            else:
+                probability_available = False
+
+            misclassified_mask = predictions_df["true_label"] != predictions_df["predicted_label"]
+            misclassified_count = int(misclassified_mask.sum())
+            if misclassified_count > 0:
+                preview_ids = predictions_df.loc[misclassified_mask, "sample_id"].head(5).tolist()
+                print(f"\n⚠️  Misclassified samples: {misclassified_count} (examples: {preview_ids})")
+            else:
+                print("\nNo misclassifications detected on the hold-out set.")
+
+            misclassified_df = predictions_df.loc[misclassified_mask].copy()
+    except Exception as exc:
+        print(f"⚠️  Detailed evaluation skipped due to error: {exc}")
+
+    metrics_payload = {
+        "engine": res.get("engine"),
+        "problem_name": problem_name,
+        "timestamp_utc": datetime.utcnow().isoformat(timespec="seconds"),
+        "train_time_sec": float(train_time_value) if isinstance(train_time_value, (int, float)) else None,
+        "test_accuracy": float(test_accuracy) if test_accuracy is not None else None,
+        "train_accuracy": float(train_accuracy) if train_accuracy is not None else None,
+        "n_train": int(len(X_train_df)),
+        "n_test": int(len(X_test_df)),
+        "train_sample_ids": train_ids.tolist(),
+        "test_sample_ids": test_ids.tolist(),
+        "class_labels": [int(lbl) for lbl in class_labels],
+        "class_names": class_names_ordered,
+        "test_confusion_matrix": cm.tolist() if cm is not None else None,
+        "train_confusion_matrix": cm_tr.tolist() if cm_tr is not None else None,
+        "test_classification_report": test_report_dict,
+        "train_classification_report": train_report_dict,
+        "misclassified_count": misclassified_count,
+        "probability_available": probability_available,
+        "artifacts": {},
+    }
+
+    if output_dir:
+        artifacts = {}
+        metrics_path = output_dir / f"{problem_name}_{args.engine}_metrics.json"
+
+        if not predictions_df.empty:
+            predictions_path = output_dir / f"{problem_name}_{args.engine}_predictions.csv"
+            predictions_df.to_csv(predictions_path, index=False)
+            artifacts["predictions_csv"] = str(predictions_path)
+
+            if not misclassified_df.empty:
+                misclassified_path = output_dir / f"{problem_name}_{args.engine}_misclassified.csv"
+                misclassified_df.to_csv(misclassified_path, index=False)
+                artifacts["misclassified_csv"] = str(misclassified_path)
+
+        metrics_payload["artifacts"] = artifacts
+
+        with open(metrics_path, "w", encoding="utf-8") as f:
+            json.dump(metrics_payload, f, indent=2)
+
+        print(f"Metrics JSON : {metrics_path}")
+        if "predictions_csv" in artifacts:
+            print(f"Predictions  : {artifacts['predictions_csv']}")
+        if "misclassified_csv" in artifacts:
+            print(f"Misclassified: {artifacts['misclassified_csv']}")
+    else:
+        metrics_payload["artifacts"] = {}
 
     # Save common metadata
     metadata = {
@@ -362,6 +546,8 @@ def main():
         "n_train": int(len(X_train_df)),
         "n_test": int(len(X_test_df)),
         "features_shape": list(X_df.shape),
+        "class_names": class_names_ordered,
+        "train_time": float(train_time_value) if isinstance(train_time_value, (int, float)) else None,
         "presets": None,
         "time_limit": None,
         "folds": None,
@@ -375,6 +561,9 @@ def main():
     else:
         metadata["folds"] = args.folds
         metadata["artifact_path"] = str(res.get("save_path"))
+
+    if output_dir:
+        metadata["metrics_output_dir"] = str(output_dir)
 
     meta_path = save_dir / "model1_autotrain_metadata.pkl"
     with open(meta_path, "wb") as f:
