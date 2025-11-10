@@ -54,7 +54,7 @@ All notable changes to the Hierarchical Time Series Classification project.
 
 ## 2025-11-01 - Minimal, focused updates
 
-These updates keep the code clean and only address real needs observed on TRUBA.
+These updates keep the code clean and only address real needs observed in HPC deployments.
 
 ### Added
 - `--n-jobs` CLI parameter to control training parallelism:

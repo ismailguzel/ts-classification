@@ -158,15 +158,8 @@ class DaskTSFreshFeatureExtractor:
 
     @staticmethod
     def _prepare_timeseries(ddf: dd.DataFrame) -> dd.DataFrame:
-        """Select and rename columns to match TSFresh expectations."""
-        timeseries_ddf = ddf[["series_id", "time", "data"]].rename(
-            columns={
-                "series_id": "id",
-                "time": "time",
-                "data": "value",
-            }
-        )
-        return timeseries_ddf
+        """Select only the columns TSFresh needs for extraction."""
+        return ddf[["series_id", "time", "data"]]
 
     @staticmethod
     def _prepare_labels(ddf: dd.DataFrame) -> pd.DataFrame:
@@ -185,9 +178,9 @@ class DaskTSFreshFeatureExtractor:
         timeseries_ddf = self._prepare_timeseries(ddf)
         features_ddf = extract_features(
             timeseries_ddf,
-            column_id="id",
+            column_id="series_id",
             column_sort="time",
-            column_value="value",
+            column_value="data",
             default_fc_parameters=self.extraction_settings,
             disable_progressbar=disable_progressbar,
         )

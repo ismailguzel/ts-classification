@@ -201,38 +201,6 @@ python verify_ids.py --data-path ../data/raw/unified-90k
 - **Data integrity**: Validates parquet files can be read
 - **Coverage**: Confirms all expected categories have data
 
-## TRUBA/HPC Usage
-
-For large-scale generation on TRUBA cluster:
-
-```bash
-# Submit SLURM job (with scale parameter)
-cd jobs-slurm
-
-# Generate test dataset (1.5K samples)
-sbatch full-data-job.sh test
-
-# Generate 90K dataset (default/baseline)
-sbatch full-data-job.sh 90k
-
-# Generate 200K dataset
-sbatch full-data-job.sh 200k
-
-# Check job status
-squeue -u $USER
-
-# View logs (real-time)
-tail -f logs/generate_*.out
-tail -f logs/generate_*.err
-
-# Check completed job logs
-ls -lh logs/
-```
-
-**Note**: The SLURM script now accepts scale as first argument. Default is 90k if not specified.
-
-See `../03-models/hierarchical/TRUBA_TRAINING_GUIDE.md` for detailed HPC setup and configuration.
-
 ## Tips
 
 1. **Start with test dataset** - Always test with test scale (1.5K samples) first
@@ -258,20 +226,6 @@ pip install ts-stationary
 - Close other applications
 - Use SSD if available
 - Consider using test dataset only
-
-**SLURM job fails on TRUBA**
-```bash
-# Check error logs
-cat jobs-slurm/logs/generate_*.err
-
-# Check output logs
-cat jobs-slurm/logs/generate_*.out
-
-# Common issues:
-# - Out of memory: Increase --mem in SLURM script
-# - Timeout: Increase --time in SLURM script
-# - Module not found: Check conda environment activation
-```
 
 ---
 

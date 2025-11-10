@@ -9,17 +9,16 @@ Bu klasör, hiyerarşik zaman serisi sınıflandırma sistemi için eğitim scri
 ├── model1_binary/              # Binary classification (Stationary vs Non-Stationary)
 │   ├── train_model1.py        # Training script
 │   ├── test_model1.py         # Test script
-│   ├── slurm_train_model1.sh  # TRUBA SLURM script
+│   ├── slurm_train_model1.sh  # Example SLURM script
 │   └── README.md              # Model 1 documentation
 │
 ├── model2_nonstationary/       # 5-class classification (Non-Stationary types)
 │   ├── train_model2.py        # Training script
 │   ├── test_model2.py         # Test script
-│   ├── slurm_train_model2.sh  # TRUBA SLURM script
+│   ├── slurm_train_model2.sh  # Example SLURM script
 │   └── README.md              # Model 2 documentation
 │
-├── submit_training.sh          # Interactive job submission helper
-└── TRUBA_TRAINING_GUIDE.md    # Complete TRUBA guide
+└── submit_training.sh          # Interactive job submission helper
 ```
 
 ## 🎯 Hiyerarşik Sistem
@@ -67,21 +66,6 @@ python train_model1.py --mode raw --classifier minirocket
 cd model2_nonstationary
 python train_model2.py --mode raw --classifier minirocket
 ```
-
-### TRUBA Cluster
-
-İnteraktif helper kullanın:
-
-```bash
-cd /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical
-bash submit_training.sh
-```
-
-Script size şunları sorar:
-1. Hangi model? (Model 1, Model 2, veya her ikisi)
-2. Hangi classifier? (MiniROCKET ⭐, Arsenal ⭐, vs.)
-
-Ardından otomatik olarak job'ları submit eder.
 
 ## Model Özellikleri
 
@@ -261,22 +245,18 @@ Test scriptleri şunları hesaplar:
 
 - **Model 1 Detayları**: `model1_binary/README.md`
 - **Model 2 Detayları**: `model2_nonstationary/README.md`
-- **TRUBA Guide**: `TRUBA_TRAINING_GUIDE.md`
 
 ## 🔗 Workflow
 
 ```bash
 # 1. Veri generation (01-data-generation/)
-python generate.py                    # Lokal
-sbatch slurm_generate_150k.sh        # TRUBA
+python generate.py
 
 # 2. Feature extraction (opsiyonel, 02-feature-engineering/)
 python extract_features.py
 
 # 3. Model training (03-models/hierarchical/)
-bash submit_training.sh              # TRUBA (önerilen)
-# veya
-python train_model1.py --mode raw    # Lokal
+python train_model1.py --mode raw
 python train_model2.py --mode raw
 
 # 4. Testing (03-models/hierarchical/)
@@ -298,7 +278,7 @@ python test_model2.py --model-path models/model2_arsenal_raw.pkl
 ```bash
 # Veri setini oluşturun
 cd ../../01-data-generation
-python generate.py  # veya sbatch slurm_generate_150k.sh
+python generate.py
 ```
 
 ### Out of memory hatası

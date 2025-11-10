@@ -24,7 +24,6 @@ Input Time Series
 - Synthetic time series generation (scalable: 1.5K to 200K samples)
 - Three training modes: RAW (sktime), FEATURES (sklearn), AutoTrain (AutoML)
 - Hierarchical two-stage classification
-- TRUBA/HPC support
 
 ---
 
@@ -36,7 +35,7 @@ hierarchical-ts-classification/
 │   ├── generate.py              # Scalable dataset generation (5K-200K)
 │   ├── verify_ids.py            # Data integrity verification
 │   ├── config.py                # Dataset configuration (11 scales)
-│   └── jobs-slurm/              # TRUBA SLURM scripts
+│   └── jobs-slurm/              # Optional SLURM job scripts
 │
 ├── 02-preprocessing/            # Feature engineering (OPTIONAL)
 │   ├── extract_features.py     # TSFresh feature extraction
@@ -48,18 +47,17 @@ hierarchical-ts-classification/
 │   │   ├── train_model1.py      # Dual-mode training (RAW/FEATURES)
 │   │   ├── autotrain_models1.py # AutoML training (AutoGluon/PyCaret)
 │   │   ├── test_model1.py       # Testing script
-│   │   ├── slurm_train_model1.sh # TRUBA SLURM script
+│   │   ├── slurm_train_model1.sh # Example SLURM script
 │   │   └── README.md            # Documentation
 │   │
 │   ├── model2_nonstationary/    # Level 2: 5-Class (Non-stat types)
 │   │   ├── train_model2.py      # Dual-mode training (RAW/FEATURES)
 │   │   ├── autotrain_models2.py # AutoML training (AutoGluon/PyCaret)
 │   │   ├── test_model2.py       # Testing script
-│   │   ├── slurm_train_model2.sh # TRUBA SLURM script
+│   │   ├── slurm_train_model2.sh # Example SLURM script
 │   │   └── README.md            # Documentation
 │   │
-│   ├── submit_training.sh       # Interactive SLURM job helper
-│   └── TRUBA_TRAINING_GUIDE.md  # Complete HPC guide
+│   └── submit_training.sh       # Interactive SLURM job helper
 │
 ├── data/                        # Data storage
 │   ├── raw/                     # Raw time series
@@ -135,12 +133,6 @@ python train_model1.py --mode features
 ```bash
 # After feature extraction
 python autotrain_models1.py --engine autogluon
-```
-
-**TRUBA/HPC**:
-```bash
-cd 03-models/hierarchical
-bash submit_training.sh
 ```
 
 See individual README files for detailed options and parameters.
@@ -241,7 +233,6 @@ Detailed documentation in subdirectories:
 - **Model Training**: [`03-models/hierarchical/README.md`](03-models/hierarchical/README.md)
 - **Model 1 Details**: [`03-models/hierarchical/model1_binary/README.md`](03-models/hierarchical/model1_binary/README.md)
 - **Model 2 Details**: [`03-models/hierarchical/model2_nonstationary/README.md`](03-models/hierarchical/model2_nonstationary/README.md)
-- **TRUBA/HPC Guide**: [`03-models/hierarchical/TRUBA_TRAINING_GUIDE.md`](03-models/hierarchical/TRUBA_TRAINING_GUIDE.md)
 
 ---
 
