@@ -1,0 +1,17 @@
+================================================================================
+MODEL 2: NON-STATIONARY 5-CLASS CLASSIFICATION
+================================================================================
+Mode: FEATURES
+Data path: ../../../data/raw/unified-5k
+Features path: ../../../data/features/unified-20k/selected
+n_jobs: 110
+================================================================================
+
+[1/6] Loading TSFresh features...
+Traceback (most recent call last):
+  File "/arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model2_nonstationary/train_model2.py", line 324, in <module>
+    labels_df = ensure_series_column(pd.read_parquet(labels_file), "Labels table").set_index('series_id')
+                ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model2_nonstationary/train_model2.py", line 60, in ensure_series_column
+    raise ValueError(f"{context} requires a 'series_id' column; columns: {list(df.columns)[:5]}")
+ValueError: Labels table requires a 'series_id' column; columns: ['is_stationary', 'primary_category', 'sub_category']

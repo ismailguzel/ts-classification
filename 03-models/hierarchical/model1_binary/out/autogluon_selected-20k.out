@@ -23,9 +23,9 @@ Python Version:     3.12.12
 Operating System:   Linux
 Platform Machine:   x86_64
 Platform Version:   #1 SMP PREEMPT_DYNAMIC Sat Sep 16 09:55:41 UTC 2023
-CPU Count:          110
-Memory Avail:       228.03 GB / 251.09 GB (90.8%)
-Disk Space Avail:   11337.34 GB / 505708.16 GB (2.2%)
+CPU Count:          224
+Memory Avail:       477.06 GB / 503.06 GB (94.8%)
+Disk Space Avail:   12044.39 GB / 505708.16 GB (2.4%)
 ===================================================
 Presets specified: ['medium_quality_faster_train']
 Using hyperparameters preset: hyperparameters='default'
@@ -39,7 +39,7 @@ Preprocessing data ...
 Selected class <--> label mapping:  class 1 = 1, class 0 = 0
 Using Feature Generators to preprocess the data ...
 Fitting AutoMLPipelineFeatureGenerator...
-	Available Memory:                    233494.08 MB
+	Available Memory:                    488493.05 MB
 	Train Data (Original)  Memory Usage: 11.80 MB (0.0% of available memory)
 	Inferring data type of each feature based on column values. Set feature_metadata_in to manually specify special dtypes of the features.
 	Stage 1 Generators:
@@ -63,10 +63,10 @@ Fitting AutoMLPipelineFeatureGenerator...
 	Types of features in processed data (raw dtype, special dtypes):
 		('float', []) : 99 | ['data__agg_autocorrelation__f_agg_"mean"__maxlag_40', 'data__agg_autocorrelation__f_agg_"median"__maxlag_40', 'data__agg_linear_trend__attr_"intercept"__chunk_len_10__f_agg_"mean"', 'data__agg_linear_trend__attr_"intercept"__chunk_len_10__f_agg_"var"', 'data__agg_linear_trend__attr_"intercept"__chunk_len_50__f_agg_"mean"', ...]
 		('int', [])   :  1 | ['series_id']
-	0.3s = Fit runtime
+	0.5s = Fit runtime
 	100 features in original data used to generate 100 features in processed data.
 	Train Data (Processed) Memory Usage: 11.68 MB (0.0% of available memory)
-Data preprocessing and feature engineering runtime = 0.28s ...
+Data preprocessing and feature engineering runtime = 0.49s ...
 AutoGluon will gauge predictive performance using evaluation metric: 'accuracy'
 	To change this, specify the eval_metric parameter of Predictor()
 Automatically generating train/validation split with holdout_frac=0.1, Train Rows: 13776, Val Rows: 1531
@@ -81,68 +81,68 @@ User-specified model hyperparameters to be fit:
 	'XT': [{'criterion': 'gini', 'ag_args': {'name_suffix': 'Gini', 'problem_types': ['binary', 'multiclass']}}, {'criterion': 'entropy', 'ag_args': {'name_suffix': 'Entr', 'problem_types': ['binary', 'multiclass']}}, {'criterion': 'squared_error', 'ag_args': {'name_suffix': 'MSE', 'problem_types': ['regression', 'quantile']}}],
 }
 Fitting 11 L1 models, fit_strategy="sequential" ...
-Fitting model: LightGBMXT ... Training model for up to 3599.72s of the 3599.72s of remaining time.
-	Fitting with cpus=110, gpus=0, mem=0.1/227.8 GB
+Fitting model: LightGBMXT ... Training model for up to 3599.51s of the 3599.51s of remaining time.
+	Fitting with cpus=112, gpus=0, mem=0.1/476.8 GB
 	1.0	 = Validation score   (accuracy)
-	3.09s	 = Training   runtime
+	7.34s	 = Training   runtime
 	0.0s	 = Validation runtime
-Fitting model: LightGBM ... Training model for up to 3596.62s of the 3596.61s of remaining time.
-	Fitting with cpus=110, gpus=0, mem=0.1/227.7 GB
+Fitting model: LightGBM ... Training model for up to 3592.16s of the 3592.15s of remaining time.
+	Fitting with cpus=112, gpus=0, mem=0.1/476.8 GB
 	1.0	 = Validation score   (accuracy)
-	0.68s	 = Training   runtime
+	1.14s	 = Training   runtime
 	0.0s	 = Validation runtime
-Fitting model: RandomForestGini ... Training model for up to 3595.93s of the 3595.93s of remaining time.
-	Fitting with cpus=110, gpus=0
+Fitting model: RandomForestGini ... Training model for up to 3591.01s of the 3591.01s of remaining time.
+	Fitting with cpus=224, gpus=0
 	1.0	 = Validation score   (accuracy)
-	0.81s	 = Training   runtime
-	0.06s	 = Validation runtime
-Fitting model: RandomForestEntr ... Training model for up to 3595.03s of the 3595.03s of remaining time.
-	Fitting with cpus=110, gpus=0
+	2.2s	 = Training   runtime
+	0.3s	 = Validation runtime
+Fitting model: RandomForestEntr ... Training model for up to 3588.45s of the 3588.45s of remaining time.
+	Fitting with cpus=224, gpus=0
 	1.0	 = Validation score   (accuracy)
-	0.74s	 = Training   runtime
-	0.05s	 = Validation runtime
-Fitting model: CatBoost ... Training model for up to 3594.22s of the 3594.22s of remaining time.
-	Fitting with cpus=110, gpus=0
+	2.0s	 = Training   runtime
+	0.3s	 = Validation runtime
+Fitting model: CatBoost ... Training model for up to 3586.10s of the 3586.10s of remaining time.
+	Fitting with cpus=112, gpus=0
 	1.0	 = Validation score   (accuracy)
-	1.5s	 = Training   runtime
-	0.0s	 = Validation runtime
-Fitting model: ExtraTreesGini ... Training model for up to 3592.71s of the 3592.71s of remaining time.
-	Fitting with cpus=110, gpus=0
+	3.43s	 = Training   runtime
+	0.01s	 = Validation runtime
+Fitting model: ExtraTreesGini ... Training model for up to 3582.65s of the 3582.65s of remaining time.
+	Fitting with cpus=224, gpus=0
 	0.9993	 = Validation score   (accuracy)
-	0.61s	 = Training   runtime
-	0.05s	 = Validation runtime
-Fitting model: ExtraTreesEntr ... Training model for up to 3592.03s of the 3592.03s of remaining time.
-	Fitting with cpus=110, gpus=0
+	2.04s	 = Training   runtime
+	0.3s	 = Validation runtime
+Fitting model: ExtraTreesEntr ... Training model for up to 3580.23s of the 3580.23s of remaining time.
+	Fitting with cpus=224, gpus=0
 	0.9993	 = Validation score   (accuracy)
-	0.51s	 = Training   runtime
-	0.04s	 = Validation runtime
-Fitting model: NeuralNetFastAI ... Training model for up to 3591.45s of the 3591.45s of remaining time.
-	Fitting with cpus=110, gpus=0, mem=0.1/225.7 GB
+	1.78s	 = Training   runtime
+	0.31s	 = Validation runtime
+Fitting model: NeuralNetFastAI ... Training model for up to 3578.07s of the 3578.07s of remaining time.
+	Fitting with cpus=112, gpus=0, mem=0.1/475.4 GB
 No improvement since epoch 4: early stopping
 	1.0	 = Validation score   (accuracy)
-	32.61s	 = Training   runtime
-	0.27s	 = Validation runtime
-Fitting model: XGBoost ... Training model for up to 3558.56s of the 3558.55s of remaining time.
-	Fitting with cpus=110, gpus=0
+	15.61s	 = Training   runtime
+	0.03s	 = Validation runtime
+Fitting model: XGBoost ... Training model for up to 3562.42s of the 3562.42s of remaining time.
+	Fitting with cpus=112, gpus=0
 	1.0	 = Validation score   (accuracy)
-	0.56s	 = Training   runtime
+	0.82s	 = Training   runtime
 	0.01s	 = Validation runtime
-Fitting model: NeuralNetTorch ... Training model for up to 3557.98s of the 3557.97s of remaining time.
-	Fitting with cpus=110, gpus=0, mem=0.1/225.9 GB
+Fitting model: NeuralNetTorch ... Training model for up to 3561.57s of the 3561.57s of remaining time.
+	Fitting with cpus=112, gpus=0, mem=0.1/475.4 GB
 	1.0	 = Validation score   (accuracy)
-	160.01s	 = Training   runtime
-	0.31s	 = Validation runtime
-Fitting model: LightGBMLarge ... Training model for up to 3397.65s of the 3397.65s of remaining time.
-	Fitting with cpus=110, gpus=0, mem=0.1/225.8 GB
+	12.75s	 = Training   runtime
+	0.04s	 = Validation runtime
+Fitting model: LightGBMLarge ... Training model for up to 3548.76s of the 3548.76s of remaining time.
+	Fitting with cpus=112, gpus=0, mem=0.1/475.3 GB
 	1.0	 = Validation score   (accuracy)
-	8.43s	 = Training   runtime
+	7.57s	 = Training   runtime
 	0.0s	 = Validation runtime
-Fitting model: WeightedEnsemble_L2 ... Training model for up to 360.00s of the 3389.20s of remaining time.
+Fitting model: WeightedEnsemble_L2 ... Training model for up to 360.00s of the 3541.17s of remaining time.
 	Ensemble Weights: {'CatBoost': 1.0}
 	1.0	 = Validation score   (accuracy)
-	0.07s	 = Training   runtime
+	0.05s	 = Training   runtime
 	0.0s	 = Validation runtime
-AutoGluon training complete, total runtime = 210.9s ... Best model: WeightedEnsemble_L2 | Estimated inference throughput: 441035.7 rows/s (1531 batch size)
+AutoGluon training complete, total runtime = 58.94s ... Best model: WeightedEnsemble_L2 | Estimated inference throughput: 214142.1 rows/s (1531 batch size)
 Disabling decision threshold calibration for metric `accuracy` due to having fewer than 10000 rows of validation data for calibration, to avoid overfitting (1531 rows).
 	`accuracy` is generally not improved through threshold calibration. Force calibration via specifying `calibrate_decision_threshold=True`.
 TabularPredictor saved. To load, use: predictor = TabularPredictor.load("/arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model1_binary/save_models/unified-20k/autogluon/selected/model1_binary_autogluon")
@@ -151,7 +151,7 @@ TabularPredictor saved. To load, use: predictor = TabularPredictor.load("/arf/ho
 ================================================================================
 Test Accuracy : 1.0000 (100.00%)
 Train Accuracy: 1.0000 (100.00%)
-Train Time    : 211.28s
+Train Time    : 59.82s
 
 Test Classification Report:
                 precision    recall  f1-score   support

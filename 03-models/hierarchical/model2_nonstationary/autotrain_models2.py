@@ -65,31 +65,33 @@ def load_features_and_labels_primary(features_path: Path):
     """
     Load primary-category features/labels for 5-class classification (FEATURES mode).
 
-    Priority order (aligned with train_model2.py expectations):
-      1) features_primary_mutual_info.parquet + labels_primary.parquet (legacy but common)
-      2) primary/features.parquet + primary/labels.parquet (standardized)
-      3) features.parquet + labels.parquet (root, if includes primary_category)
+    Priority order:
+      1) primary/features.parquet + primary/labels.parquet (standardized subdirectory)
+      2) features.parquet + labels.parquet (root location)
+      3) features_primary_mutual_info.parquet + labels_primary.parquet (legacy)
 
     Filters to non-stationary rows if 'is_stationary' exists in labels.
     Maps 'primary_category' via CATEGORY_MAPPING to integer labels 0..4.
     """
-    # 1) Legacy common path (train_model2.py default)
-    feat_file = features_path / "features_primary_mutual_info.parquet"
-    lab_file = features_path / "labels_primary.parquet"
+    # 1) Standard subdirectory (created by feature_selection.py --target primary)
+    feat_file = features_path / "primary" / "features.parquet"
+    lab_file = features_path / "primary" / "labels.parquet"
 
-    # 2) Standardized primary/
-    if not (feat_file.exists() and lab_file.exists()):
-        feat_file = features_path / "primary" / "features.parquet"
-        lab_file = features_path / "primary" / "labels.parquet"
-
-    # 3) Root standard (must contain primary_category)
+    # 2) Root location (if no subdirectory structure)
     if not (feat_file.exists() and lab_file.exists()):
         feat_file = features_path / "features.parquet"
         lab_file = features_path / "labels.parquet"
 
+    # 3) Legacy fallback
+    if not (feat_file.exists() and lab_file.exists()):
+        feat_file = features_path / "features_primary_mutual_info.parquet"
+        lab_file = features_path / "labels_primary.parquet"
+
     if not (feat_file.exists() and lab_file.exists()):
         raise FileNotFoundError(
-            f"Could not find primary features/labels under {features_path}."
+            f"Could not find features/labels under {features_path}.\n"
+            f"Expected: primary/features.parquet + primary/labels.parquet\n"
+            f"or features.parquet + labels.parquet"
         )
 
     print(f"✓ Using features file: {feat_file}")
@@ -100,23 +102,49 @@ def load_features_and_labels_primary(features_path: Path):
     print(f"  Labels shape  : {y_df.shape}")
     print(f"  Label columns : {list(y_df.columns)}")
 
+    # Handle identifier columns (id or series_id)
     if "id" in X_df.columns:
         X_df = X_df.set_index("id")
+    elif "series_id" in X_df.columns:
+        X_df = X_df.set_index("series_id")
+
+    if "series_id" in y_df.columns:
+        y_df = y_df.set_index("series_id")
+    elif "id" in y_df.columns:
+        y_df = y_df.set_index("id")
+
+    # Align indices
+    common_ids = X_df.index.intersection(y_df.index)
+    if len(common_ids) == 0:
+        raise ValueError("No common IDs found between features and labels.")
+    X_df = X_df.loc[common_ids]
+    y_df = y_df.loc[common_ids]
 
     if "primary_category" not in y_df.columns:
         raise ValueError("labels must include 'primary_category' column.")
 
-    # Optional non-stationary filter
+    # Filter non-stationary samples
+    # Method 1: Use is_stationary column if available
     if "is_stationary" in y_df.columns:
         nonstat_mask = (y_df["is_stationary"] == False)
         X_df = X_df[nonstat_mask]
         y_df = y_df[nonstat_mask]
+        print(f"  Filtered using is_stationary column: {len(X_df)} non-stationary samples")
+    
+    # Method 2: Filter out 'stationary' from primary_category
+    cat = y_df["primary_category"].astype(str).str.lower()
+    stationary_mask = (cat == 'stationary')
+    if stationary_mask.any():
+        n_stationary = stationary_mask.sum()
+        X_df = X_df[~stationary_mask]
+        y_df = y_df[~stationary_mask]
+        cat = cat[~stationary_mask]
+        print(f"  Filtered out {n_stationary} stationary samples: {len(X_df)} non-stationary samples remaining")
 
     if len(X_df) == 0:
-        raise ValueError("No samples found after filtering.")
+        raise ValueError("No non-stationary samples found after filtering.")
 
     # Map labels
-    cat = y_df["primary_category"].astype(str).str.lower()
     mapped = cat.map(CATEGORY_MAPPING)
     if mapped.isna().any():
         unknown = sorted(cat[mapped.isna()].unique().tolist())

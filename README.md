@@ -270,21 +270,38 @@ python generate.py --scale 20k
 # Output: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/01-data-generation/generation-20k.out
 ```
 
-### Feature Extraction with Dask
+### Feature Extraction and Selection
 ```bash
+cd 02-preprocessing
+
+# Step 1: Extract features from raw time series (creates ~800 TSFresh features)
 python extract_dask.py \
     --input ../data/raw/unified-20k \
     --output ../data/features/unified-20k/allfeatures \
     --n-workers 55 \
     --memory-limit 0
 
+# Output: allfeatures/features.parquet, allfeatures/labels.parquet
+
+# Step 2: Select top features for each classification task
 python feature_selection.py \
     --input ../data/features/unified-20k/allfeatures \
     --output ../data/features/unified-20k/selected \
-    --method mutual_info
+    --method mutual_info \
+    --n-features 100 \
+    --target all
 
-
+# Output: 
+#   selected/binary/features.parquet + labels.parquet    (for Model 1)
+#   selected/primary/features.parquet + labels.parquet   (for Model 2)
 ```
+
+**Why separate feature selection for binary and primary?**
+- Different tasks optimize different features via mutual information
+- Binary (Model 1): Features that distinguish stationary vs non-stationary
+- Primary (Model 2): Features that distinguish 5 non-stationary types
+- Models automatically load from correct subdirectory (binary/ or primary/)
+
 
 ### Model 1 (Binary Classification)
 ```bash

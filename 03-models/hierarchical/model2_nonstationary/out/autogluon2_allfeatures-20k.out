@@ -1,0 +1,216 @@
+================================================================================
+MODEL 2 AUTOTRAIN - 5-Class Non-Stationary Classification
+================================================================================
+Engine       : autogluon
+Features path: ../../../data/features/unified-20k/allfeatures
+Test size    : 0.2
+================================================================================
+
+[1/4] Loading primary features and labels (FEATURES mode)...
+✓ Using features file: ../../../data/features/unified-20k/allfeatures/features.parquet
+✓ Using labels file  : ../../../data/features/unified-20k/allfeatures/labels.parquet
+  Features shape: (19134, 778)
+  Labels shape  : (19134, 4)
+  Label columns : ['series_id', 'is_stationary', 'primary_category', 'sub_category']
+  Filtered using is_stationary column: 9146 non-stationary samples
+✓ Features: (9146, 777)
+✓ Samples : 9146
+
+[2/4] Train/Test split...
+Train: 7,316  Test: 1,830
+
+[3/4] Training...
+Warning: path already exists! This predictor may overwrite an existing predictor! path="save_models/unified-20k/autogluon/allfeatures/model2_nonstationary_autogluon"
+Preset alias specified: 'medium_quality_faster_train' maps to 'medium_quality'.
+Verbosity: 2 (Standard Logging)
+=================== System Info ===================
+AutoGluon Version:  1.4.0
+Python Version:     3.12.12
+Operating System:   Linux
+Platform Machine:   x86_64
+Platform Version:   #1 SMP PREEMPT_DYNAMIC Sat Sep 16 09:55:41 UTC 2023
+CPU Count:          224
+Memory Avail:       476.96 GB / 503.06 GB (94.8%)
+Disk Space Avail:   11958.34 GB / 505708.16 GB (2.4%)
+===================================================
+Presets specified: ['medium_quality_faster_train']
+Using hyperparameters preset: hyperparameters='default'
+Beginning AutoGluon training ... Time limit = 3600s
+AutoGluon will save models to "/arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model2_nonstationary/save_models/unified-20k/autogluon/allfeatures/model2_nonstationary_autogluon"
+Train Data Rows:    7316
+Train Data Columns: 777
+Label Column:       _label
+Problem Type:       multiclass
+Preprocessing data ...
+Train Data Class Count: 5
+Using Feature Generators to preprocess the data ...
+Fitting AutoMLPipelineFeatureGenerator...
+	Available Memory:                    488402.83 MB
+	Train Data (Original)  Memory Usage: 43.37 MB (0.0% of available memory)
+	Inferring data type of each feature based on column values. Set feature_metadata_in to manually specify special dtypes of the features.
+	Stage 1 Generators:
+		Fitting AsTypeFeatureGenerator...
+			Note: Converting 14 features to boolean dtype as they only contain 2 unique values.
+	Stage 2 Generators:
+		Fitting FillNaFeatureGenerator...
+	Stage 3 Generators:
+		Fitting IdentityFeatureGenerator...
+	Stage 4 Generators:
+		Fitting DropUniqueFeatureGenerator...
+	Stage 5 Generators:
+		Fitting DropDuplicatesFeatureGenerator...
+	Useless Original Features (Count: 36): ['data__fft_coefficient__attr_"imag"__coeff_0', 'data__has_duplicate_max', 'data__has_duplicate_min', 'data__large_standard_deviation__r_0.4', 'data__large_standard_deviation__r_0.45', 'data__large_standard_deviation__r_0.5', 'data__large_standard_deviation__r_0.55', 'data__large_standard_deviation__r_0.6000000000000001', 'data__large_standard_deviation__r_0.65', 'data__large_standard_deviation__r_0.7000000000000001', 'data__large_standard_deviation__r_0.75', 'data__large_standard_deviation__r_0.8', 'data__large_standard_deviation__r_0.8500000000000001', 'data__large_standard_deviation__r_0.9', 'data__large_standard_deviation__r_0.9500000000000001', 'data__partial_autocorrelation__lag_0', 'data__query_similarity_count__query_None__threshold_0.0', 'data__symmetry_looking__r_0.0', 'data__symmetry_looking__r_0.25', 'data__symmetry_looking__r_0.30000000000000004', 'data__symmetry_looking__r_0.35000000000000003', 'data__symmetry_looking__r_0.4', 'data__symmetry_looking__r_0.45', 'data__symmetry_looking__r_0.5', 'data__symmetry_looking__r_0.55', 'data__symmetry_looking__r_0.6000000000000001', 'data__symmetry_looking__r_0.65', 'data__symmetry_looking__r_0.7000000000000001', 'data__symmetry_looking__r_0.75', 'data__symmetry_looking__r_0.8', 'data__symmetry_looking__r_0.8500000000000001', 'data__symmetry_looking__r_0.9', 'data__symmetry_looking__r_0.9500000000000001', 'data__value_count__value_-1', 'data__value_count__value_0', 'data__value_count__value_1']
+		These features carry no predictive signal and should be manually investigated.
+		This is typically a feature which has the same value for all rows.
+		These features do not need to be present at inference time.
+	Unused Original Features (Count: 1): ['data__mean_abs_change']
+		These features were not used to generate any of the output features. Add a feature generator compatible with these features to utilize them.
+		Features can also be unused if they carry very little information, such as being categorical but having almost entirely unique values or being duplicates of other features.
+		These features do not need to be present at inference time.
+		('float', []) : 1 | ['data__mean_abs_change']
+	Types of features in original data (raw dtype, special dtypes):
+		('float', []) : 740 | ['data__abs_energy', 'data__absolute_maximum', 'data__absolute_sum_of_changes', 'data__agg_autocorrelation__f_agg_"mean"__maxlag_40', 'data__agg_autocorrelation__f_agg_"median"__maxlag_40', ...]
+	Types of features in processed data (raw dtype, special dtypes):
+		('float', [])     : 726 | ['data__abs_energy', 'data__absolute_maximum', 'data__absolute_sum_of_changes', 'data__agg_autocorrelation__f_agg_"mean"__maxlag_40', 'data__agg_autocorrelation__f_agg_"median"__maxlag_40', ...]
+		('int', ['bool']) :  14 | ['data__fft_coefficient__attr_"angle"__coeff_0', 'data__has_duplicate', 'data__large_standard_deviation__r_0.05', 'data__large_standard_deviation__r_0.1', 'data__large_standard_deviation__r_0.15000000000000002', ...]
+	1.9s = Fit runtime
+	740 features in original data used to generate 740 features in processed data.
+	Train Data (Processed) Memory Usage: 40.62 MB (0.0% of available memory)
+Data preprocessing and feature engineering runtime = 2.11s ...
+AutoGluon will gauge predictive performance using evaluation metric: 'accuracy'
+	To change this, specify the eval_metric parameter of Predictor()
+Automatically generating train/validation split with holdout_frac=0.1, Train Rows: 6584, Val Rows: 732
+User-specified model hyperparameters to be fit:
+{
+	'NN_TORCH': [{}],
+	'GBM': [{'extra_trees': True, 'ag_args': {'name_suffix': 'XT'}}, {}, {'learning_rate': 0.03, 'num_leaves': 128, 'feature_fraction': 0.9, 'min_data_in_leaf': 3, 'ag_args': {'name_suffix': 'Large', 'priority': 0, 'hyperparameter_tune_kwargs': None}}],
+	'CAT': [{}],
+	'XGB': [{}],
+	'FASTAI': [{}],
+	'RF': [{'criterion': 'gini', 'ag_args': {'name_suffix': 'Gini', 'problem_types': ['binary', 'multiclass']}}, {'criterion': 'entropy', 'ag_args': {'name_suffix': 'Entr', 'problem_types': ['binary', 'multiclass']}}, {'criterion': 'squared_error', 'ag_args': {'name_suffix': 'MSE', 'problem_types': ['regression', 'quantile']}}],
+	'XT': [{'criterion': 'gini', 'ag_args': {'name_suffix': 'Gini', 'problem_types': ['binary', 'multiclass']}}, {'criterion': 'entropy', 'ag_args': {'name_suffix': 'Entr', 'problem_types': ['binary', 'multiclass']}}, {'criterion': 'squared_error', 'ag_args': {'name_suffix': 'MSE', 'problem_types': ['regression', 'quantile']}}],
+}
+Fitting 11 L1 models, fit_strategy="sequential" ...
+Fitting model: NeuralNetFastAI ... Training model for up to 3597.89s of the 3597.89s of remaining time.
+	Fitting with cpus=112, gpus=0, mem=0.4/476.7 GB
+	0.9522	 = Validation score   (accuracy)
+	16.12s	 = Training   runtime
+	0.03s	 = Validation runtime
+Fitting model: LightGBMXT ... Training model for up to 3581.71s of the 3581.71s of remaining time.
+	Fitting with cpus=112, gpus=0, mem=0.4/476.5 GB
+	0.9836	 = Validation score   (accuracy)
+	24.3s	 = Training   runtime
+	0.01s	 = Validation runtime
+Fitting model: LightGBM ... Training model for up to 3557.36s of the 3557.36s of remaining time.
+	Fitting with cpus=112, gpus=0, mem=0.4/476.4 GB
+	0.9822	 = Validation score   (accuracy)
+	20.5s	 = Training   runtime
+	0.01s	 = Validation runtime
+Fitting model: RandomForestGini ... Training model for up to 3536.81s of the 3536.81s of remaining time.
+	Fitting with cpus=224, gpus=0, mem=0.0/476.3 GB
+	0.9713	 = Validation score   (accuracy)
+	2.48s	 = Training   runtime
+	0.32s	 = Validation runtime
+Fitting model: RandomForestEntr ... Training model for up to 3533.94s of the 3533.94s of remaining time.
+	Fitting with cpus=224, gpus=0, mem=0.0/475.8 GB
+	0.9699	 = Validation score   (accuracy)
+	2.34s	 = Training   runtime
+	0.33s	 = Validation runtime
+Fitting model: CatBoost ... Training model for up to 3531.21s of the 3531.21s of remaining time.
+	Fitting with cpus=112, gpus=0, mem=1.2/475.5 GB
+	0.9754	 = Validation score   (accuracy)
+	75.53s	 = Training   runtime
+	0.02s	 = Validation runtime
+Fitting model: ExtraTreesGini ... Training model for up to 3455.64s of the 3455.64s of remaining time.
+	Fitting with cpus=224, gpus=0, mem=0.0/475.2 GB
+	0.9549	 = Validation score   (accuracy)
+	2.12s	 = Training   runtime
+	0.32s	 = Validation runtime
+Fitting model: ExtraTreesEntr ... Training model for up to 3453.11s of the 3453.11s of remaining time.
+	Fitting with cpus=224, gpus=0, mem=0.0/474.8 GB
+	0.9495	 = Validation score   (accuracy)
+	1.93s	 = Training   runtime
+	0.31s	 = Validation runtime
+Fitting model: XGBoost ... Training model for up to 3450.79s of the 3450.79s of remaining time.
+	Fitting with cpus=112, gpus=0
+	0.9768	 = Validation score   (accuracy)
+	27.64s	 = Training   runtime
+	0.03s	 = Validation runtime
+Fitting model: NeuralNetTorch ... Training model for up to 3423.08s of the 3423.07s of remaining time.
+	Fitting with cpus=112, gpus=0, mem=0.2/474.6 GB
+	0.9481	 = Validation score   (accuracy)
+	31.45s	 = Training   runtime
+	0.09s	 = Validation runtime
+Fitting model: LightGBMLarge ... Training model for up to 3391.52s of the 3391.52s of remaining time.
+	Fitting with cpus=112, gpus=0, mem=0.8/474.5 GB
+	0.9727	 = Validation score   (accuracy)
+	84.12s	 = Training   runtime
+	0.01s	 = Validation runtime
+Fitting model: WeightedEnsemble_L2 ... Training model for up to 360.00s of the 3307.36s of remaining time.
+	Ensemble Weights: {'LightGBMXT': 1.0}
+	0.9836	 = Validation score   (accuracy)
+	0.05s	 = Training   runtime
+	0.0s	 = Validation runtime
+AutoGluon training complete, total runtime = 292.78s ... Best model: WeightedEnsemble_L2 | Estimated inference throughput: 65959.8 rows/s (732 batch size)
+TabularPredictor saved. To load, use: predictor = TabularPredictor.load("/arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model2_nonstationary/save_models/unified-20k/autogluon/allfeatures/model2_nonstationary_autogluon")
+
+[4/4] Evaluation
+================================================================================
+Test Accuracy : 0.9847 (98.47%)
+Train Accuracy: 0.9984 (99.84%)
+Train Time    : 293.31s
+
+Test Classification Report:
+                  precision    recall  f1-score   support
+
+           Trend     1.0000    0.9923    0.9962       392
+      Volatility     0.9950    0.9950    0.9950       397
+      Stochastic     0.9924    0.9799    0.9861       399
+         Anomaly     0.9505    0.9903    0.9700       310
+Structural Break     0.9786    0.9639    0.9712       332
+
+        accuracy                         0.9847      1830
+       macro avg     0.9833    0.9843    0.9837      1830
+    weighted avg     0.9850    0.9847    0.9847      1830
+
+
+Test Confusion Matrix:
+                        Trend Volatili Stochast  Anomaly Structur
+Trend                     389        0        2        0        1
+Volatility                  0      395        0        2        0
+Stochastic                  0        0      391        3        5
+Anomaly                     0        2        0      307        1
+Structural Break            0        0        1       11      320
+
+Train Classification Report:
+                  precision    recall  f1-score   support
+
+           Trend     1.0000    0.9987    0.9994      1568
+      Volatility     0.9994    0.9994    0.9994      1586
+      Stochastic     0.9994    0.9975    0.9984      1596
+         Anomaly     0.9968    0.9984    0.9976      1238
+Structural Break     0.9955    0.9977    0.9966      1328
+
+        accuracy                         0.9984      7316
+       macro avg     0.9982    0.9983    0.9983      7316
+    weighted avg     0.9984    0.9984    0.9984      7316
+
+
+Train Confusion Matrix:
+                        Trend Volatili Stochast  Anomaly Structur
+Trend                    1566        0        0        0        2
+Volatility                  0     1585        0        1        0
+Stochastic                  0        0     1592        0        4
+Anomaly                     0        1        1     1236        0
+Structural Break            0        0        0        3     1325
+
+⚠️  Misclassified samples: 28 (examples: [18179, 13578, 18925, 15325, 18252])
+
+================================================================================
+✅ AUTOTRAIN COMPLETE
+================================================================================
+Engine     : autogluon
+Test Acc   : 98.47%
+Train Acc  : 99.84%
+Artifacts  : save_models/unified-20k/autogluon/allfeatures/model2_nonstationary_autogluon
+Metadata   : save_models/unified-20k/autogluon/allfeatures/model2_autotrain_metadata.pkl

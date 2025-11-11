@@ -1,0 +1,172 @@
+================================================================================
+MODEL 1: BINARY CLASSIFICATION (Stationary vs Non-Stationary)
+================================================================================
+Mode: FEATURES
+Data path: ../../../data/raw/unified-5k
+Features path: ../../../data/features/unified-20k/selected
+n_jobs: 110
+================================================================================
+================================================================================
+
+[1/6] Loading TSFresh features...
+✓ Using binary features: ../../../data/features/unified-20k/selected/binary/features.parquet
+✓ Using binary labels: ../../../data/features/unified-20k/selected/binary/labels.parquet
+✓ Loaded features: (19134, 100)
+✓ Number of features: 100
+✓ Number of samples: 19134
+
+Label distribution:
+  0: Stationary       9,988 (52.2%)
+  1: Non-Stationary   9,146 (47.8%)
+
+[3/6] Preparing feature matrix...
+✓ X shape: (19134, 100)
+✓ y shape: (19134,)
+✓ Features scaled with StandardScaler
+
+[4/6] Splitting data...
+Train set: 15,307 samples
+Test set:  3,827 samples
+
+[5/6] Training models...
+--------------------------------------------------------------------------------
+
+🌲 Training Random Forest...
+  ✓ Accuracy: 0.9645 (96.45%)
+  ✓ Train Accuracy: 1.0000 (100.00%)
+  ✓ Training time: 1.52s
+
+🚀 Training XGBoost...
+  ✓ Accuracy: 0.9647 (96.47%)
+  ✓ Train Accuracy: 1.0000 (100.00%)
+  ✓ Training time: 1.38s
+
+🐱 Training CatBoost...
+  ✓ Accuracy: 0.9621 (96.21%)
+  ✓ Train Accuracy: 0.9889 (98.89%)
+  ✓ Training time: 3.48s
+
+⚡ Training SVM (Linear)...
+  ✓ Accuracy: 0.9399 (93.99%)
+  ✓ Train Accuracy: 0.9485 (94.85%)
+  ✓ Training time: 30.58s
+
+[6/6] Evaluation Results
+================================================================================
+
+📊 RandomForest
+--------------------------------------------------------------------------------
+Accuracy      : 0.9645 (96.45%)
+Train Accuracy: 1.0000 (100.00%)
+Training Time : 1.52s
+
+Classification Report:
+                precision    recall  f1-score   support
+
+    Stationary     0.9541    0.9790    0.9664      1998
+Non-Stationary     0.9764    0.9486    0.9623      1829
+
+      accuracy                         0.9645      3827
+     macro avg     0.9653    0.9638    0.9643      3827
+  weighted avg     0.9648    0.9645    0.9644      3827
+
+
+Confusion Matrix:
+                   Predicted
+                   Stat    Non-Stat
+Actual Stat        1956      42
+       Non-Stat      94    1735
+
+📊 XGBoost
+--------------------------------------------------------------------------------
+Accuracy      : 0.9647 (96.47%)
+Train Accuracy: 1.0000 (100.00%)
+Training Time : 1.38s
+
+Classification Report:
+                precision    recall  f1-score   support
+
+    Stationary     0.9555    0.9780    0.9666      1998
+Non-Stationary     0.9753    0.9502    0.9626      1829
+
+      accuracy                         0.9647      3827
+     macro avg     0.9654    0.9641    0.9646      3827
+  weighted avg     0.9650    0.9647    0.9647      3827
+
+
+Confusion Matrix:
+                   Predicted
+                   Stat    Non-Stat
+Actual Stat        1954      44
+       Non-Stat      91    1738
+
+📊 CatBoost
+--------------------------------------------------------------------------------
+Accuracy      : 0.9621 (96.21%)
+Train Accuracy: 0.9889 (98.89%)
+Training Time : 3.48s
+
+Classification Report:
+                precision    recall  f1-score   support
+
+    Stationary     0.9535    0.9750    0.9641      1998
+Non-Stationary     0.9720    0.9481    0.9599      1829
+
+      accuracy                         0.9621      3827
+     macro avg     0.9627    0.9615    0.9620      3827
+  weighted avg     0.9623    0.9621    0.9621      3827
+
+
+Confusion Matrix:
+                   Predicted
+                   Stat    Non-Stat
+Actual Stat        1948      50
+       Non-Stat      95    1734
+
+📊 SVM_Linear
+--------------------------------------------------------------------------------
+Accuracy      : 0.9399 (93.99%)
+Train Accuracy: 0.9485 (94.85%)
+Training Time : 30.58s
+
+Classification Report:
+                precision    recall  f1-score   support
+
+    Stationary     0.9150    0.9755    0.9443      1998
+Non-Stationary     0.9711    0.9010    0.9348      1829
+
+      accuracy                         0.9399      3827
+     macro avg     0.9431    0.9383    0.9395      3827
+  weighted avg     0.9418    0.9399    0.9397      3827
+
+
+Confusion Matrix:
+                   Predicted
+                   Stat    Non-Stat
+Actual Stat        1949      49
+       Non-Stat     181    1648
+
+================================================================================
+SAVING BEST MODEL
+================================================================================
+
+🏆 Best Model: XGBoost
+   Accuracy: 0.9647 (96.47%)
+
+✓ Model saved to: saved_models/model1_binary_classifier.pkl
+✓ Metadata saved to: saved_models/model1_metadata.pkl
+
+================================================================================
+✅ MODEL 1 TRAINING COMPLETE!
+================================================================================
+
+Mode: FEATURES
+Best Model: XGBoost
+Accuracy: 96.47%
+Saved to: saved_models/model1_binary_classifier.pkl
+
+Next steps:
+  1. Review classification report above
+  2. Test model: python test_model1.py
+  3. If accuracy is good (>90%), proceed to Model 2 (primary categories)
+================================================================================
