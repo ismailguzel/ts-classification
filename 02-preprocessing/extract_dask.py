@@ -4,11 +4,12 @@ Extract TSFresh features for hierarchical classification using Dask.
 Run from the `02-preprocessing` directory.
 
 Usage:
-    python extract_dask.py --input ../data/raw/unified-90k --output ../data/features
+    python extract_dask.py --input ../data/raw/unified-5k --output ../data/features/unified-5k/allfeatures
 
-    cd 02-preprocessing && python extract_dask.py --input ../data/raw/unified-20k --output ../data/features/test-dask --max-files 20 to smoke-test on a small subset.
-Tune --n-workers, --threads-per-worker, or point --scheduler-address at your existing cluster once the basics look good.
+    # Smoke test on a small subset
+    python extract_dask.py --input ../data/raw/unified-20k --output ../data/features/test-dask --max-files 20
 
+Tune --n-workers, --threads-per-worker, or point --scheduler-address at your existing cluster.
 
 This script reads the time series parquet files with dask, builds the feature
 extraction graph via tsfresh, and materialises the result with `compute()`.
@@ -246,13 +247,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--input",
         type=str,
-        default="../data/raw/unified-90k",
+        default="../data/raw/unified-5k",
         help="Input directory containing parquet files",
     )
     parser.add_argument(
         "--output",
         type=str,
-        default="../data/features",
+        default="../data/features/unified-5k/allfeatures",
         help="Directory to store extracted features",
     )
     parser.add_argument(

@@ -261,9 +261,9 @@ class FeatureSelector:
 
 def main():
     parser = argparse.ArgumentParser(description='Select relevant features')
-    parser.add_argument('--input', type=str, default='../data/features',
+    parser.add_argument('--input', type=str, default='../data/features/unified-5k/allfeatures',
                         help='Input directory with extracted features')
-    parser.add_argument('--output', type=str, default='../data/features/selected',
+    parser.add_argument('--output', type=str, default='../data/features/unified-5k/selected',
                         help='Output directory for selected features')
     parser.add_argument('--method', type=str, default='mutual_info',
                         choices=['variance', 'correlation', 'statistical', 'mutual_info', 'importance'],

@@ -124,7 +124,7 @@ python test_model2.py --model-path saved_models/model2_nonstationary_*.pkl
 **FEATURES Mode** (TSFresh + sklearn):
 ```bash
 cd 02-preprocessing
-python extract_features.py --input ../data/raw/unified-test
+python extract_features.py  # Uses unified-5k by default
 python feature_selection.py --method mutual_info
 cd ../03-models/hierarchical/model1_binary
 python train_model1.py --mode features
@@ -138,19 +138,19 @@ cd 03-models/hierarchical/model1_binary
 # Using AutoGluon (recommended)
 python autotrain_models1.py \
     --engine autogluon \
-    --features-path ../../../data/features/selected \
+    --features-path ../../../data/features/unified-5k/selected \
     --time-limit 3600 \
     --presets medium_quality_faster_train
 
 # Using PyCaret (alternative)
 python autotrain_models1.py \
     --engine pycaret \
-    --features-path ../../../data/features/selected \
+    --features-path ../../../data/features/unified-5k/selected \
     --folds 5
 
 # Model 2 AutoTrain
 cd ../model2_nonstationary
-python autotrain_models2.py --engine autogluon --features-path ../../../data/features/selected
+python autotrain_models2.py --engine autogluon --features-path ../../../data/features/unified-5k/selected
 ```
 
 **Note:** AutoTrain requires feature extraction first (see 02-preprocessing/).

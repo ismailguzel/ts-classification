@@ -78,7 +78,7 @@ Available classifiers:
 - `arsenal`
 
 Requirements:
-- Raw data: `../../../data/raw/unified-test/`
+- Raw data: `../../../data/raw/unified-5k/` (default)
 - Output: `saved_models/model1_binary_classifier.pkl`
 
 ### Training - FEATURES Mode
@@ -86,16 +86,16 @@ Requirements:
 ```bash
 # First: Extract and select features
 cd ../../../02-preprocessing
-python extract_features.py --input ../data/raw/unified-test --output ../data/features
-python feature_selection.py --input ../data/features --output ../data/features/selected --target binary
+python extract_features.py --input ../data/raw/unified-5k --output ../data/features/unified-5k/allfeatures
+python feature_selection.py --input ../data/features/unified-5k/allfeatures --output ../data/features/unified-5k/selected --target binary
 
 # Then: Train with features
 cd ../03-models/hierarchical/model1_binary
-python train_model1.py --mode features --features-path ../../../data/features/selected
+python train_model1.py --mode features --features-path ../../../data/features/unified-5k/selected
 ```
 
 Requirements:
-- Features: `../../../data/features/selected/features_binary_*.parquet`
+- Features: `../../../data/features/unified-5k/selected/binary/` (default)
 - Output: `saved_models/model1_binary_classifier.pkl`
 
 ### Testing

@@ -29,9 +29,9 @@ parser.add_argument("--n-samples", type=int, default=100,
 					help="Number of samples to evaluate (default: 100)")
 parser.add_argument("--output-dir", type=str, default=None,
 					help="Optional directory to store detailed metrics and predictions")
-parser.add_argument("--data-path", type=str, default="../../../data/raw/unified-test",
+parser.add_argument("--data-path", type=str, default="../../../data/raw/unified-5k",
 					help="Path to raw parquet hierarchy when testing in raw mode")
-parser.add_argument("--features-path", type=str, default="../../../data/features/selected",
+parser.add_argument("--features-path", type=str, default="../../../data/features/unified-5k/selected",
 					help="Path containing features.parquet and labels.parquet for features mode")
 args = parser.parse_args()
 

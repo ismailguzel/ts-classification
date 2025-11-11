@@ -255,7 +255,7 @@ def main():
     parser = argparse.ArgumentParser(description="AutoTrain Model 1 (binary) with AutoGluon or PyCaret")
     parser.add_argument("--engine", type=str, required=True, choices=["autogluon", "pycaret"],
                         help="AutoML engine to use")
-    parser.add_argument("--features-path", type=str, default="../../../data/features/selected",
+    parser.add_argument("--features-path", type=str, default="../../../data/features/unified-5k/selected",
                         help="Path to features directory")
     parser.add_argument("--test-size", type=float, default=0.2, help="Test size for train/test split")
     parser.add_argument("--random-state", type=int, default=42, help="Random state")

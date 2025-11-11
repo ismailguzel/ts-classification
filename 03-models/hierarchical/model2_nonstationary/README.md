@@ -108,30 +108,30 @@ python train_model2.py --mode raw --classifier shapelet    # Pattern-based
 - `shapelet` - ShapeletTransform only
 
 **Requirements:**
-- Raw data: `../../../data/raw/unified-test/`
-- Time (5-class, ~698 non-stationary samples): 
-  - TimeSeriesForest: ~40 seconds
-  - ROCKET: ~90 seconds
-  - Arsenal: ~2 minutes
-  - All models: ~4-6 minutes
+- Raw data: `../../../data/raw/unified-5k/` (default)
+- Time (5-class, ~2,520 non-stationary samples): 
+  - TimeSeriesForest: ~2-3 minutes
+  - ROCKET: ~5-7 minutes
+  - Arsenal: ~10-15 minutes
+  - All models: ~20-30 minutes
 - Output: `saved_models/model2_nonstationary_classifier.pkl`
 - Parallelization: N_JOBS=-1 (uses all CPU cores)
 
 ### Training - FEATURES Mode
 
 ```bash
-# First: Extract and select features (if not done)
+# First: Extract and select features
 cd ../../../02-preprocessing
-python extract_features.py --input ../data/raw/unified-test --output ../data/features
-python feature_selection.py --input ../data/features --output ../data/features/selected --target primary
+python extract_features.py --input ../data/raw/unified-5k --output ../data/features/unified-5k/allfeatures
+python feature_selection.py --input ../data/features/unified-5k/allfeatures --output ../data/features/unified-5k/selected --target primary
 
 # Then: Train with features
-cd ../03-models/hierarchical/model2_nonstationary
-python train_model2.py --mode features --features-path ../../../data/features/selected
+cd ../model2_nonstationary
+python train_model2.py --mode features --features-path ../../../data/features/unified-5k/selected
 ```
 
 **Requirements:**
-- Features: `../../../data/features/selected/features_primary_*.parquet`
+- Features: `../../../data/features/unified-5k/selected/primary/` (default)
 - Time: ~10-15 minutes (after feature extraction)
 - Output: `saved_models/model2_nonstationary_classifier.pkl`
 - Parallelization: N_JOBS=-1 (uses all CPU cores)

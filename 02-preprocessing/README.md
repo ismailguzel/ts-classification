@@ -31,10 +31,13 @@ This directory contains scripts for:
 #### Option A: Sequential Processing (extract_features.py)
 
 ```bash
-# Extract features with efficient settings
+# Default: unified-5k dataset (quick start)
+python extract_features.py --feature-set efficient --n-jobs 4
+
+# For specific datasets
 python extract_features.py \
     --input ../data/raw/unified-test \
-    --output ../data/features \
+    --output ../data/features/unified-test/allfeatures \
     --feature-set efficient \
     --n-jobs 4
 
@@ -50,10 +53,13 @@ python -u extract_features.py \
 #### Option B: Dask Parallel Processing (extract_dask.py) ⚡ Faster
 
 ```bash
+# Default: unified-5k dataset
+python extract_dask.py --n-workers 4 --threads-per-worker 2
+
 # For larger datasets with Dask distributed computing
 python extract_dask.py \
     --input ../data/raw/unified-20k \
-    --output ../data/features/unified-20k/allfeatures-dask \
+    --output ../data/features/unified-20k/allfeatures \
     --n-workers 55 \
     --threads-per-worker 1 \
     --memory-limit 0
@@ -61,7 +67,7 @@ python extract_dask.py \
 # With scheduler address (if using external Dask cluster)
 python extract_dask.py \
     --input ../data/raw/unified-20k \
-    --output ../data/features/allfeatures-dask \
+    --output ../data/features/unified-20k/allfeatures \
     --scheduler-address tcp://localhost:8786
 ```
 
@@ -97,15 +103,18 @@ python extract_dask.py \
 ### Usage
 
 ```bash
-# Select features using mutual information
+# Default: unified-5k dataset
+python feature_selection.py --method mutual_info --n-features 100 --target all
+
+# For specific datasets
 python feature_selection.py \
-    --input ../data/features/unified-20k/allfeatures \
-    --output ../data/features/unified-20k/selected \
+    --input ../data/features/unified-test/allfeatures \
+    --output ../data/features/unified-test/selected \
     --method mutual_info \
     --n-features 100 \
     --target all
 
-# With logging
+# Larger datasets (20K example with logging)
 python -u feature_selection.py \
     --input ../data/features/unified-20k/allfeatures \
     --output ../data/features/unified-20k/selected \
@@ -127,7 +136,7 @@ python -u feature_selection.py \
 Feature selection creates standardized directories:
 
 ```
-data/features/selected/
+data/features/unified-5k/selected/
 ├── binary/
 │   ├── features.parquet       # Selected features for binary task
 │   ├── labels.parquet          # Binary labels

@@ -331,9 +331,9 @@ class TSFreshFeatureExtractor:
 
 def main():
     parser = argparse.ArgumentParser(description='Extract time series features using TSFresh')
-    parser.add_argument('--input', type=str, default='../data/raw/unified-90k',
-                        help='Input directory with parquet files')
-    parser.add_argument('--output', type=str, default='../data/features',
+    parser.add_argument('--input', type=str, default='../data/raw/unified-5k',
+                        help='Input directory with raw time series parquet files')
+    parser.add_argument('--output', type=str, default='../data/features/unified-5k/allfeatures',
                         help='Output directory for features')
     parser.add_argument('--feature-set', type=str, default='efficient',
                         choices=['minimal', 'efficient', 'comprehensive'],

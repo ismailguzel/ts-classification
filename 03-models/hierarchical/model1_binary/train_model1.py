@@ -57,9 +57,9 @@ def set_series_index(df: pd.DataFrame, context: str) -> pd.DataFrame:
 parser = argparse.ArgumentParser(description='Train Model 1: Binary Classification')
 parser.add_argument('--mode', type=str, default='raw', choices=['raw', 'features'],
                     help='Training mode: raw (sktime) or features (sklearn)')
-parser.add_argument('--data-path', type=str, default='../../../data/raw/unified-90k',
+parser.add_argument('--data-path', type=str, default='../../../data/raw/unified-5k',
                     help='Path to raw time series data')
-parser.add_argument('--features-path', type=str, default='../../../data/features/selected',
+parser.add_argument('--features-path', type=str, default='../../../data/features/unified-5k/selected',
                     help='Path to TSFresh features (for features mode)')
 parser.add_argument('--test-size', type=float, default=0.2,
                     help='Test set size (default: 0.2)')
