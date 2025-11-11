@@ -79,8 +79,8 @@ python train_model2.py --mode raw --classifier minirocket
 
 **Kullanılabilir Classifiers**:
 - TimeSeriesForest (baseline, fast)
-- ROCKET (good balance)
-- Arsenal (ensemble, best accuracy)
+- ROCKET (balanced approach)
+- Arsenal (ensemble)
 
 ### Model 2: 5-Class Classification
 
@@ -100,7 +100,7 @@ python train_model2.py --mode raw --classifier minirocket
 **Kullanılabilir Classifiers**:
 - TimeSeriesForest (baseline, fast)
 - ROCKET (2000 kernels for 5-class)
-- Arsenal (2000 kernels, best accuracy)
+- Arsenal (2000 kernels)
 
 ## Training Modes
 
@@ -234,7 +234,7 @@ python test_model2.py \
 ```
 
 Test scriptleri şunları hesaplar:
-- Accuracy, Precision, Recall, F1-Score
+- Evaluation metrics
 - Confusion matrix
 - Per-class metrics
 - Classification report

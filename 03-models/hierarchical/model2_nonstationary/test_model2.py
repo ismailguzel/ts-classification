@@ -25,6 +25,8 @@ warnings.filterwarnings('ignore')
 
 # Parse arguments
 parser = argparse.ArgumentParser(description='Test Model 2: Non-Stationary 5-Class Classification')
+parser.add_argument('--model-path', type=str, default='saved_models/model2_nonstationary_classifier.pkl',
+                    help='Path to trained model pickle file (default: saved_models/model2_nonstationary_classifier.pkl)')
 parser.add_argument('--n-samples', type=int, default=100,
                     help='Number of samples to test (default: 100)')
 parser.add_argument('--output-dir', type=str, default=None,
@@ -70,20 +72,39 @@ print("MODEL 2 TEST - Non-Stationary 5-Class Classification")
 print("="*80)
 
 # Load model
-model_path = Path('saved_models/model2_nonstationary_classifier.pkl')
-metadata_path = Path('saved_models/model2_metadata.pkl')
+model_path = Path(args.model_path)
 
 if not model_path.exists():
     print("❌ Model not found! Please train first:")
     print("   python train_model2.py")
     exit(1)
 
+# Try to find metadata file (multiple naming conventions)
+metadata_candidates = [
+    model_path.parent / model_path.name.replace('_classifier.pkl', '_metadata.pkl'),  # model2_nonstationary_metadata.pkl
+    model_path.parent / 'model2_metadata.pkl',  # Standard name
+    model_path.parent / 'model2_autotrain_metadata.pkl',  # AutoTrain version
+]
+
+metadata_path = None
+for candidate in metadata_candidates:
+    if candidate.exists():
+        metadata_path = candidate
+        break
+
+if metadata_path is None:
+    print("⚠️  Metadata file not found. Using default settings...")
+    metadata = {'mode': 'raw', 'model_name': 'Unknown', 'accuracy': 0.0, 'n_classes': 5}
+else:
+    print(f"✓ Found metadata: {metadata_path.name}")
+
 print("\n[1/3] Loading model...")
 with open(model_path, 'rb') as f:
     model = pickle.load(f)
 
-with open(metadata_path, 'rb') as f:
-    metadata = pickle.load(f)
+if metadata_path:
+    with open(metadata_path, 'rb') as f:
+        metadata = pickle.load(f)
 
 print(f"✓ Loaded model: {metadata['model_name']}")
 print(f"  Mode: {metadata['mode']}")
@@ -119,9 +140,29 @@ if mode == 'raw':
     
     print(f"Found {len(files)} parquet files")
     
-    # Load and prepare test series
+    # Separate files by category for balanced sampling
+    category_files = {}
+    for fp in files:
+        path_str = str(fp)
+        for cat in CATEGORY_MAPPING.keys():
+            if cat in path_str:
+                if cat not in category_files:
+                    category_files[cat] = []
+                category_files[cat].append(fp)
+                break
+    
+    # Load files from each category for balanced representation
+    files_to_load = []
+    for cat, cat_files in category_files.items():
+        files_to_load.extend(cat_files[:2])  # Take 2 files per category
+    
+    if not files_to_load:
+        files_to_load = files[:5]  # Fallback
+    
+    print(f"Loading {len(files_to_load)} files for balanced test set")
+    
     dfs = []
-    for fp in files[:5]:  # Load first few files for quick test
+    for fp in files_to_load:
         df_part = pd.read_parquet(fp)
         dfs.append(df_part)
     
@@ -133,15 +174,18 @@ if mode == 'raw':
 
     print(f"✓ Filtered to {df_nonstat['series_id'].nunique():,} non-stationary series")
     
-    # Take first N series
-    test_series = []
-    test_labels = []
-    sample_ids = []
+    # Collect samples by category for balanced sampling
+    samples_by_class = {i: [] for i in range(len(CLASS_NAMES))}
     
-    for i, series_id in enumerate(df_nonstat['series_id'].unique()):
-        if i >= args.n_samples:
-            break
+    for series_id in df_nonstat['series_id'].unique():
         series_data = df_nonstat[df_nonstat['series_id'] == series_id].sort_values('time')
+        
+        # Get primary category and map to Model 2 label
+        primary_cat = series_data['primary_category'].iloc[0]
+        if primary_cat not in CATEGORY_MAPPING:
+            continue
+        
+        label = CATEGORY_MAPPING[primary_cat]
         
         # Check for data or value column
         if 'data' in series_data.columns:
@@ -149,18 +193,32 @@ if mode == 'raw':
         elif 'value' in series_data.columns:
             ts_data = series_data['value'].values
         else:
-            ts_data = series_data.iloc[:, 2].values  # Assuming third column is data
+            ts_data = series_data.iloc[:, 2].values
         
-        # Get primary category and map to Model 2 label
-        primary_cat = series_data['primary_category'].iloc[0]
-        if primary_cat in CATEGORY_MAPPING:
-            label = CATEGORY_MAPPING[primary_cat]
-        else:
-            continue
-        
-        test_series.append(ts_data)
-        test_labels.append(label)
-        sample_ids.append(series_id)
+        samples_by_class[label].append((ts_data, label, series_id))
+    
+    # Balance samples across classes
+    samples_per_class = args.n_samples // len(CLASS_NAMES)
+    test_samples = []
+    for class_idx in range(len(CLASS_NAMES)):
+        class_samples = samples_by_class[class_idx][:samples_per_class]
+        test_samples.extend(class_samples)
+    
+    # Add remaining if needed
+    if len(test_samples) < args.n_samples:
+        for class_idx in range(len(CLASS_NAMES)):
+            remaining = args.n_samples - len(test_samples)
+            if remaining <= 0:
+                break
+            extra = samples_by_class[class_idx][samples_per_class:samples_per_class+remaining]
+            test_samples.extend(extra)
+    
+    test_samples = test_samples[:args.n_samples]
+    
+    # Unpack samples
+    test_series = [s[0] for s in test_samples]
+    test_labels = [s[1] for s in test_samples]
+    sample_ids = [s[2] for s in test_samples]
     
     # Prepare data
     fixed_length = metadata.get('fixed_length', 1500)

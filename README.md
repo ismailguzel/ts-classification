@@ -115,8 +115,16 @@ python train_model2.py --mode raw --classifier rocket
 ### 4. Test Models
 
 ```bash
-python test_model1.py --model-path saved_models/model1_binary_*.pkl
-python test_model2.py --model-path saved_models/model2_nonstationary_*.pkl
+# Test with default models
+cd 03-models/hierarchical/model1_binary
+python test_model1.py
+
+cd ../model2_nonstationary
+python test_model2.py
+
+# Test specific models
+python test_model1.py --model-path saved_models/model1_binary_rocket.pkl
+python test_model2.py --model-path saved_models/model2_nonstationary_arsenal.pkl
 ```
 
 ### Alternative Workflows
@@ -213,8 +221,7 @@ bash smoke_test.sh
 ┌─────────────────────────────────────────────────────────────────┐
 │ 5. TESTING & EVALUATION                                        │
 │    • test_model1.py / test_model2.py                           │
-│    • Metrics: Accuracy, Precision, Recall, F1                  │
-│    • Confusion matrices and classification reports             │
+│    • Evaluation metrics and classification reports             │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -224,9 +231,9 @@ bash smoke_test.sh
 
 | Mode | Input | Classifiers | When to Use |
 |------|-------|-------------|-------------|
-| **RAW** | Time series | sktime (ROCKET, Arsenal) | Quick start, best baseline |
+| **RAW** | Time series | sktime (ROCKET, Arsenal) | Quick start, baseline |
 | **FEATURES** | TSFresh features | sklearn (XGBoost, SVM) | Feature analysis, interpretability |
-| **AutoTrain** | TSFresh features | AutoML (AutoGluon, PyCaret) | Production, automated tuning |
+| **AutoTrain** | TSFresh features | AutoML (AutoGluon, PyCaret) | Automated tuning |
 
 See individual README files for detailed configuration options.
 

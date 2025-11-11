@@ -241,19 +241,33 @@ class FeatureSelector:
         # Save labels.parquet (only id and target column)
         std_labels_file = std_dir / 'labels.parquet'
         print(f"Saving standardized labels to: {std_labels_file}")
-        # Ensure 'id' is present
-        if 'id' not in labels_df.columns:
-            labels_df = labels_df.reset_index()
-        # Only keep id and target column
+        
+        # Ensure we have the identifier column (either 'id' or 'series_id')
+        labels_df_copy = labels_df.copy()
+        if 'id' not in labels_df_copy.columns and 'series_id' not in labels_df_copy.columns:
+            # Reset index to get the identifier back as a column
+            labels_df_copy = labels_df_copy.reset_index()
+        
+        # Standardize identifier column name to 'series_id'
+        if 'id' in labels_df_copy.columns and 'series_id' not in labels_df_copy.columns:
+            labels_df_copy = labels_df_copy.rename(columns={'id': 'series_id'})
+        elif labels_df_copy.index.name == 'series_id':
+            labels_df_copy = labels_df_copy.reset_index()
+        
+        # Select columns based on target
         if target == 'binary':
-            label_cols = ['id', 'is_stationary']
+            label_cols = ['series_id', 'is_stationary']
         elif target == 'primary':
-            label_cols = ['id', 'primary_category']
+            label_cols = ['series_id', 'primary_category']
         elif target == 'sub':
-            label_cols = ['id', 'sub_category']
+            label_cols = ['series_id', 'sub_category']
         else:
-            label_cols = ['id'] + [col for col in labels_df.columns if col != 'id']
-        labels_df_std = labels_df[label_cols]
+            # For 'all', keep all columns with series_id
+            label_cols = ['series_id'] + [col for col in labels_df_copy.columns if col != 'series_id']
+        
+        # Filter only existing columns
+        label_cols = [col for col in label_cols if col in labels_df_copy.columns]
+        labels_df_std = labels_df_copy[label_cols]
         labels_df_std.to_parquet(std_labels_file, index=False)
 
         print(f"\n✅ Selected features and standardized files saved successfully!")

@@ -21,14 +21,12 @@ Only operates on series classified as **non-stationary** by Model 1.
 Uses raw time series with specialized time series classifiers:
 - ✅ No feature engineering needed
 - ✅ Fast training
-- ✅ Good baseline performance
 - 🌲 **TimeSeriesForest**: Fast ensemble method
 - 🚀 **ROCKET**: State-of-the-art (2000 kernels for 5-class)
 - 🎯 **Arsenal**: ROCKET-based ensemble (2000 kernels)
 
 ### Mode 2: FEATURES - sklearn classifiers
 Uses TSFresh extracted features with traditional ML:
-- ✅ Potentially higher accuracy
 - ✅ More interpretable features
 - ✅ Faster inference
 - 🌲 **Random Forest**: Robust ensemble
@@ -43,43 +41,29 @@ Uses TSFresh extracted features with traditional ML:
 
 #### 1. TimeSeriesForest
 - **Type**: Interval-based ensemble
-- **Speed**: Fast ⚡⚡⚡
-- **Accuracy**: 80-85%
 - **Use case**: Quick baseline
 
 #### 2. ROCKET
 - **Type**: Convolutional kernel transform
 - **Kernels**: 2000 (optimized for 5-class)
-- **Speed**: Fast ⚡⚡
-- **Accuracy**: 85-88%
-- **Use case**: Balanced performance
+- **Use case**: Balanced approach
 
-#### 3. Arsenal ⭐ Best Accuracy
+#### 3. Arsenal
 - **Type**: ROCKET ensemble (2000 kernels)
-- **Speed**: Moderate ⚡
-- **Accuracy**: 86-90%
-- **Use case**: Highest accuracy
 
 ### FEATURES Mode (sklearn)
 
 #### 1. Random Forest
 - **Type**: Decision tree ensemble
 - **Estimators**: 200
-- **Speed**: Fast ⚡
-- **Use case**: Robust baseline
 
 #### 2. XGBoost
 - **Type**: Gradient boosting
 - **Estimators**: 200
-- **Speed**: Fast ⚡⚡
-- **Performance**: Excellent
-- **Use case**: Best performance
 
 #### 3. SVM (RBF)
 - **Type**: Support vector machine
 - **Kernel**: RBF (for non-linear separation)
-- **Speed**: Moderate ⏱️
-- **Use case**: Complex decision boundaries
 
 ---
 
@@ -94,18 +78,16 @@ cd 03-models/hierarchical/model2_nonstationary
 python train_model2.py --mode raw
 
 # Train specific classifier
-python train_model2.py --mode raw --classifier rocket      # Balanced
-python train_model2.py --mode raw --classifier arsenal     # Best accuracy
-python train_model2.py --mode raw --classifier tsf         # Quick baseline
-python train_model2.py --mode raw --classifier shapelet    # Pattern-based
+python train_model2.py --mode raw --classifier rocket
+python train_model2.py --mode raw --classifier arsenal
+python train_model2.py --mode raw --classifier tsf
 ```
 
 **Available classifiers:**
 - `all` - Train all models (default)
 - `tsf` - TimeSeriesForest only
 - `rocket` - ROCKET only (2000 kernels)
-- `arsenal` - Arsenal only (2000 kernels) ⭐ **Recommended for accuracy**
-- `shapelet` - ShapeletTransform only
+- `arsenal` - Arsenal only (2000 kernels)
 
 **Requirements:**
 - Raw data: `../../../data/raw/unified-5k/` (default)
@@ -139,56 +121,18 @@ python train_model2.py --mode features --features-path ../../../data/features/un
 ### Testing
 
 ```bash
-# Test with 100 samples (default)
+# Test with default model and 100 samples
 python test_model2.py
+
+# Test specific model
+python test_model2.py --model-path saved_models/model2_nonstationary_classifier.pkl
 
 # Test with more samples
 python test_model2.py --n-samples 500
+
+# Test with specific model and more samples
+python test_model2.py --model-path saved_models/model2_nonstationary_rocket.pkl --n-samples 500
 ```
-
----
-
-## 📈 Expected Performance
-
-**Target Accuracy:** 60-75% (5-class is harder than binary)
-
-**Dataset:** 698 non-stationary samples across 5 categories
-
-### RAW Mode Results (~698 non-stationary test samples)
-
-| Classifier | Accuracy | Training Time | Speed | Use Case |
-|------------|----------|---------------|-------|----------|
-| TimeSeriesForest | 60-70% | ~45s | ⚡⚡⚡ | Quick baseline |
-| ROCKET | 65-72% | ~90s | ⚡⚡ | Balanced |
-| **Arsenal** ⭐ | 67-75% | ~2min | ⚡ | **Best accuracy** |
-| Shapelet | 60-70% | ~10min | ⏱️ | Interpretable |
-
-### FEATURES Mode Results (~698 non-stationary test samples)
-
-| Classifier | Accuracy | Training Time | Use Case |
-|------------|----------|---------------|----------|
-| Random Forest | 65-73% | ~10s | Robust baseline |
-| XGBoost | 68-76% | ~15s | Best performance |
-| SVM (RBF) | 63-72% | ~20s | Non-linear patterns |
-
-**Why harder than Model 1?**
-- 5 classes instead of 2
-- Some categories have overlapping characteristics
-- Trends vs structural breaks can be similar
-- Stochastic vs volatility patterns overlap
-
-**Per-Class Performance (typical):**
-- Trend: 70-80% (clear trends, but can overlap with structural breaks)
-- Volatility: 65-75% (distinct GARCH patterns)
-- Stochastic: 55-70% (overlaps with volatility and trends)
-- Anomaly: 70-80% (clear outliers when present)
-- Structural Break: 60-75% (can overlap with trends)
-
-**Recommendations:**
-- 🎯 **Need accuracy?** → Use Arsenal or XGBoost (features)
-- ⚖️ **Balanced?** → Use ROCKET
-- 🏃 **Need speed?** → Use TimeSeriesForest or ROCKET
-- 🔬 **Research?** → Compare all models
 
 ---
 
@@ -234,7 +178,7 @@ CATEGORY_MAPPING = {
 
 Script automatically:
 1. Trains multiple models (depending on mode)
-2. Compares accuracy on test set
+2. Evaluates on test set
 3. Saves best performing model
 4. Stores metadata (mode, params, scaler, mapping, etc.)
 
@@ -249,7 +193,7 @@ saved_models/
 Metadata includes:
 - Model name and type
 - Training mode (raw/features)
-- Accuracy metrics
+- Evaluation metrics
 - Class names and mapping
 - Data shapes and parameters
 - Fixed length (for raw mode)
@@ -270,19 +214,7 @@ Metadata includes:
 - Need interpretable features
 - Want to analyze feature importance
 - Have computational resources for TSFresh
-- Aiming for best possible accuracy
 - Need faster inference time
-
-### Performance Comparison:
-
-| Aspect | RAW Mode | FEATURES Mode |
-|--------|----------|---------------|
-| Setup | ✅ Fast | ⏳ Slow (feature extraction) |
-| Training | ⚡ Fast (~10-20 min) | ⚡ Fast (~10-15 min) |
-| Inference | 🐢 Slower | ⚡⚡ Faster |
-| Accuracy | ✅ Good (60-75%) | ✅ Better (65-76%) |
-| Interpretability | ❌ Limited | ✅ High |
-| Memory | 💾 Higher | 💾 Lower |
 
 ---
 
@@ -308,10 +240,10 @@ python feature_selection.py --target primary
 - Verify primary_category field exists
 - Ensure data generation completed successfully
 
-**Low accuracy (<60%)**
+**Training issues**
 - Check class distribution (should be relatively balanced)
 - Try different mode (raw vs features)
-- Increase dataset size (currently 698 non-stationary)
+- Increase dataset size
 - Tune hyperparameters (n_estimators, num_kernels)
 - Check for NaN/inf values in data
 - 5-class problem is inherently harder than binary
@@ -379,7 +311,7 @@ if not is_stationary:
 After successful Model 2 training:
 
 1. **Review Results**: Check classification report and confusion matrix
-2. **Test Performance**: Run `python test_model2.py`
+2. **Test Model**: Run `python test_model2.py`
 3. **Analyze Confusion**: Which classes are confused? (common: trend/structural_break, stochastic/volatility)
 4. **Compare Modes**: Try both raw and features modes
 5. **Build Pipeline**: Combine Model 1 + Model 2 for hierarchical classification

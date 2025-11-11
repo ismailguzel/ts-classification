@@ -35,11 +35,10 @@ Uses TSFresh extracted features with traditional ML:
 
 #### 2. ROCKET
 - Convolutional kernel transform
-- Balanced speed/accuracy
+- Balanced approach
 
 #### 3. Arsenal
 - ROCKET ensemble
-- Best accuracy
 
 ### FEATURES Mode (sklearn)
 
@@ -65,10 +64,9 @@ cd 03-models/hierarchical/model1_binary
 python train_model1.py --mode raw
 
 # Train specific classifier
-python train_model1.py --mode raw --classifier rocket      # Balanced
-python train_model1.py --mode raw --classifier arsenal     # Best accuracy
-python train_model1.py --mode raw --classifier tsf         # Quick baseline
-python train_model1.py --mode raw --classifier shapelet    # Pattern-based
+python train_model1.py --mode raw --classifier rocket
+python train_model1.py --mode raw --classifier arsenal
+python train_model1.py --mode raw --classifier tsf
 ```
 
 Available classifiers:
@@ -101,11 +99,17 @@ Requirements:
 ### Testing
 
 ```bash
-# Test with 100 samples (default)
+# Test with default model and 100 samples
 python test_model1.py
+
+# Test specific model
+python test_model1.py --model-path saved_models/model1_binary_classifier.pkl
 
 # Test with more samples
 python test_model1.py --n-samples 500
+
+# Test with specific model and more samples
+python test_model1.py --model-path saved_models/model1_binary_rocket.pkl --n-samples 500
 ```
 
 Quick test on a subset to verify model works.
@@ -141,10 +145,10 @@ FEATURES Mode - Data Preparation
 Model Selection
 
 Script automatically:
-1. Trains multiple models (depending on mode)
-2. Compares accuracy on test set
-3. Saves best performing model
-4. Stores metadata (mode, params, scaler, etc.)
+1. Trains AutoML on features
+2. Automatically selects best model
+3. Evaluates on test set
+4. Saves results to `output/`
 
 Output Files
 
@@ -157,7 +161,7 @@ saved_models/
 Metadata includes:
 - Model name and type
 - Training mode (raw/features)
-- Accuracy metrics
+- Evaluation metrics
 - Data shapes and parameters
 - Fixed length (for raw mode)
 - Scaler (if features mode)
@@ -177,19 +181,7 @@ Metadata includes:
 - Need interpretable features
 - Want to analyze feature importance
 - Have computational resources for TSFresh
-- Aiming for best possible accuracy
 - Need faster inference time
-
-### Performance Comparison:
-
-| Aspect | RAW Mode | FEATURES Mode |
-|--------|----------|---------------|
-| Setup | ✅ Fast | ⏳ Slow (feature extraction) |
-| Training | ⚡ Fast (~5-10 min) | ⚡ Fast (~5-10 min) |
-| Inference | 🐢 Slower | ⚡⚡ Faster |
-| Accuracy | ✅ Good (80-87%) | ✅ Better (83-90%) |
-| Interpretability | ❌ Limited | ✅ High |
-| Memory | 💾 Higher | 💾 Lower |
 
 ---
 
@@ -210,10 +202,10 @@ python extract_features.py
 python feature_selection.py --target binary
 ```
 
-**Low accuracy (<75%)**
+**Training issues**
 - Check data quality and label distribution
 - Ensure balanced labels (should be ~50/50)
-- Try different classifier (Arsenal, XGBoost)
+- Try different classifier
 - Increase dataset size
 - Check for NaN/inf values in data
 
@@ -235,7 +227,7 @@ python feature_selection.py --target binary
 After successful Model 1 training:
 
 1. **Review Results**: Check classification report and confusion matrix
-2. **Test Performance**: Run `python test_model1.py`
+2. **Test Model**: Run `python test_model1.py`
 3. **Compare Modes**: Try both raw and features modes
 4. **Proceed to Model 2**: Train 5-class non-stationary classifier
 5. **Build Pipeline**: Combine Model 1 + Model 2 for hierarchical classification

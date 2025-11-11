@@ -1,2 +1,2 @@
 Model,Accuracy,AUC,Recall,Prec.,F1,Kappa,MCC
-Logistic Regression,1.0,1.0,1.0,1.0,1.0,1.0,1.0
+Decision Tree Classifier,1.0,1.0,1.0,1.0,1.0,1.0,1.0

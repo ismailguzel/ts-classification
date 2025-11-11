@@ -25,6 +25,8 @@ warnings.filterwarnings("ignore")
 # CLI
 # ---------------------------------------------------------------------------
 parser = argparse.ArgumentParser(description="Test Model 1: Binary Classification")
+parser.add_argument("--model-path", type=str, default="saved_models/model1_binary_classifier.pkl",
+					help="Path to trained model pickle file (default: saved_models/model1_binary_classifier.pkl)")
 parser.add_argument("--n-samples", type=int, default=100,
 					help="Number of samples to evaluate (default: 100)")
 parser.add_argument("--output-dir", type=str, default=None,
@@ -99,24 +101,44 @@ def prepare_fixed_length(series: np.ndarray, target_length: int) -> np.ndarray:
 
 
 # ---------------------------------------------------------------------------
-# Load model metadata
+# Load model & metadata
 # ---------------------------------------------------------------------------
-print("=" * 80)
-print("MODEL 1 TEST - Binary Classification")
-print("=" * 80)
+print("="*80)
+print("Loading Model 1 (Binary Classification)")
+print("="*80)
 
-model_path = Path("saved_models/model1_binary_classifier.pkl")
-metadata_path = Path("saved_models/model1_metadata.pkl")
+model_path = Path(args.model_path)
 
 if not model_path.exists():
 	print("❌ Model not found. Train before testing: python train_model1.py")
 	raise SystemExit(1)
 
+# Try to find metadata file (multiple naming conventions)
+metadata_candidates = [
+	model_path.parent / model_path.name.replace("_classifier.pkl", "_metadata.pkl"),  # model1_binary_metadata.pkl
+	model_path.parent / "model1_metadata.pkl",  # Standard name
+	model_path.parent / "model1_autotrain_metadata.pkl",  # AutoTrain version
+]
+
+metadata_path = None
+for candidate in metadata_candidates:
+	if candidate.exists():
+		metadata_path = candidate
+		break
+
+if metadata_path is None:
+	print("⚠️  Metadata file not found. Using default settings...")
+	metadata = {"mode": "raw", "model_name": "Unknown", "accuracy": 0.0}
+else:
+	print(f"✓ Found metadata: {metadata_path.name}")
+
 print("\n[1/3] Loading model...")
 with model_path.open("rb") as fh:
 	model = pickle.load(fh)
-with metadata_path.open("rb") as fh:
-	metadata = pickle.load(fh)
+
+if metadata_path:
+	with metadata_path.open("rb") as fh:
+		metadata = pickle.load(fh)
 
 mode = metadata.get("mode", "raw")
 print(f"✓ Loaded model: {metadata.get('model_name', 'Unknown')}")
@@ -145,36 +167,87 @@ if mode == "raw":
 
 	print(f"Found {len(parquet_files)} parquet files")
 
+	# Separate stationary and non-stationary files for balanced sampling
+	# Need to check for exact folder name to avoid matching both "stationary" and non-stationary folders
+	stationary_files = [f for f in parquet_files if "/stationary/" in str(f) or "\\stationary\\" in str(f)]
+	nonstationary_files = [f for f in parquet_files if f not in stationary_files]
+	
+	print(f"  Found {len(stationary_files)} stationary files, {len(nonstationary_files)} non-stationary files")
+	
+	# Load balanced subset from both classes
+	files_to_load = []
+	if stationary_files:
+		files_to_load.extend(stationary_files[:3])  # Load some stationary
+	if nonstationary_files:
+		files_to_load.extend(nonstationary_files[:3])  # Load some non-stationary
+	
+	if not files_to_load:
+		files_to_load = parquet_files[:5]  # Fallback to any files
+	
+	print(f"Loading {len(files_to_load)} files for balanced test set")
+	
 	dfs = []
-	for fp in parquet_files[:5]:  # keep load light for smoke testing
+	for fp in files_to_load:
 		part_df = pd.read_parquet(fp)
 		dfs.append(part_df)
 	raw_df = pd.concat(dfs, ignore_index=True)
 	raw_df = ensure_series_column(raw_df, "Raw evaluation DataFrame")
 
 	fixed_length = metadata.get("fixed_length", 1500)
-	test_series = []
-	test_labels = []
-	sample_ids = []
-
-	for idx, series_id in enumerate(raw_df["series_id"].unique()):
-		if idx >= args.n_samples:
-			break
+	
+	# Collect samples by class for balanced sampling
+	stationary_samples = []
+	nonstationary_samples = []
+	
+	print(f"  Total unique series in loaded files: {raw_df['series_id'].nunique()}")
+	
+	for series_id in raw_df["series_id"].unique():
 		series_df = raw_df[raw_df["series_id"] == series_id].sort_values("time")
+		is_stat = series_df["is_stationary"].iloc[0]
+		
 		if "data" in series_df.columns:
 			values = series_df["data"].to_numpy()
 		elif "value" in series_df.columns:
 			values = series_df["value"].to_numpy()
 		else:
 			values = series_df.iloc[:, 2].to_numpy()
-		label = 0 if series_df["is_stationary"].iloc[0] else 1
-		test_series.append(prepare_fixed_length(values, fixed_length))
-		test_labels.append(label)
-		sample_ids.append(series_id)
+		
+		label = 0 if is_stat else 1
+		sample = (prepare_fixed_length(values, fixed_length), label, series_id)
+		
+		if is_stat:
+			stationary_samples.append(sample)
+		else:
+			nonstationary_samples.append(sample)
+	
+	print(f"  Collected {len(stationary_samples)} stationary, {len(nonstationary_samples)} non-stationary samples")
+	
+	# Balance the samples (50/50 split)
+	samples_per_class = args.n_samples // 2
+	test_samples = []
+	test_samples.extend(stationary_samples[:samples_per_class])
+	test_samples.extend(nonstationary_samples[:samples_per_class])
+	
+	# If we don't have enough, add remaining
+	if len(test_samples) < args.n_samples:
+		remaining = args.n_samples - len(test_samples)
+		test_samples.extend(stationary_samples[samples_per_class:samples_per_class+remaining])
+		test_samples.extend(nonstationary_samples[samples_per_class:samples_per_class+remaining])
+	
+	test_samples = test_samples[:args.n_samples]
+	
+	# Unpack samples
+	test_series = [s[0] for s in test_samples]
+	test_labels = [s[1] for s in test_samples]
+	sample_ids = [s[2] for s in test_samples]
 
 	X_test = np.asarray(test_series).reshape(-1, 1, fixed_length)
 	y_test = np.asarray(test_labels)
 	sample_ids = np.asarray(sample_ids)
+	
+	stat_count = np.sum(y_test == 0)
+	nonstat_count = np.sum(y_test == 1)
+	print(f"  Stationary: {stat_count}, Non-Stationary: {nonstat_count}")
 
 else:
 	features_path = resolve_path(args.features_path)
