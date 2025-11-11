@@ -63,15 +63,17 @@ class FeatureSelector:
         print(f"Loading labels from: {labels_file}")
         labels_df = pd.read_parquet(labels_file)
         
-        # TSFresh outputs features with 'id' as index, but labels have 'series_id'
-        # We need to align them
-        if 'id' in features_df.columns:
-            features_df = features_df.set_index('id')
-        
-        # Rename series_id to id in labels for consistency with features
+        # Standardize identifier column name
+        if 'series_id' in features_df.columns:
+            features_df = features_df.set_index('series_id')
+        elif 'id' in features_df.columns:
+            features_df = features_df.rename(columns={'id': 'series_id'}).set_index('series_id')
+
         if 'series_id' in labels_df.columns:
-            labels_df = labels_df.rename(columns={'series_id': 'id'})
-        
+            labels_df = labels_df.set_index('series_id')
+        elif 'id' in labels_df.columns:
+            labels_df = labels_df.rename(columns={'id': 'series_id'}).set_index('series_id')
+
         return features_df, labels_df
     
     def remove_low_variance(self, X, threshold=0.01):

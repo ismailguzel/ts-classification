@@ -81,8 +81,6 @@ python train_model2.py --mode raw --classifier minirocket
 - TimeSeriesForest (baseline, fast)
 - ROCKET (good balance)
 - Arsenal (ensemble, best accuracy)
-- ShapeletTransform (interpretable)
-- HIVECOTEV2 (most powerful, very slow)
 
 ### Model 2: 5-Class Classification
 

@@ -12,9 +12,18 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
 DATA_PATH="data/raw/unified-20k"
-FEATURES_PATH="data/features/unified-20k/allfeatures"
-SELECTED_FEATURES_PATH="data/features/unified-20k/selected"
+FEATURES_PATH="data/features/smoke-dask"
+SELECTED_FEATURES_PATH="data/features/smoke-dask"
 FALLBACK_DATA_PATH="data/raw/unified-20k"
+
+RUN_FEATURE_EXTRACTION=1
+FEATURE_MAX_FILES=20
+FEATURE_SET="efficient"
+FEATURE_INPUT_PATH=""
+FEATURE_NO_PROGRESS=1
+FEATURE_USE_CLIENT=0
+FEATURE_GATHER_STATS=0
+FEATURE_EXTRACTION_SCRIPT="$SCRIPT_DIR/02-preprocessing/extract_dask.py"
 
 SCENARIOS=("raw" "features")
 N_SAMPLES=100
@@ -22,6 +31,8 @@ CLASSIFIER="rocket"
 WITH_MODEL2=0
 TRAIN_PREVIEW_LINES=120
 TEST_PREVIEW_LINES=60
+
+declare -A FEATURE_DONE=()
 
 normalize_scenarios() {
   declare -ga SCENARIOS=()
@@ -58,6 +69,79 @@ run_and_preview() {
   return $status
 }
 
+run_feature_extraction() {
+  local input_path="$1"
+  local output_path="$2"
+
+  if [[ $RUN_FEATURE_EXTRACTION -eq 0 ]]; then
+    echo "↷ Skipping feature extraction (disabled)"
+    return 0
+  fi
+
+  if [[ -z "$input_path" ]]; then
+    echo "❌ Feature extraction input path not provided" >&2
+    return 1
+  fi
+
+  if [[ ! -d "$input_path" ]]; then
+    echo "❌ Feature extraction input path not found: $input_path" >&2
+    return 1
+  fi
+
+  if [[ ! -f "$FEATURE_EXTRACTION_SCRIPT" ]]; then
+    echo "❌ Feature extraction script not found: $FEATURE_EXTRACTION_SCRIPT" >&2
+    return 1
+  fi
+
+  local input_abs
+  input_abs=$(cd "$input_path" && pwd)
+
+  mkdir -p "$output_path"
+  local output_abs
+  output_abs=$(cd "$output_path" && pwd)
+
+  if [[ -n "${FEATURE_DONE[$output_abs]+x}" ]]; then
+    echo "↷ Feature extraction already executed for $output_abs (skipping)"
+    return 0
+  fi
+
+  rm -f "$output_abs/features.parquet" "$output_abs/labels.parquet" "$output_abs/feature_names.txt"
+  rm -rf "$output_abs/temp_chunks"
+
+  echo "▶ Running feature extraction (input: $input_abs → output: $output_abs)"
+
+  local cmd=(
+    python "$FEATURE_EXTRACTION_SCRIPT"
+    --input "$input_abs"
+    --output "$output_abs"
+    --feature-set "$FEATURE_SET"
+  )
+
+  if [[ -n "$FEATURE_MAX_FILES" && "$FEATURE_MAX_FILES" != "all" && "$FEATURE_MAX_FILES" != "none" ]]; then
+    cmd+=(--max-files "$FEATURE_MAX_FILES")
+  fi
+
+  if [[ $FEATURE_NO_PROGRESS -eq 1 ]]; then
+    cmd+=(--no-progress)
+  fi
+
+  if [[ $FEATURE_USE_CLIENT -eq 0 ]]; then
+    cmd+=(--no-client)
+  fi
+
+  if [[ $FEATURE_GATHER_STATS -eq 1 ]]; then
+    cmd+=(--gather-statistics)
+  fi
+
+  if ! run_and_preview "$TRAIN_PREVIEW_LINES" "${cmd[@]}"; then
+    echo "❌ Feature extraction failed" >&2
+    return 1
+  fi
+
+  FEATURE_DONE[$output_abs]=1
+  echo "✅ Feature extraction completed for $output_abs"
+  return 0
+}
 run_pipeline() {
   local scenario="$1"
   local mode="$2"
@@ -85,6 +169,7 @@ run_pipeline() {
         return 1
       fi
     fi
+    resolved_data="$(cd "$resolved_data" && pwd)"
     echo "✓ Training data available: $resolved_data"
   else
     resolved_features="$features_path"
@@ -92,12 +177,45 @@ run_pipeline() {
       echo "❌ Error: Features path not provided for scenario '$scenario'"
       return 1
     fi
-    if [[ ! -d "$resolved_features" ]]; then
-      echo "❌ Error: Features path not found at $resolved_features"
-      echo "   Extract or adjust features before running this scenario."
+    local extraction_input="$data_path"
+    if [[ -n "$FEATURE_INPUT_PATH" ]]; then
+      extraction_input="$FEATURE_INPUT_PATH"
+    fi
+    if [[ -z "$extraction_input" ]]; then
+      extraction_input="$DATA_PATH"
+    fi
+    if [[ -z "$extraction_input" ]]; then
+      extraction_input="$FALLBACK_DATA_PATH"
+    fi
+    if [[ -z "$extraction_input" ]]; then
+      echo "❌ Unable to determine raw data path for feature extraction" >&2
       return 1
     fi
-    echo "✓ Features path available: $resolved_features"
+
+    if ! run_feature_extraction "$extraction_input" "$resolved_features"; then
+      return 1
+    fi
+
+    if [[ ! -d "$resolved_features" ]]; then
+      echo "❌ Error: Features path not found at $resolved_features"
+      echo "   Feature extraction step did not produce the expected directory."
+      return 1
+    fi
+    resolved_features="$(cd "$resolved_features" && pwd)"
+    if [[ -d "$extraction_input" ]]; then
+      echo "✓ Features generated from: $(cd "$extraction_input" && pwd)"
+    else
+      echo "✓ Features generated from: $extraction_input"
+    fi
+    echo "✓ Features path ready: $resolved_features"
+  fi
+
+  local data_arg=""
+  local features_arg=""
+  if [[ "$mode" == "raw" ]]; then
+    data_arg="$resolved_data"
+  else
+    features_arg="$resolved_features"
   fi
 
   pushd "$SCRIPT_DIR/03-models/hierarchical/model1_binary" >/dev/null
@@ -105,7 +223,7 @@ run_pipeline() {
     if ! run_and_preview "$TRAIN_PREVIEW_LINES" python train_model1.py \
         --mode raw \
         --classifier "$CLASSIFIER" \
-        --data-path "../../../$resolved_data" \
+        --data-path "$data_arg" \
         --test-size 0.2 \
         --random-state 42; then
       echo "❌ Model 1 training failed for scenario '$label'"
@@ -116,7 +234,7 @@ run_pipeline() {
     if ! run_and_preview "$TRAIN_PREVIEW_LINES" python train_model1.py \
         --mode features \
         --classifier "$CLASSIFIER" \
-        --features-path "../../../$resolved_features" \
+        --features-path "$features_arg" \
         --test-size 0.2 \
         --random-state 42; then
       echo "❌ Model 1 training failed for scenario '$label'"
@@ -128,7 +246,14 @@ run_pipeline() {
   echo "✅ Model 1 training completed"
 
   pushd "$SCRIPT_DIR/03-models/hierarchical/model1_binary" >/dev/null
-  if ! run_and_preview "$TEST_PREVIEW_LINES" python test_model1.py --n-samples "$N_SAMPLES"; then
+  local test_cmd=(python test_model1.py --n-samples "$N_SAMPLES")
+  if [[ -n "$data_arg" ]]; then
+    test_cmd+=(--data-path "$data_arg")
+  fi
+  if [[ -n "$features_arg" ]]; then
+    test_cmd+=(--features-path "$features_arg")
+  fi
+  if ! run_and_preview "$TEST_PREVIEW_LINES" "${test_cmd[@]}"; then
     echo "❌ Model 1 testing failed for scenario '$label'"
     popd >/dev/null
     return 1
@@ -147,7 +272,7 @@ run_pipeline() {
       if ! run_and_preview "$TRAIN_PREVIEW_LINES" python train_model2.py \
           --mode raw \
           --classifier "$model2_classifier" \
-          --data-path "../../../$resolved_data" \
+          --data-path "$data_arg" \
           --test-size 0.2 \
           --random-state 42; then
         echo "❌ Model 2 training failed for scenario '$label'"
@@ -158,7 +283,7 @@ run_pipeline() {
       if ! run_and_preview "$TRAIN_PREVIEW_LINES" python train_model2.py \
           --mode features \
           --classifier "$model2_classifier" \
-          --features-path "../../../$resolved_features" \
+          --features-path "$features_arg" \
           --test-size 0.2 \
           --random-state 42; then
         echo "❌ Model 2 training failed for scenario '$label'"
@@ -167,7 +292,15 @@ run_pipeline() {
       fi
     fi
 
-    if ! run_and_preview "$TEST_PREVIEW_LINES" python test_model2.py --n-samples "$N_SAMPLES"; then
+  local test2_cmd=(python test_model2.py --n-samples "$N_SAMPLES")
+    if [[ -n "$data_arg" ]]; then
+      test2_cmd+=(--data-path "$data_arg")
+    fi
+    if [[ -n "$features_arg" ]]; then
+      test2_cmd+=(--features-path "$features_arg")
+    fi
+
+    if ! run_and_preview "$TEST_PREVIEW_LINES" "${test2_cmd[@]}"; then
       echo "❌ Model 2 testing failed for scenario '$label'"
       popd >/dev/null
       return 1
@@ -198,6 +331,24 @@ while [[ $# -gt 0 ]]; do
       FEATURES_PATH="$2"; shift 2 ;;
     --selected-features-path)
       SELECTED_FEATURES_PATH="$2"; shift 2 ;;
+    --feature-input-path)
+      FEATURE_INPUT_PATH="$2"; shift 2 ;;
+    --feature-max-files)
+      FEATURE_MAX_FILES="$2"; shift 2 ;;
+    --feature-set)
+      FEATURE_SET="$2"; shift 2 ;;
+    --skip-feature-extraction)
+      RUN_FEATURE_EXTRACTION=0; shift 1 ;;
+    --feature-use-client)
+      FEATURE_USE_CLIENT=1; shift 1 ;;
+    --feature-no-client)
+      FEATURE_USE_CLIENT=0; shift 1 ;;
+    --feature-progress)
+      FEATURE_NO_PROGRESS=0; shift 1 ;;
+    --feature-no-progress)
+      FEATURE_NO_PROGRESS=1; shift 1 ;;
+    --feature-gather-statistics)
+      FEATURE_GATHER_STATS=1; shift 1 ;;
     --n-samples)
       N_SAMPLES="$2"; shift 2 ;;
     --classifier)
@@ -211,6 +362,15 @@ while [[ $# -gt 0 ]]; do
       echo "  --data-path PATH                   Raw data directory"
       echo "  --features-path PATH               Full feature directory"
       echo "  --selected-features-path PATH      Selected feature directory"
+  echo "  --feature-input-path PATH           Raw data path for feature extraction"
+  echo "  --feature-max-files INT            Limit files during feature extraction (default: $FEATURE_MAX_FILES)"
+  echo "  --feature-set NAME                 TSFresh feature set (default: $FEATURE_SET)"
+  echo "  --skip-feature-extraction          Skip feature engineering step"
+  echo "  --feature-use-client               Launch a local Dask client"
+  echo "  --feature-no-client                Disable Dask client (default)"
+  echo "  --feature-progress                 Show TSFresh progress bars"
+  echo "  --feature-no-progress              Hide TSFresh progress bars (default)"
+  echo "  --feature-gather-statistics        Gather parquet metadata statistics"
       echo "  --n-samples INT                    Samples for quick testing (default: $N_SAMPLES)"
       echo "  --classifier NAME                  Model 1 classifier (default: $CLASSIFIER)"
       echo "  --with-model2                      Include Model 2 smoke tests"
@@ -233,6 +393,30 @@ echo "SMOKE TEST: Hierarchical Time Series Classification"
 echo "Scenarios: ${SCENARIOS[*]}"
 echo "Classifier: $CLASSIFIER"
 echo "Model 2 enabled: ${WITH_MODEL2}" 
+if [[ $RUN_FEATURE_EXTRACTION -eq 1 ]]; then
+  max_desc="$FEATURE_MAX_FILES"
+  if [[ -z "$max_desc" || "$max_desc" == "none" ]]; then
+    max_desc="auto"
+  fi
+  echo "Feature extraction: enabled (max_files=$max_desc, set=$FEATURE_SET)"
+else
+  echo "Feature extraction: skipped"
+fi
+if [[ -n "$FEATURE_INPUT_PATH" ]]; then
+  feature_input_display="$FEATURE_INPUT_PATH"
+else
+  feature_input_display="$DATA_PATH"
+fi
+if [[ -d "$feature_input_display" ]]; then
+  feature_input_display="$(cd "$feature_input_display" && pwd)"
+fi
+echo "Feature input path: $feature_input_display"
+
+feature_output_display="$FEATURES_PATH"
+if [[ -d "$feature_output_display" ]]; then
+  feature_output_display="$(cd "$feature_output_display" && pwd)"
+fi
+echo "Feature output path: $feature_output_display"
 echo "================================================================================"
 
 if ! python -c "import pandas" 2>/dev/null; then
@@ -258,14 +442,14 @@ for scenario in "${SCENARIOS[@]}"; do
       run_pipeline "raw" "raw" "$DATA_PATH" "" "Raw time series" || exit 1
       ;;
     features|full|fullfeatures)
-      run_pipeline "$scenario" "features" "" "$FEATURES_PATH" "Full feature set" || exit 1
+      run_pipeline "$scenario" "features" "$DATA_PATH" "$FEATURES_PATH" "Full feature set" || exit 1
       ;;
     selected|selectedfeatures|selected-features)
       path_to_use="$SELECTED_FEATURES_PATH"
       if [[ -z "$path_to_use" ]]; then
         path_to_use="$FEATURES_PATH"
       fi
-      run_pipeline "$scenario" "features" "" "$path_to_use" "Selected feature set" || exit 1
+      run_pipeline "$scenario" "features" "$DATA_PATH" "$path_to_use" "Selected feature set" || exit 1
       unset path_to_use
       ;;
     *)

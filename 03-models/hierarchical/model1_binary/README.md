@@ -31,15 +31,15 @@ Uses TSFresh extracted features with traditional ML:
 
 #### 1. TimeSeriesForest
 - Interval-based ensemble
+- Fast baseline
 
 #### 2. ROCKET
 - Convolutional kernel transform
+- Balanced speed/accuracy
 
 #### 3. Arsenal
 - ROCKET ensemble
-
-#### 4. ShapeletTransform
-- Pattern-based
+- Best accuracy
 
 ### FEATURES Mode (sklearn)
 
@@ -76,7 +76,6 @@ Available classifiers:
 - `tsf`
 - `rocket`
 - `arsenal`
-- `shapelet`
 
 Requirements:
 - Raw data: `../../../data/raw/unified-test/`
@@ -122,7 +121,7 @@ Quick test on a subset to verify model works.
 RAW Mode - Data Preparation
 
 1. **Data Source**: Parquet files with metadata
-   - Column detection: 'series_id' or 'id'
+      - Column detection: 'series_id'
    - Data column: 'data' or 'value'
    - Label from: 'is_stationary' metadata
 2. **Format**: Univariate time series
@@ -293,7 +292,7 @@ To change parallelization, edit this single variable.
 ### Data Format
 
 The code automatically detects:
-- **Column names**: 'series_id' or 'id' for series identifier
+- **Column names**: 'series_id' for series identifier
 - **Data columns**: 'data' or 'value' for time series values
 - **Labels**: 'is_stationary' metadata (True/False)
 

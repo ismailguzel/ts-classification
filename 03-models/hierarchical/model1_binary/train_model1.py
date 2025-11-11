@@ -40,6 +40,19 @@ import json
 from datetime import datetime
 warnings.filterwarnings('ignore')
 
+
+def ensure_series_column(df: pd.DataFrame, context: str) -> pd.DataFrame:
+    if 'series_id' in df.columns:
+        return df
+    if 'id' in df.columns:
+        return df.rename(columns={'id': 'series_id'})
+    raise ValueError(f"{context} requires a 'series_id' column; columns: {list(df.columns)[:5]}")
+
+
+def set_series_index(df: pd.DataFrame, context: str) -> pd.DataFrame:
+    df = ensure_series_column(df, context)
+    return df.set_index('series_id')
+
 # Parse arguments
 parser = argparse.ArgumentParser(description='Train Model 1: Binary Classification')
 parser.add_argument('--mode', type=str, default='raw', choices=['raw', 'features'],
@@ -327,78 +340,47 @@ else:
     features_path = Path(args.features_path)
 
     # Try new standard filenames first
-    features_file = features_path / 'features.parquet'
-    labels_file = features_path / 'labels.parquet'
+    candidate_pairs = [
+        ("standard", features_path / 'features.parquet', features_path / 'labels.parquet'),
+        ("binary", features_path / 'binary' / 'features.parquet', features_path / 'binary' / 'labels.parquet'),
+        ("legacy", features_path / 'features_binary_mutual_info.parquet', features_path / 'labels_binary.parquet'),
+    ]
 
-    if features_file.exists() and labels_file.exists():
-        print(f"✓ Found features: {features_file}")
-        print(f"✓ Found labels: {labels_file}")
-    else:
-        # Fallback to legacy names (selected features)
-        features_file = features_path / 'features_binary_mutual_info.parquet'
-        labels_file = features_path / 'labels_binary.parquet'
-        if not features_file.exists() or not labels_file.exists():
-            print(f"❌ Error: Features or labels file not found in {features_path}")
-            print(f"    Please extract features first:")
-            print(f"    cd ../../../02-preprocessing")
-            print(f"    python extract_features.py")
-            print(f"    python feature_selection.py --target binary")
-            exit(1)
-        print(f"✓ Found selected features: {features_file}")
-        print(f"✓ Found selected labels: {labels_file}")
+    X_df = None
+    labels_df = None
+    source_label = None
+    for name, feat_file, lab_file in candidate_pairs:
+        if feat_file.exists() and lab_file.exists():
+            print(f"✓ Using {name} features: {feat_file}")
+            print(f"✓ Using {name} labels: {lab_file}")
+            X_df = pd.read_parquet(feat_file)
+            labels_df = pd.read_parquet(lab_file)
+            source_label = name
+            break
 
-    # Load features and labels
-    X_df = pd.read_parquet(features_file)
-    labels_df = pd.read_parquet(labels_file)
+    if X_df is None or labels_df is None:
+        print(f"❌ Error: Features or labels file not found in {features_path}")
+        print("   Expected standard (features.parquet + labels.parquet), binary/ directory,"
+              " or legacy mutual-info selection.")
+        exit(1)
 
-    # TSFresh outputs features with 'id' as index, labels have 'id' or 'series_id' column
-    if 'id' in X_df.columns:
-        X_df = X_df.set_index('id')
+    X_df = set_series_index(X_df, f"{source_label} features table")
+    labels_df = ensure_series_column(labels_df, f"{source_label} labels table")
+    labels_df = labels_df.set_index('series_id')
+    labels_df = labels_df.reindex(X_df.index)
 
-    # Convert labels (is_stationary: True=0, False=1)
+    if labels_df.isnull().any().any():
+        missing_ids = labels_df.index[labels_df.isnull().any(axis=1)].tolist()
+        print(f"❌ Error: Missing labels for series IDs: {missing_ids[:5]}")
+        exit(1)
+
     if 'is_stationary' in labels_df.columns:
         labels = (labels_df['is_stationary'] == False).astype(int).values
     elif 'label' in labels_df.columns:
-        labels = labels_df['label'].values
+        labels = labels_df['label'].astype(int).values
     else:
-        # Try standardized per-target subdirectory for binary
-        bin_dir = features_path / 'binary'
-        alt_feat = bin_dir / 'features.parquet'
-        alt_lab = bin_dir / 'labels.parquet'
-        if alt_feat.exists() and alt_lab.exists():
-            print("⚠️  'is_stationary' not found in labels; trying binary standardized files in 'binary/'...")
-            X_df = pd.read_parquet(alt_feat)
-            labels_df = pd.read_parquet(alt_lab)
-            if 'id' in X_df.columns:
-                X_df = X_df.set_index('id')
-            if 'is_stationary' in labels_df.columns:
-                labels = (labels_df['is_stationary'] == False).astype(int).values
-            elif 'label' in labels_df.columns:
-                labels = labels_df['label'].values
-            else:
-                print("❌ Error: Could not find label column in binary labels file.")
-                exit(1)
-        else:
-            # Fallback to legacy names within this branch as a last resort
-            legacy_feat = features_path / 'features_binary_mutual_info.parquet'
-            legacy_lab = features_path / 'labels_binary.parquet'
-            if legacy_feat.exists() and legacy_lab.exists():
-                print("⚠️  'is_stationary' not found; falling back to legacy binary files...")
-                X_df = pd.read_parquet(legacy_feat)
-                labels_df = pd.read_parquet(legacy_lab)
-                if 'id' in X_df.columns:
-                    X_df = X_df.set_index('id')
-                if 'is_stationary' in labels_df.columns:
-                    labels = (labels_df['is_stationary'] == False).astype(int).values
-                elif 'label' in labels_df.columns:
-                    labels = labels_df['label'].values
-                else:
-                    print("❌ Error: Could not find label column in legacy labels file.")
-                    exit(1)
-            else:
-                print(f"❌ Error: Could not find label column in labels file.")
-                print(f"   Tried standardized root, standardized 'binary/' and legacy filenames.")
-                exit(1)
+        print("❌ Error: Labels file must include 'is_stationary' or 'label' column.")
+        exit(1)
 
     print(f"✓ Loaded features: {X_df.shape}")
     print(f"✓ Number of features: {X_df.shape[1]}")

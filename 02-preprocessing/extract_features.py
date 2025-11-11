@@ -183,6 +183,7 @@ class TSFreshFeatureExtractor:
         
         # Impute missing values
         features = impute(features)
+        features.index.name = 'series_id'
         
         return features
     
@@ -306,7 +307,10 @@ class TSFreshFeatureExtractor:
         # Save features
         features_file = output_path / 'features.parquet'
         print(f"\nSaving features to: {features_file}")
-        features.reset_index().to_parquet(features_file, index=False)
+        features_to_save = features.copy()
+        if features_to_save.index.name != 'series_id':
+            features_to_save.index.name = 'series_id'
+        features_to_save.reset_index().to_parquet(features_file, index=False)
         
         # Save labels
         labels_file = output_path / 'labels.parquet'

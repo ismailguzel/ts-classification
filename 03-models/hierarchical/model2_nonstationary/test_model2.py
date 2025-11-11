@@ -8,6 +8,8 @@ Usage:
     python test_model2.py [--n-samples 100]
 """
 
+# fmt: off
+
 import pandas as pd
 import numpy as np
 import pickle
@@ -17,6 +19,8 @@ import argparse
 import warnings
 import json
 from datetime import datetime
+
+# fmt: on
 warnings.filterwarnings('ignore')
 
 # Parse arguments
@@ -25,6 +29,10 @@ parser.add_argument('--n-samples', type=int, default=100,
                     help='Number of samples to test (default: 100)')
 parser.add_argument('--output-dir', type=str, default=None,
                     help='Directory to store detailed predictions and metrics')
+parser.add_argument('--data-path', type=str, default='../../../data/raw/unified-test',
+                    help='Path to raw parquet files for raw mode testing')
+parser.add_argument('--features-path', type=str, default='../../../data/features/selected',
+                    help='Directory containing features/labels parquet files for features mode')
 
 args = parser.parse_args()
 
@@ -41,6 +49,21 @@ def safe_predict_proba(model, X):
             print(f"⚠️  predict_proba unavailable: {exc}")
             return None
     return None
+
+
+def ensure_series_column(df: pd.DataFrame, context: str) -> pd.DataFrame:
+    if 'series_id' in df.columns:
+        return df
+    if 'id' in df.columns:
+        return df.rename(columns={'id': 'series_id'})
+    raise ValueError(f"{context} requires a 'series_id' column; columns: {list(df.columns)[:5]}")
+
+
+def resolve_path(path_str: str) -> Path:
+    path = Path(path_str).expanduser()
+    if not path.is_absolute():
+        path = (Path.cwd() / path).resolve()
+    return path
 
 print("="*80)
 print("MODEL 2 TEST - Non-Stationary 5-Class Classification")
@@ -81,8 +104,8 @@ mode = metadata['mode']
 
 if mode == 'raw':
     # RAW MODE: Load time series
-    data_path = Path('../../../data/raw/unified-test')
-    
+    data_path = resolve_path(args.data_path)
+
     if not data_path.exists():
         print(f"❌ Error: Test data not found: {data_path}")
         exit(1)
@@ -103,24 +126,22 @@ if mode == 'raw':
         dfs.append(df_part)
     
     df = pd.concat(dfs, ignore_index=True)
+    df = ensure_series_column(df, "Raw evaluation DataFrame")
     
     # Filter only NON-STATIONARY series
     df_nonstat = df[df['is_stationary'] == False].copy()
-    
-    # Detect id column name
-    id_col = 'id' if 'id' in df_nonstat.columns else 'series_id'
-    
-    print(f"✓ Filtered to {df_nonstat[id_col].nunique():,} non-stationary series")
+
+    print(f"✓ Filtered to {df_nonstat['series_id'].nunique():,} non-stationary series")
     
     # Take first N series
     test_series = []
     test_labels = []
     sample_ids = []
     
-    for i, series_id in enumerate(df_nonstat[id_col].unique()):
+    for i, series_id in enumerate(df_nonstat['series_id'].unique()):
         if i >= args.n_samples:
             break
-        series_data = df_nonstat[df_nonstat[id_col] == series_id].sort_values('time')
+        series_data = df_nonstat[df_nonstat['series_id'] == series_id].sort_values('time')
         
         # Check for data or value column
         if 'data' in series_data.columns:
@@ -160,35 +181,62 @@ if mode == 'raw':
 
 else:
     # FEATURES MODE: Load TSFresh features
-    features_path = Path('../../../data/features/selected')
-    features_file = features_path / 'features_primary_mutual_info.parquet'
-    labels_file = features_path / 'labels_primary.parquet'
-    
-    if not features_file.exists():
-        print(f"❌ Error: Features file not found: {features_file}")
+    features_path = resolve_path(args.features_path)
+
+    candidate_pairs = [
+        ("standard", features_path / 'features.parquet', features_path / 'labels.parquet'),
+        ("primary", features_path / 'primary' / 'features.parquet', features_path / 'primary' / 'labels.parquet'),
+        ("legacy", features_path / 'features_primary_mutual_info.parquet', features_path / 'labels_primary.parquet'),
+    ]
+
+    X_df = None
+    labels_df = None
+    source_label = None
+    for name, feat_file, lab_file in candidate_pairs:
+        if feat_file.exists() and lab_file.exists():
+            print(f"✓ Using {name} features: {feat_file}")
+            print(f"✓ Using {name} labels: {lab_file}")
+            X_df = pd.read_parquet(feat_file)
+            labels_df = pd.read_parquet(lab_file)
+            source_label = name
+            break
+
+    if X_df is None or labels_df is None:
+        print(f"❌ Error: Could not locate feature/label parquet pair under {features_path}")
+        print("   Expected standard (features.parquet + labels.parquet), primary/ subdirectory,"
+              " or legacy mutual-info selection.")
         exit(1)
-    
-    # Load features and labels
-    X_df = pd.read_parquet(features_file)
-    labels_df = pd.read_parquet(labels_file)
-    
-    # Set index to id
-    if 'id' in X_df.columns:
-        X_df = X_df.set_index('id')
-    
-    # Filter only NON-STATIONARY series
-    nonstat_mask = labels_df['is_stationary'] == False
-    X_df = X_df[nonstat_mask]
-    labels_df = labels_df[nonstat_mask]
-    
-    # Take first N samples
-    X_df = X_df.head(args.n_samples)
-    labels_df = labels_df.head(args.n_samples)
-    
-    # Map primary categories to Model 2 labels
+
+    X_df = ensure_series_column(X_df, f"{source_label} features table")
+    labels_df = ensure_series_column(labels_df, f"{source_label} labels table")
+
+    X_df = X_df.set_index('series_id')
+    labels_df = labels_df.set_index('series_id')
+
+    if 'is_stationary' in labels_df.columns:
+        nonstat_mask = labels_df['is_stationary'] == False
+    elif 'stationary_flag' in labels_df.columns:
+        nonstat_mask = labels_df['stationary_flag'] == False
+    else:
+        print("❌ Error: Could not find a stationary indicator column in labels table")
+        exit(1)
+
+    X_df = X_df[nonstat_mask].head(args.n_samples)
+    labels_df = labels_df.loc[X_df.index]
+
+    if labels_df.isnull().any().any():
+        missing_ids = labels_df.index[labels_df.isnull().any(axis=1)].tolist()
+        print(f"❌ Error: Missing label entries for series IDs: {missing_ids[:5]}")
+        exit(1)
+
+    if 'primary_category' not in labels_df.columns:
+        print("❌ Error: 'primary_category' column missing in labels table")
+        exit(1)
+
     y_test = labels_df['primary_category'].map(CATEGORY_MAPPING).values
-    
-    # Scale features using saved scaler
+
+    print(f"✓ Loaded features: {X_df.shape}")
+
     scaler = metadata.get('scaler')
     if scaler is not None:
         X_test = scaler.transform(X_df.values)
@@ -208,14 +256,17 @@ print(f"\n✓ Test Accuracy: {100*accuracy:.2f}%")
 
 print("\nClassification Report:")
 report_text = classification_report(
-    y_test, y_pred,
+    y_test,
+    y_pred,
+    labels=list(range(len(CLASS_NAMES))),
     target_names=CLASS_NAMES,
-    digits=4
+    digits=4,
+    zero_division=0
 )
 print(report_text)
 
 print("\nConfusion Matrix:")
-cm = confusion_matrix(y_test, y_pred)
+cm = confusion_matrix(y_test, y_pred, labels=list(range(len(CLASS_NAMES))))
 print(f"{'':20s} " + " ".join([f"{name[:8]:>8s}" for name in CLASS_NAMES]))
 for i, name in enumerate(CLASS_NAMES):
     row = " ".join([f"{cm[i,j]:8d}" for j in range(len(CLASS_NAMES))])
@@ -224,6 +275,7 @@ for i, name in enumerate(CLASS_NAMES):
 report_dict = classification_report(
     y_test,
     y_pred,
+    labels=list(range(len(CLASS_NAMES))),
     target_names=CLASS_NAMES,
     output_dict=True,
     zero_division=0

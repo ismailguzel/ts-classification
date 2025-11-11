@@ -25,7 +25,6 @@ Uses raw time series with specialized time series classifiers:
 - 🌲 **TimeSeriesForest**: Fast ensemble method
 - 🚀 **ROCKET**: State-of-the-art (2000 kernels for 5-class)
 - 🎯 **Arsenal**: ROCKET-based ensemble (2000 kernels)
-- 🔍 **ShapeletTransform**: Pattern-based classification
 
 ### Mode 2: FEATURES - sklearn classifiers
 Uses TSFresh extracted features with traditional ML:
@@ -60,12 +59,6 @@ Uses TSFresh extracted features with traditional ML:
 - **Speed**: Moderate ⚡
 - **Accuracy**: 86-90%
 - **Use case**: Highest accuracy
-
-#### 4. ShapeletTransform
-- **Type**: Pattern-based
-- **Speed**: Slow ⏱️
-- **Accuracy**: 82-86%
-- **Use case**: Interpretable patterns
 
 ### FEATURES Mode (sklearn)
 
@@ -205,7 +198,7 @@ python test_model2.py --n-samples 500
 
 1. **Filtering**: Only non-stationary series (is_stationary = False)
 2. **Data Source**: Parquet files with metadata
-   - Column detection: 'series_id' or 'id'
+    - Column detection: 'series_id'
    - Data column: 'data' or 'value'
    - Label from: 'primary_category' metadata
 3. **Format**: Univariate time series
@@ -419,7 +412,7 @@ To change parallelization, edit this single variable.
 ### Data Format
 
 The code automatically detects:
-- **Column names**: 'series_id' or 'id' for series identifier
+- **Column names**: 'series_id' for series identifier
 - **Data columns**: 'data' or 'value' for time series values
 - **Labels**: 'primary_category' metadata (trend, volatility, stochastic, anomaly, structural_break)
 

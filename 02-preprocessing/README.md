@@ -16,7 +16,8 @@ This directory contains scripts for:
 
 ```
 02-preprocessing/
-├── extract_features.py        # TSFresh feature extraction
+├── extract_features.py        # TSFresh feature extraction (sequential)
+├── extract_dask.py            # TSFresh feature extraction (Dask parallel)
 ├── feature_selection.py       # Feature selection methods
 └── README.md                   # This file
 ```
@@ -27,6 +28,8 @@ This directory contains scripts for:
 
 ### 1. Extract Features with TSFresh
 
+#### Option A: Sequential Processing (extract_features.py)
+
 ```bash
 # Extract features with efficient settings
 python extract_features.py \
@@ -35,32 +38,49 @@ python extract_features.py \
     --feature-set efficient \
     --n-jobs 4
 
-# For larger datasets
-python extract_features.py \
-    --input ../data/raw/unified-5k \
-    --output ../data/features/unified-5k \
+# For larger datasets (20K example)
+python -u extract_features.py \
+    --input ../data/raw/unified-20k \
+    --output ../data/features/unified-20k/allfeatures \
+    --chunk-size 30 \
     --feature-set efficient \
-    --n-jobs 8
+    --n-jobs 110 2>&1 | tee extraction-20k.out
 ```
 
+#### Option B: Dask Parallel Processing (extract_dask.py) ⚡ Faster
+
+```bash
+# For larger datasets with Dask distributed computing
+python extract_dask.py \
+    --input ../data/raw/unified-20k \
+    --output ../data/features/unified-20k/allfeatures-dask \
+    --n-workers 55 \
+    --threads-per-worker 1 \
+    --memory-limit 0
+
+# With scheduler address (if using external Dask cluster)
+python extract_dask.py \
+    --input ../data/raw/unified-20k \
+    --output ../data/features/allfeatures-dask \
+    --scheduler-address tcp://localhost:8786
 ```
-cd ../02-preprocessing/ && python -u extract_features.py     --input ./data/raw/unified-20k     --output ../data/features/unified-20k/allfeatures     --chunk-size 30  --feature-set efficient     --n-jobs 110 2>&1 | tee extraction-20k.out
 
-python extract_dask.py --input ../data/raw/uni
-fied-20k --output ../data/features/allfeatures-dask --n-workers 55 --
-threads-per-worker 1 --memory-limit=0
-
-
-```
-
-Options:
+**extract_features.py Options:**
 - `--feature-set`: `minimal`, `efficient`, `comprehensive`
 - `--n-jobs`: Number of parallel processes
+- `--chunk-size`: Files per chunk (default: 10)
 
-Output:
-- `../data/features/features.parquet`
-- `../data/features/labels.parquet`
-- `../data/features/feature_names.txt`
+**extract_dask.py Options:**
+- `--feature-set`: `minimal`, `efficient`, `comprehensive`
+- `--n-workers`: Number of Dask workers
+- `--threads-per-worker`: Threads per worker
+- `--memory-limit`: Memory limit per worker (0 = unlimited)
+- `--scheduler-address`: External Dask scheduler (optional)
+
+**Output (both methods):**
+- `features.parquet` - Extracted features
+- `labels.parquet` - Target labels
+- `feature_names.txt` - Feature names list
 
 ## Feature Selection
 
@@ -79,14 +99,20 @@ Output:
 ```bash
 # Select features using mutual information
 python feature_selection.py \
-    --input ../data/features/allfeatures-dask \
-    --output ../data/features/selected-dask \
+    --input ../data/features/unified-20k/allfeatures \
+    --output ../data/features/unified-20k/selected \
     --method mutual_info \
     --n-features 100 \
     --target all
-```
 
-cd ../02-preprocessing/ && python -u feature_selection.py     --input ../data/features/unified-20k/allfeatures     --output ../data/features/unified-20k/selected  --method mutual_info   --n-features 100  --target all  2>&1 | tee selection-20k.out
+# With logging
+python -u feature_selection.py \
+    --input ../data/features/unified-20k/allfeatures \
+    --output ../data/features/unified-20k/selected \
+    --method mutual_info \
+    --n-features 100 \
+    --target all 2>&1 | tee selection-20k.out
+```
 
 
 ### Target Options

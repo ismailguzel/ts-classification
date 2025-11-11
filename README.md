@@ -38,7 +38,8 @@ hierarchical-ts-classification/
 │   └── jobs-slurm/              # Optional SLURM job scripts
 │
 ├── 02-preprocessing/            # Feature engineering (OPTIONAL)
-│   ├── extract_features.py     # TSFresh feature extraction
+│   ├── extract_features.py     # TSFresh feature extraction (sequential)
+│   ├── extract_dask.py          # TSFresh feature extraction (Dask parallel)
 │   ├── feature_selection.py    # Feature selection methods
 │   └── README.md                # Preprocessing docs
 │
@@ -131,9 +132,28 @@ python train_model1.py --mode features
 
 **AutoTrain Mode** (AutoML):
 ```bash
-# After feature extraction
-python autotrain_models1.py --engine autogluon
+# After feature extraction and selection
+cd 03-models/hierarchical/model1_binary
+
+# Using AutoGluon (recommended)
+python autotrain_models1.py \
+    --engine autogluon \
+    --features-path ../../../data/features/selected \
+    --time-limit 3600 \
+    --presets medium_quality_faster_train
+
+# Using PyCaret (alternative)
+python autotrain_models1.py \
+    --engine pycaret \
+    --features-path ../../../data/features/selected \
+    --folds 5
+
+# Model 2 AutoTrain
+cd ../model2_nonstationary
+python autotrain_models2.py --engine autogluon --features-path ../../../data/features/selected
 ```
+
+**Note:** AutoTrain requires feature extraction first (see 02-preprocessing/).
 
 See individual README files for detailed options and parameters.
 
@@ -156,7 +176,8 @@ bash smoke_test.sh
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
 │ 2. PREPROCESSING (02-preprocessing/) [OPTIONAL]                │
-│    • extract_features.py → TSFresh features                    │
+│    • extract_features.py → TSFresh features (sequential)       │
+│    • extract_dask.py → TSFresh features (Dask parallel)        │
 │    • feature_selection.py → Select relevant features           │
 │    └─→ Only for FEATURES/AutoTrain modes                       │
 └─────────────────────────────────────────────────────────────────┘

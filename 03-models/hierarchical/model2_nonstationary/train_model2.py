@@ -51,6 +51,18 @@ warnings.filterwarnings('ignore')
 import json
 from datetime import datetime
 
+
+def ensure_series_column(df: pd.DataFrame, context: str) -> pd.DataFrame:
+    if 'series_id' in df.columns:
+        return df
+    if 'id' in df.columns:
+        return df.rename(columns={'id': 'series_id'})
+    raise ValueError(f"{context} requires a 'series_id' column; columns: {list(df.columns)[:5]}")
+
+
+def set_series_index(df: pd.DataFrame, context: str) -> pd.DataFrame:
+    df = ensure_series_column(df, context)
+    return df.set_index('series_id')
 # Parse arguments
 parser = argparse.ArgumentParser(description='Train Model 2: Non-Stationary 5-Class Classification')
 parser.add_argument('--mode', type=str, default='raw', choices=['raw', 'features'],
@@ -288,41 +300,53 @@ else:
     print("\n[1/6] Loading TSFresh features...")
     
     features_path = Path(args.features_path)
-    features_file = features_path / 'features_primary_mutual_info.parquet'
-    labels_file = features_path / 'labels_primary.parquet'
-    
-    if not features_file.exists():
-        print(f"❌ Error: Features file not found: {features_file}")
-        print(f"    Please extract features first:")
-        print(f"    cd ../../../02-preprocessing")
-        print(f"    python extract_features.py")
-        print(f"    python feature_selection.py --target primary")
+
+    candidate_pairs = [
+        (features_path / 'features.parquet', features_path / 'labels.parquet'),
+        (features_path / 'features_primary_mutual_info.parquet', features_path / 'labels_primary.parquet'),
+        (features_path / 'primary/features.parquet', features_path / 'primary/labels.parquet')
+    ]
+
+    features_file = None
+    labels_file = None
+    for feat_file, lab_file in candidate_pairs:
+        if feat_file.exists() and lab_file.exists():
+            features_file, labels_file = feat_file, lab_file
+            break
+
+    if features_file is None or labels_file is None:
+        print(f"❌ Error: Features or labels file not found under {features_path}")
+        print("    Expected combinations: features.parquet+labels.parquet,"
+              " primary/ directory, or legacy mutual-info selection.")
         exit(1)
-    
-    if not labels_file.exists():
-        print(f"❌ Error: Labels file not found: {labels_file}")
+
+    X_df = set_series_index(pd.read_parquet(features_file), "Features table")
+    labels_df = ensure_series_column(pd.read_parquet(labels_file), "Labels table").set_index('series_id')
+    labels_df = labels_df.reindex(X_df.index)
+
+    if labels_df.isnull().any().any():
+        missing_ids = labels_df.index[labels_df.isnull().any(axis=1)].tolist()
+        print(f"❌ Error: Missing labels for series IDs: {missing_ids[:5]}")
         exit(1)
-    
-    # Load features and labels
-    X_df = pd.read_parquet(features_file)
-    labels_df = pd.read_parquet(labels_file)
-    
-    # TSFresh outputs features with 'id' as index, labels have 'id' column
-    if 'id' in X_df.columns:
-        X_df = X_df.set_index('id')
-    
-    # Filter only NON-STATIONARY series
+
+    if 'is_stationary' not in labels_df.columns:
+        print("❌ Error: 'is_stationary' column not found in labels table")
+        exit(1)
+
     nonstat_mask = labels_df['is_stationary'] == False
     X_df = X_df[nonstat_mask]
     labels_df = labels_df[nonstat_mask]
-    
+
     print(f"✓ Filtered to {len(X_df):,} non-stationary series")
-    
-    if len(X_df) == 0:
+
+    if X_df.empty:
         print("❌ Error: No non-stationary series found!")
         exit(1)
-    
-    # Map primary categories to Model 2 labels
+
+    if 'primary_category' not in labels_df.columns:
+        print("❌ Error: 'primary_category' column missing in labels table")
+        exit(1)
+
     labels = labels_df['primary_category'].map(CATEGORY_MAPPING).values
     
     print(f"✓ Loaded features: {X_df.shape}")
