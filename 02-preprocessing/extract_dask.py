@@ -4,7 +4,7 @@ Extract TSFresh features for hierarchical classification using Dask.
 Run from the `02-preprocessing` directory.
 
 Usage:
-    python extract_dask.py --input ../data/raw/unified-5k --output ../data/features/unified-5k/allfeatures
+    python extract_dask.py --input ../data/raw/unified-20k --output ../data/features/unified-20k/allfeatures --n-workers 55 --memory-limit 0
 
     # Smoke test on a small subset
     python extract_dask.py --input ../data/raw/unified-20k --output ../data/features/test-dask --max-files 20

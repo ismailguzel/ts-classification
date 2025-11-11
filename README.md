@@ -8,16 +8,16 @@ This project implements a hierarchical classification system for time series dat
 
 ```
 Input Time Series
-       ↓
+    ↓
 [Model 1: Binary]  →  Stationary (0) ✓
-       ↓
+    ↓
   Non-Stationary (1)
-       ↓
+    ↓
 [Model 2: 5-Class]  →  Trend (0)
-                    →  Volatility (1)
-                    →  Stochastic (2)
-                    →  Anomaly (3)
-                    →  Structural Break (4)
+              →  Volatility (1)
+              →  Stochastic (2)
+              →  Anomaly (3)
+              →  Structural Break (4)
 ```
 
 ### Key Features
@@ -163,8 +163,6 @@ python autotrain_models2.py --engine autogluon --features-path ../../../data/fea
 
 **Note:** AutoTrain requires feature extraction first (see 02-preprocessing/).
 
-See individual README files for detailed options and parameters.
-
 **Smoke Test**:
 ```bash
 bash smoke_test.sh
@@ -181,7 +179,7 @@ bash smoke_test.sh
 │    • config.py → 11 scale presets (1.5K to 200K)              │
 │    • verify_ids.py → Data integrity check                      │
 └─────────────────────────────────────────────────────────────────┘
-                              ↓
+                  ↓
 ┌─────────────────────────────────────────────────────────────────┐
 │ 2. PREPROCESSING (02-preprocessing/) [OPTIONAL]                │
 │    • extract_features.py → TSFresh features (sequential)       │
@@ -189,7 +187,7 @@ bash smoke_test.sh
 │    • feature_selection.py → Select relevant features           │
 │    └─→ Only for FEATURES/AutoTrain modes                       │
 └─────────────────────────────────────────────────────────────────┘
-                              ↓
+                  ↓
 ┌─────────────────────────────────────────────────────────────────┐
 │ 3. MODEL TRAINING (03-models/hierarchical/)                    │
 │                                                                 │
@@ -202,7 +200,7 @@ bash smoke_test.sh
 │    C. AutoTrain Mode                                           │
 │       → TSFresh features → AutoML (AutoGluon/PyCaret)          │
 └─────────────────────────────────────────────────────────────────┘
-                              ↓
+                  ↓
 ┌─────────────────────────────────────────────────────────────────┐
 │ 4. HIERARCHICAL CLASSIFICATION                                 │
 │                                                                 │
@@ -217,7 +215,7 @@ bash smoke_test.sh
 │    ├─→ Anomaly (3)                                             │
 │    └─→ Structural Break (4)                                    │
 └─────────────────────────────────────────────────────────────────┘
-                              ↓
+                  ↓
 ┌─────────────────────────────────────────────────────────────────┐
 │ 5. TESTING & EVALUATION                                        │
 │    • test_model1.py / test_model2.py                           │
@@ -261,6 +259,147 @@ Detailed documentation in subdirectories:
 - **Model Training**: [`03-models/hierarchical/README.md`](03-models/hierarchical/README.md)
 - **Model 1 Details**: [`03-models/hierarchical/model1_binary/README.md`](03-models/hierarchical/model1_binary/README.md)
 - **Model 2 Details**: [`03-models/hierarchical/model2_nonstationary/README.md`](03-models/hierarchical/model2_nonstationary/README.md)
+
+---
+
+## 🚀 Example Commands (20K Dataset)
+
+### Data Generation
+```bash
+python generate.py --scale 20k
+# Output: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/01-data-generation/generation-20k.out
+```
+
+### Feature Extraction with Dask
+```bash
+python extract_dask.py \
+    --input ../data/raw/unified-20k \
+    --output ../data/features/unified-20k/allfeatures \
+    --n-workers 55 \
+    --memory-limit 0
+
+python feature_selection.py \
+    --input ../data/features/unified-20k/allfeatures \
+    --output ../data/features/unified-20k/selected \
+    --method mutual_info
+
+
+```
+
+### Model 1 (Binary Classification)
+```bash
+
+conda activate ts-sktime
+# RAW mode
+python -u train_model1.py \
+    --mode raw \
+    --data-path ../../../data/raw/unified-20k \
+    2>&1 | tee train_raw-20k.out
+
+# FEATURES mode (all features)
+python -u train_model1.py \
+    --mode features \
+    --features-path ../../../data/features/unified-20k/allfeatures \
+    2>&1 | tee train_allfeatures-20k.out
+
+# FEATURES mode (selected features)
+python -u train_model1.py \
+    --mode features \
+    --features-path ../../../data/features/unified-20k/selected \
+    2>&1 | tee train_selected-20k.out
+
+conda activate ts-autogluon
+# AutoGluon (all features)
+python -u autotrain_models1.py \
+    --engine autogluon \
+    --features-path ../../../data/features/unified-20k/allfeatures \
+    --save-dir ./save_models/unified-20k/autogluon/allfeatures \
+    --time-limit 3600 \
+    --presets medium_quality_faster_train \
+    2>&1 | tee autogluon_allfeatures-20k.out
+
+# AutoGluon (selected features)
+python -u autotrain_models1.py \
+    --engine autogluon \
+    --features-path ../../../data/features/unified-20k/selected \
+    --save-dir ./save_models/unified-20k/autogluon/selected \
+    --time-limit 3600 \
+    --presets medium_quality_faster_train \
+    2>&1 | tee autogluon_selected-20k.out
+
+conda activate ts-pycaret
+# PyCaret (all features)
+python -u autotrain_models1.py \
+    --engine pycaret \
+    --features-path ../../../data/features/unified-20k/allfeatures \
+    --save-dir ./save_models/unified-20k/pycaret/allfeatures \
+    2>&1 | tee pycaret_allfeatures-20k.out
+
+# PyCaret (selected features)
+python -u autotrain_models1.py \
+    --engine pycaret \
+    --features-path ../../../data/features/unified-20k/selected \
+    --save-dir ./save_models/unified-20k/pycaret/selected \
+    2>&1 | tee pycaret_selected-20k.out
+```
+
+### Model 2 (5-Class Classification)
+```bash
+
+conda activate ts-sktime
+# RAW mode
+python -u train_model2.py \
+    --mode raw \
+    --data-path ../../../data/raw/unified-20k \
+    2>&1 | tee train2_raw-20k.out
+
+# FEATURES mode (all features)
+python -u train_model2.py \
+    --mode features \
+    --features-path ../../../data/features/unified-20k/allfeatures \
+    2>&1 | tee train2_allfeatures-20k.out
+
+# FEATURES mode (selected features)
+python -u train_model2.py \
+    --mode features \
+    --features-path ../../../data/features/unified-20k/selected \
+    2>&1 | tee train2_selected-20k.out
+
+conda activate ts-autogluon
+# AutoGluon (all features)
+python -u autotrain_models2.py \
+    --engine autogluon \
+    --features-path ../../../data/features/unified-20k/allfeatures \
+    --save-dir ./save_models/unified-20k/autogluon/allfeatures \
+    --time-limit 3600 \
+    --presets medium_quality_faster_train \
+    2>&1 | tee autogluon2_allfeatures-20k.out
+
+# AutoGluon (selected features)
+python -u autotrain_models2.py \
+    --engine autogluon \
+    --features-path ../../../data/features/unified-20k/selected \
+    --save-dir ./save_models/unified-20k/autogluon/selected \
+    --time-limit 3600 \
+    --presets medium_quality_faster_train \
+    2>&1 | tee autogluon2_selected-20k.out
+
+
+conda activate ts-pycaret
+# PyCaret (all features)
+python -u autotrain_models2.py \
+    --engine pycaret \
+    --features-path ../../../data/features/unified-20k/allfeatures \
+    --save-dir ./save_models/unified-20k/pycaret/allfeatures \
+    2>&1 | tee pycaret2_allfeatures-20k.out
+
+# PyCaret (selected features)
+python -u autotrain_models2.py \
+    --engine pycaret \
+    --features-path ../../../data/features/unified-20k/selected \
+    --save-dir ./save_models/unified-20k/pycaret/selected \
+    2>&1 | tee pycaret2_selected-20k.out
+```
 
 ---
 

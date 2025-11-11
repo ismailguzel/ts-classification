@@ -267,6 +267,8 @@ def main():
     parser.add_argument("--random-state", type=int, default=42, help="Random state")
     parser.add_argument("--output-dir", type=str, default=None,
                         help="Optional directory for structured metrics and predictions")
+    parser.add_argument("--save-dir", type=str, default="saved_models",
+                        help="Directory to save trained models and metadata")
 
     # AutoGluon specific
     parser.add_argument("--time-limit", type=int, default=3600, help="Training time limit (seconds)")
@@ -316,8 +318,8 @@ def main():
 
     # Train
     print("\n[3/4] Training...")
-    save_dir = Path("saved_models")
-    save_dir.mkdir(exist_ok=True)
+    save_dir = Path(args.save_dir)
+    save_dir.mkdir(parents=True, exist_ok=True)
     problem_name = "model2_primary"
 
     if args.engine == "autogluon":
