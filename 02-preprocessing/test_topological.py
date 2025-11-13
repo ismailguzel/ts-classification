@@ -19,17 +19,19 @@ extractor = TopologicalFeatureExtractor(
     homology_dims=(0, 1),
     n_landscapes=5,
     landscape_resolution=100,
-    normalize=True
+    normalize=True,
+    n_perm=500
 )
 print("   ✓ Ready")
 print(f"   Embedding: {extractor.embedding_dim}D, delay={extractor.embedding_delay}")
 print(f"   Homology: {extractor.homology_dims}")
 print(f"   Landscapes: {extractor.n_landscapes}x{extractor.landscape_resolution}")
+print(f"   n_perm: {extractor.n_perm if extractor.n_perm else 'None (use all points)'}")
 
 # Test 1: Synthetic data
 print("\n2. Test with synthetic time series...")
 np.random.seed(42)
-ts = np.sin(np.linspace(0, 4*np.pi, 500)) + np.random.normal(0, 0.1, 500)
+ts = np.sin(np.linspace(0, 4*np.pi, 1000)) + np.random.normal(0, 0.1, 1000)
 print(f"   Length: {len(ts)}, Range: [{ts.min():.2f}, {ts.max():.2f}]")
 
 # Takens embedding
@@ -100,6 +102,27 @@ if data_path.exists():
     print(f"   Parallel (n_jobs=2)...")
     feats_df2, failed2 = extractor.extract_batch(series_dict, n_jobs=2, verbose=False)
     print(f"   ✓ {feats_df2.shape[0]} series, {feats_df2.shape[1]-1} features")
+    
+    # Test mean landscape
+    print(f"\n9. Test mean landscape option...")
+    extractor_mean = TopologicalFeatureExtractor(
+        embedding_dim=3,
+        embedding_delay=1,
+        homology_dims=(0, 1),
+        n_landscapes=5,
+        landscape_resolution=100,
+        normalize=True,
+        use_mean_landscape=True,
+        n_perm=500
+    )
+    print(f"   ✓ Extractor with mean landscape created")
+    
+    # Extract with mean
+    feats_mean = extractor_mean.extract_features(ts_real)
+    expected_mean = len(extractor_mean.homology_dims) * extractor_mean.landscape_resolution
+    print(f"   ✓ Features shape: {feats_mean.shape}")
+    print(f"   Expected: ({expected_mean},) vs Regular: ({len(feats_real)},)")
+    print(f"   Reduction: {len(feats_real)} → {len(feats_mean)} ({len(feats_mean)/len(feats_real)*100:.1f}%)")
     
 else:
     print(f"   ⚠ Data not found: {data_path}")

@@ -38,6 +38,8 @@ class TopologicalFeatureExtractor:
         landscape_resolution (int): Landscape resolution (default: 100)
         normalize (bool): Normalize features (default: True)
         max_thresh (float): Maximum filtration value for Ripser (default: inf)
+        n_perm (int): Number of permutations for Ripser (default: None, uses all points)
+        use_mean_landscape (bool): Use mean of all landscapes instead of concatenating (default: False)
     """
     
     def __init__(
@@ -48,7 +50,9 @@ class TopologicalFeatureExtractor:
         n_landscapes=5,
         landscape_resolution=100,
         normalize=True,
-        max_thresh=np.inf
+        max_thresh=np.inf,
+        n_perm=None,
+        use_mean_landscape=False
     ):
         self.embedding_dim = embedding_dim
         self.embedding_delay = embedding_delay
@@ -57,6 +61,8 @@ class TopologicalFeatureExtractor:
         self.landscape_resolution = landscape_resolution
         self.normalize = normalize
         self.max_thresh = max_thresh
+        self.n_perm = n_perm
+        self.use_mean_landscape = use_mean_landscape
         
     def takens_embedding(self, ts):
         """Time delay embedding."""
@@ -81,12 +87,17 @@ class TopologicalFeatureExtractor:
         """Compute persistence diagrams using Ripser."""
         point_cloud = self.takens_embedding(ts)
         
-        # Run Ripser with threshold to speed up
-        result = ripser(
-            point_cloud,
-            maxdim=max(self.homology_dims),
-            thresh=self.max_thresh
-        )
+        # Run Ripser with threshold and optional n_perm to speed up
+        ripser_kwargs = {
+            'maxdim': max(self.homology_dims),
+            'thresh': self.max_thresh
+        }
+        
+        # Only add n_perm if specified (not None)
+        if self.n_perm is not None:
+            ripser_kwargs['n_perm'] = self.n_perm
+        
+        result = ripser(point_cloud, **ripser_kwargs)
         
         diagrams = {}
         for dim in self.homology_dims:
@@ -98,19 +109,31 @@ class TopologicalFeatureExtractor:
         return diagrams
     
     def compute_persistence_landscape(self, diagram):
-        """Fast persistence landscape computation."""
+        """
+        Fast persistence landscape computation.
+        
+        Returns:
+            If use_mean_landscape=False: Flattened array (n_landscapes * resolution,)
+            If use_mean_landscape=True: Mean landscape array (resolution,)
+        """
         # Clean diagram
         diagram = diagram[np.isfinite(diagram).all(axis=1)]
         diagram = diagram[diagram[:, 1] > diagram[:, 0]]
         
+        # Determine output size
+        if self.use_mean_landscape:
+            output_size = self.landscape_resolution
+        else:
+            output_size = self.n_landscapes * self.landscape_resolution
+        
         if len(diagram) == 0:
-            return np.zeros(self.n_landscapes * self.landscape_resolution)
+            return np.zeros(output_size)
         
         min_birth = diagram[:, 0].min()
         max_death = diagram[:, 1].max()
         
         if max_death <= min_birth:
-            return np.zeros(self.n_landscapes * self.landscape_resolution)
+            return np.zeros(output_size)
         
         # Grid
         grid = np.linspace(min_birth, max_death, self.landscape_resolution)
@@ -130,7 +153,11 @@ class TopologicalFeatureExtractor:
                 n_vals = min(self.n_landscapes, len(lambda_vals))
                 landscapes[:n_vals, i] = lambda_vals[:n_vals]
         
-        return landscapes.flatten()
+        # Return mean or flattened
+        if self.use_mean_landscape:
+            return landscapes.mean(axis=0)  # Shape: (resolution,)
+        else:
+            return landscapes.flatten()  # Shape: (n_landscapes * resolution,)
     
     def diagrams_to_features(self, diagrams):
         """Convert diagrams to feature vector."""
@@ -225,10 +252,17 @@ class TopologicalFeatureExtractor:
     def get_feature_names(self):
         """Generate feature names."""
         names = []
-        for dim in self.homology_dims:
-            for k in range(self.n_landscapes):
+        if self.use_mean_landscape:
+            # Mean landscape: one feature per bin per homology dimension
+            for dim in self.homology_dims:
                 for i in range(self.landscape_resolution):
-                    names.append(f"topo_H{dim}_L{k}_bin{i}")
+                    names.append(f"topo_H{dim}_mean_bin{i}")
+        else:
+            # Regular: n_landscapes features per bin per homology dimension
+            for dim in self.homology_dims:
+                for k in range(self.n_landscapes):
+                    for i in range(self.landscape_resolution):
+                        names.append(f"topo_H{dim}_L{k}_bin{i}")
         return names
     
     def get_parquet_files(self, input_path):
@@ -426,6 +460,10 @@ def main():
                        help="Max files to process")
     parser.add_argument("--n-jobs", type=int, default=1,
                        help="Number of parallel jobs")
+    parser.add_argument("--n-perm", type=int, default=None,
+                       help="Number of points for Ripser (subsampling for speed)")
+    parser.add_argument("--use-mean-landscape", action="store_true",
+                       help="Use mean of landscapes (reduces features by n_landscapes factor)")
     parser.add_argument("--no-normalize", action="store_true",
                        help="Disable normalization")
     
@@ -441,9 +479,17 @@ def main():
     print(f"Embedding: dim={args.embedding_dim}, delay={args.embedding_delay}")
     print(f"Homology: {homology_dims}")
     print(f"Landscapes: {args.n_landscapes} x {args.landscape_resolution}")
+    if args.use_mean_landscape:
+        total_features = len(homology_dims) * args.landscape_resolution
+        print(f"Use mean landscape: True (→ {total_features} features)")
+    else:
+        total_features = len(homology_dims) * args.n_landscapes * args.landscape_resolution
+        print(f"Use mean landscape: False (→ {total_features} features)")
     print(f"Max threshold: {args.max_thresh}")
     print(f"Chunk size: {args.chunk_size}")
     print(f"Parallel jobs: {args.n_jobs}")
+    if args.n_perm:
+        print(f"Ripser n_perm: {args.n_perm}")
     if args.max_files:
         print(f"Max files: {args.max_files}")
     print("="*80)
@@ -455,7 +501,9 @@ def main():
         n_landscapes=args.n_landscapes,
         landscape_resolution=args.landscape_resolution,
         normalize=not args.no_normalize,
-        max_thresh=args.max_thresh
+        max_thresh=args.max_thresh,
+        n_perm=args.n_perm,
+        use_mean_landscape=args.use_mean_landscape
     )
     
     features, labels = extractor.process_chunk_by_chunk(
