@@ -397,7 +397,7 @@ def main() -> None:
     finally:
         extractor.shutdown_client()
 
-    print("\n🎉 Feature extraction completed successfully!")
+    print("\nFeature extraction completed successfully!")
     print(f"   Final features: {features_df.shape}")
     print(f"   Final labels: {labels_df.shape}")
 

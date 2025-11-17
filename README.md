@@ -28,7 +28,7 @@ Input Time Series
 
 ---
 
-##  Project Structure
+## Project Structure
 
 ```
 hierarchical-ts-classification/
@@ -339,7 +339,7 @@ Detailed documentation in subdirectories:
 
 ---
 
-##  Example Commands (20K Dataset)
+## Example Commands (20K Dataset)
 
 ### Data Generation
 ```bash
@@ -459,7 +459,7 @@ python -u autotrain_models2.py \
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please:
 
@@ -470,35 +470,37 @@ Contributions are welcome! Please:
 
 ---
 
-##  License
+## License
 
 This project is licensed under the MIT License.
 
 ---
 
-## 👤 Author
+## Author
 
 **Ismail Guzel**
 - GitHub: [@ismailguzel](https://github.com/ismailguzel)
 
 ---
 
-##  References
+## References
 
 - TSFresh: https://tsfresh.readthedocs.io/
 - scikit-learn: https://scikit-learn.org/
 - sktime: https://www.sktime.net/
+- AutoGluon: https://auto.gluon.ai/stable/index.html
 
 ---
 
-## 📞 Support
+## Support
 
 For questions or issues, please open an issue on GitHub.
 
 ---
 
-## 🎉 Acknowledgments
+## Acknowledgments
 
 - TSFresh team for excellent feature engineering library
 - scikit-learn community for machine learning tools
 - sktime for time series classification algorithms
+- AutoGluon team for automated machine learning framework

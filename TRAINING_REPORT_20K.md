@@ -239,9 +239,9 @@ Model 2 (5-Class):    AutoGluon (all) > XGBoost (all) > AutoGluon (selected)
 
 | Mode | Speed | Accuracy | Interpretability | Resource Usage |
 |------|-------|----------|------------------|----------------|
-| **RAW** |  Fast | ⭐⭐⭐ Good (81%) |  Limited | 💾 High memory |
-| **FEATURES (selected)** |  Fast | ⭐⭐⭐⭐ Excellent (98%) |  High | 💾 Low memory |
-| **AutoML (all)** |  Slow | ⭐⭐⭐⭐⭐ Best (98.5%) |  Limited | 💾 Medium |
+| **RAW** | Fast | Good (81%) | Limited | High memory |
+| **FEATURES (selected)** | Fast | Excellent (98%) | High | Low memory |
+| **AutoML (all)** | Slow | Best (98.5%) | Limited | Medium |
 
 ### Recommendations
 

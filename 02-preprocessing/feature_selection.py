@@ -330,7 +330,7 @@ def main():
         # Save results
         selector.save_selected_features(X_selected, labels_df, selected_features, args.output, target)
     
-    print("\n🎉 Feature selection completed successfully!")
+    print("\nFeature selection completed successfully!")
 
 
 if __name__ == "__main__":

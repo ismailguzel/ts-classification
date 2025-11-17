@@ -8,7 +8,7 @@ This directory contains all data files for the project.
 data/
 ├── raw/                         # Raw generated time series data
 │   ├── unified-test/            # Test dataset (~1.5K samples)
-│   ├── unified-5k/              # Small dataset (~5K samples) ⭐ Default
+│   ├── unified-5k/              # Small dataset (~5K samples) - Default
 │   ├── unified-10k/             # (~10K samples)
 │   ├── unified-20k/             # (~20K samples)
 │   ├── unified-30k/             # (~30K samples)
@@ -20,7 +20,7 @@ data/
 │   └── unified-200k/            # Large dataset (~200K samples)
 │
 └── features/                    # TSFresh extracted features (per-dataset)
-    ├── unified-5k/              # Features for 5K dataset ⭐ Default
+    ├── unified-5k/              # Features for 5K dataset - Default
     │   ├── allfeatures/         # All extracted features
     │   │   ├── features.parquet
     │   │   ├── labels.parquet
@@ -98,7 +98,7 @@ cd ../01-data-generation
 # Test dataset (quick start - 1.5K samples)
 python generate.py --scale test
 
-# Default recommended scale (5K samples) ⭐
+# Default recommended scale (5K samples)
 python generate.py --scale 5k
 
 # Full-scale dataset (200K samples)

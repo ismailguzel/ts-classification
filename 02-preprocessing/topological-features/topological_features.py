@@ -514,7 +514,7 @@ def main():
         n_jobs=args.n_jobs
     )
     
-    print("\n🎉 Completed!")
+    print("\nCompleted!")
     print(f"   Features: {features.shape}")
     print(f"   Labels: {labels.shape}")
 
