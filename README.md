@@ -22,8 +22,9 @@ Input Time Series
 
 ### Key Features
 - Synthetic time series generation (scalable: 1.5K to 200K samples)
-- Three training modes: RAW (sktime), FEATURES (sklearn), AutoTrain (AutoML)
+- Three training modes: RAW (sktime), FEATURES (sklearn), AutoTrain (AutoGluon)
 - Hierarchical two-stage classification
+- Comprehensive evaluation metrics with CSV exports
 
 ---
 
@@ -43,22 +44,26 @@ hierarchical-ts-classification/
 │   ├── topological-features/    # Experimental: TDA-based features
 │   └── README.md                # Preprocessing docs
 │
-├── 03-models/hierarchical/      # Hierarchical models
-│   ├── model1_binary/           # Level 1: Binary (Stat vs Non-stat)
-│   │   ├── train_model1.py      # Dual-mode training (RAW/FEATURES)
-│   │   ├── autotrain_models1.py # AutoML training (AutoGluon/PyCaret)
-│   │   ├── test_model1.py       # Testing script
-│   │   ├── slurm_train_model1.sh # Example SLURM script
-│   │   └── README.md            # Documentation
+├── 03-models/
+│   ├── hierarchical/            # Hierarchical models
+│   │   ├── model1_binary/       # Level 1: Binary (Stat vs Non-stat)
+│   │   │   ├── train_model1.py      # Dual-mode training (RAW/FEATURES)
+│   │   │   ├── autotrain_models1.py # AutoML training (AutoGluon)
+│   │   │   ├── test_model1.py       # Testing script
+│   │   │   └── README.md            # Documentation
+│   │   │
+│   │   ├── model2_nonstationary/    # Level 2: 5-Class (Non-stat types)
+│   │   │   ├── train_model2.py      # Dual-mode training (RAW/FEATURES)
+│   │   │   ├── autotrain_models2.py # AutoML training (AutoGluon)
+│   │   │   ├── test_model2.py       # Testing script
+│   │   │   └── README.md            # Documentation
+│   │   │
+│   │   └── README.md            # Models overview
 │   │
-│   ├── model2_nonstationary/    # Level 2: 5-Class (Non-stat types)
-│   │   ├── train_model2.py      # Dual-mode training (RAW/FEATURES)
-│   │   ├── autotrain_models2.py # AutoML training (AutoGluon/PyCaret)
-│   │   ├── test_model2.py       # Testing script
-│   │   ├── slurm_train_model2.sh # Example SLURM script
-│   │   └── README.md            # Documentation
-│   │
-│   └── submit_training.sh       # Interactive SLURM job helper
+│   └── utils/                   # Shared utilities
+│       ├── metrics.py           # ModelEvaluator class
+│       ├── data_utils.py        # Data loading utilities
+│       └── constants.py         # Shared constants
 │
 ├── data/                        # Data storage
 │   ├── raw/                     # Raw time series
@@ -66,7 +71,10 @@ hierarchical-ts-classification/
 │   └── README.md                # Data documentation
 │
 ├── README.md                    # This file
-└── requirements.txt             # Dependencies
+├── requirements.txt             # Dependencies
+├── smoke_test.sh                # Quick validation test
+├── run-20k-trainig.sh           # Batch training script
+└── TRAINING_REPORT_20K.md       # Training results report
 ```
 
 ---
@@ -132,13 +140,20 @@ python test_model2.py --model-path saved_models/model2_nonstationary_raw_arsenal
 **FEATURES Mode** (TSFresh + sklearn):
 ```bash
 cd 02-preprocessing
-python extract_features.py  # Uses unified-5k by default
-python feature_selection.py --method mutual_info
+python extract_dask.py \
+    --input ../data/raw/unified-5k \
+    --output ../data/features/unified-5k/allfeatures \
+    --n-workers 4
+python feature_selection.py \
+    --input ../data/features/unified-5k/allfeatures \
+    --output ../data/features/unified-5k/selected \
+    --method mutual_info \
+    --target all
 cd ../03-models/hierarchical/model1_binary
 python train_model1.py --mode features
 ```
 
-**AutoTrain Mode** (AutoML):
+**AutoTrain Mode** (AutoGluon):
 ```bash
 # After feature extraction and selection
 cd 03-models/hierarchical/model1_binary
@@ -159,9 +174,16 @@ python autotrain_models2.py \
 
 **Note:** AutoTrain requires feature extraction first (see 02-preprocessing/).
 
-**Smoke Test**:
+**Smoke Test** (Quick Validation):
 ```bash
+# Tests all modes with small dataset
 bash smoke_test.sh
+```
+
+**Batch Training** (20K Dataset):
+```bash
+# Runs complete training pipeline
+bash run-20k-trainig.sh
 ```
 
 ---
@@ -178,9 +200,9 @@ bash smoke_test.sh
                   ↓
 ┌─────────────────────────────────────────────────────────────────┐
 │ 2. PREPROCESSING (02-preprocessing/) [OPTIONAL]                │
-│    • extract_features.py → TSFresh features (sequential)       │
 │    • extract_dask.py → TSFresh features (Dask parallel)        │
 │    • feature_selection.py → Select relevant features           │
+│    • topological-features/ → Experimental TDA features          │
 │    └─→ Only for FEATURES/AutoTrain modes                       │
 └─────────────────────────────────────────────────────────────────┘
                   ↓
@@ -194,7 +216,7 @@ bash smoke_test.sh
 │       → TSFresh features → sklearn classifiers                 │
 │                                                                 │
 │    C. AutoTrain Mode                                           │
-│       → TSFresh features → AutoML (AutoGluon/PyCaret)          │
+│       → TSFresh features → AutoML (AutoGluon)                  │
 └─────────────────────────────────────────────────────────────────┘
                   ↓
 ┌─────────────────────────────────────────────────────────────────┐
@@ -215,7 +237,8 @@ bash smoke_test.sh
 ┌─────────────────────────────────────────────────────────────────┐
 │ 5. TESTING & EVALUATION                                        │
 │    • test_model1.py / test_model2.py                           │
-│    • Evaluation metrics and classification reports             │
+│    • Comprehensive metrics (JSON + CSV exports)                │
+│    • Predictions and misclassified samples analysis            │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -233,16 +256,74 @@ See individual README files for detailed configuration options.
 
 ---
 
+## Output Structure
+
+Training scripts automatically organize outputs into mode-specific directories:
+
+```
+03-models/hierarchical/model1_binary/saved_models/
+├── model1_binary_raw_rocket/
+│   ├── model1_binary_classifier.pkl
+│   ├── metrics.json
+│   ├── predictions.csv
+│   └── misclassified.csv
+│
+├── model1_binary_features/
+│   ├── model1_binary_classifier.pkl
+│   ├── metrics.json
+│   ├── predictions.csv
+│   └── misclassified.csv
+│
+└── model1_binary_autogluon/
+    ├── models/              # AutoGluon models
+    ├── metadata.pkl         # AutoGluon metadata
+    ├── metrics.json
+    ├── predictions.csv
+    └── misclassified.csv
+```
+
+**Output Files:**
+- `model*_classifier.pkl` - Trained model (RAW/FEATURES modes)
+- `metrics.json` - Comprehensive evaluation metrics
+- `predictions.csv` - All predictions with true labels
+- `misclassified.csv` - Incorrectly classified samples
+- `models/` - AutoGluon ensemble models directory
+- `metadata.pkl` - AutoGluon training metadata
+
+---
+
 ## Requirements
 
 ```bash
 pip install -r requirements.txt
 
-# Optional: AutoML support
-pip install autogluon.tabular pycaret
+# Optional: AutoGluon support
+pip install autogluon.tabular
 ```
 
-Core: `tsfresh`, `scikit-learn`, `sktime`, `pandas`, `numpy`
+Core dependencies:
+- `tsfresh` - Time series feature extraction
+- `scikit-learn` - Traditional ML classifiers
+- `sktime` - Time series classifiers (ROCKET, Arsenal)
+- `pandas`, `numpy` - Data manipulation
+- `dask` - Parallel feature extraction
+
+---
+
+## Utilities
+
+The `03-models/utils/` module provides shared functionality:
+
+- **`metrics.py`**: `ModelEvaluator` class for comprehensive model evaluation
+  - Automatic predictions CSV export
+  - Misclassified samples CSV export
+  - JSON metrics with nested structure
+  
+- **`data_utils.py`**: Data loading and preprocessing utilities
+  - RAW mode: Time series loading
+  - FEATURES mode: Parquet file handling
+  
+- **`constants.py`**: Shared constants and label mappings
 
 ---
 
@@ -325,7 +406,6 @@ conda activate ts-autogluon
 # AutoGluon (all features)
 python -u autotrain_models1.py \
     --features-path ../../../data/features/unified-20k/allfeatures \
-    --save-dir ./save_models/unified-20k/autogluon/allfeatures \
     --time-limit 3600 \
     --presets medium_quality_faster_train \
     2>&1 | tee autogluon_allfeatures-20k.out
@@ -333,7 +413,6 @@ python -u autotrain_models1.py \
 # AutoGluon (selected features)
 python -u autotrain_models1.py \
     --features-path ../../../data/features/unified-20k/selected \
-    --save-dir ./save_models/unified-20k/autogluon/selected \
     --time-limit 3600 \
     --presets medium_quality_faster_train \
     2>&1 | tee autogluon_selected-20k.out
@@ -366,7 +445,6 @@ conda activate ts-autogluon
 # AutoGluon (all features)
 python -u autotrain_models2.py \
     --features-path ../../../data/features/unified-20k/allfeatures \
-    --save-dir ./save_models/unified-20k/autogluon/allfeatures \
     --time-limit 3600 \
     --presets medium_quality_faster_train \
     2>&1 | tee autogluon2_allfeatures-20k.out
@@ -374,7 +452,6 @@ python -u autotrain_models2.py \
 # AutoGluon (selected features)
 python -u autotrain_models2.py \
     --features-path ../../../data/features/unified-20k/selected \
-    --save-dir ./save_models/unified-20k/autogluon/selected \
     --time-limit 3600 \
     --presets medium_quality_faster_train \
     2>&1 | tee autogluon2_selected-20k.out
