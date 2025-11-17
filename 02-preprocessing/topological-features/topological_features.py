@@ -429,7 +429,7 @@ class TopologicalFeatureExtractor:
         with open(names_file, 'w') as f:
             f.write('\n'.join(features.columns))
         
-        print(f"\n✅ Saved successfully!")
+        print(f"\n Saved successfully!")
         print(f"   Features: {features.shape}")
         print(f"   Labels: {labels.shape}")
 

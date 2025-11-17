@@ -1,6 +1,6 @@
 # Model 2: Non-Stationary 5-Class Classification
 
-## 🎯 Objective
+##  Objective
 
 Classify **NON-STATIONARY** time series into 5 semantic categories:
 
@@ -15,27 +15,27 @@ Only operates on series classified as **non-stationary** by Model 1.
 
 ---
 
-## 🔄 Training Modes
+##  Training Modes
 
 ### Mode 1: RAW (Default) - sktime classifiers
 Uses raw time series with specialized time series classifiers:
-- ✅ No feature engineering needed
-- ✅ Fast training
-- 🌲 **TimeSeriesForest**: Fast ensemble method
-- 🚀 **ROCKET**: State-of-the-art (2000 kernels for 5-class)
-- 🎯 **Arsenal**: ROCKET-based ensemble (2000 kernels)
+-  No feature engineering needed
+-  Fast training
+-  **TimeSeriesForest**: Fast ensemble method
+-  **ROCKET**: State-of-the-art (2000 kernels for 5-class)
+-  **Arsenal**: ROCKET-based ensemble (2000 kernels)
 
 ### Mode 2: FEATURES - sklearn classifiers
 Uses TSFresh extracted features with traditional ML:
-- ✅ More interpretable features
-- ✅ Faster inference
-- 🌲 **Random Forest**: Robust ensemble
-- 🚀 **XGBoost**: Gradient boosting
-- ⚡ **SVM (RBF)**: Non-linear kernel for multi-class
+-  More interpretable features
+-  Faster inference
+-  **Random Forest**: Robust ensemble
+-  **XGBoost**: Gradient boosting
+-  **SVM (RBF)**: Non-linear kernel for multi-class
 
 ---
 
-## 📊 Models Available
+##  Models Available
 
 ### RAW Mode (sktime)
 
@@ -67,7 +67,7 @@ Uses TSFresh extracted features with traditional ML:
 
 ---
 
-## 🚀 Usage
+##  Usage
 
 ### Training - RAW Mode (Default)
 
@@ -96,7 +96,7 @@ python train_model2.py --mode raw --classifier tsf
   - ROCKET: ~5-7 minutes
   - Arsenal: ~10-15 minutes
   - All models: ~20-30 minutes
-- Output: `saved_models/model2_nonstationary_classifier.pkl`
+- Output: `saved_models/model2_nonstationary_raw_<classifier>/`
 - Parallelization: N_JOBS=-1 (uses all CPU cores)
 
 ### Training - FEATURES Mode
@@ -115,28 +115,25 @@ python train_model2.py --mode features --features-path ../../../data/features/un
 **Requirements:**
 - Features: `../../../data/features/unified-5k/selected/primary/` (default)
 - Time: ~10-15 minutes (after feature extraction)
-- Output: `saved_models/model2_nonstationary_classifier.pkl`
+- Output: `saved_models/model2_nonstationary_features/`
 - Parallelization: N_JOBS=-1 (uses all CPU cores)
 
 ### Testing
 
 ```bash
-# Test with default model and 100 samples
-python test_model2.py
+# Test RAW mode model
+python test_model2.py --model-path saved_models/model2_nonstationary_raw_rocket/model2_nonstationary_classifier.pkl
 
-# Test specific model
-python test_model2.py --model-path saved_models/model2_nonstationary_classifier.pkl
+# Test FEATURES mode model
+python test_model2.py --model-path saved_models/model2_nonstationary_features/model2_nonstationary_classifier.pkl
 
 # Test with more samples
-python test_model2.py --n-samples 500
-
-# Test with specific model and more samples
-python test_model2.py --model-path saved_models/model2_nonstationary_rocket.pkl --n-samples 500
+python test_model2.py --model-path saved_models/model2_nonstationary_raw_rocket/model2_nonstationary_classifier.pkl --n-samples 500
 ```
 
 ---
 
-## 🔧 Technical Details
+##  Technical Details
 
 ### RAW Mode - Data Preparation
 
@@ -184,15 +181,49 @@ Script automatically:
 
 ### Output Files
 
+#### RAW Mode Output Structure
 ```
 saved_models/
-├── model2_nonstationary_classifier.pkl    # Best trained model
-└── model2_metadata.pkl                    # Training metadata
+└── model2_nonstationary_raw_<classifier>/    # e.g., model2_nonstationary_raw_rocket
+    ├── model2_nonstationary_classifier.pkl   # Best trained model
+    ├── model2_metadata.pkl                   # Training metadata
+    ├── model2_raw_<CLASSIFIER>_metrics.json  # Model metrics
+    ├── model2_raw_predictions.csv            # Test predictions
+    ├── model2_raw_misclassified.csv          # Misclassified samples
+    └── model2_raw_summary.json               # Summary comparison
+```
+
+#### FEATURES Mode Output Structure
+```
+saved_models/
+└── model2_nonstationary_features/            # All sklearn models
+    ├── model2_nonstationary_classifier.pkl   # Best trained model
+    ├── model2_metadata.pkl                   # Training metadata
+    ├── scaler.pkl                            # Feature scaler
+    ├── predictions_<ModelName>.csv           # Per-model predictions
+    ├── misclassified_<ModelName>.csv         # Per-model misclassified
+    ├── model2_features_<ModelName>_metrics.json  # Per-model metrics
+    ├── model2_features_summary.json          # Summary comparison
+    └── catboost_info/                        # CatBoost logs
+```
+
+#### AutoTrain Mode Output Structure
+```
+saved_models/
+└── model2_nonstationary_autogluon/           # AutoGluon artifacts
+    ├── models/                               # Trained model files
+    ├── predictions_AutoGluon_5Class.csv
+    ├── misclassified_AutoGluon_5Class.csv
+    ├── leaderboard_test.csv
+    ├── leaderboard_train.csv
+    ├── model2_autotrain_metadata.pkl         # Training metadata
+    └── metrics/
+        └── AutoGluon_5Class_metrics.json
 ```
 
 Metadata includes:
 - Model name and type
-- Training mode (raw/features)
+- Training mode (raw/features/autotrain)
 - Evaluation metrics
 - Class names and mapping
 - Data shapes and parameters
@@ -202,7 +233,7 @@ Metadata includes:
 
 ---
 
-## 💡 Tips
+##  Tips
 
 ### When to use RAW mode:
 - Quick baseline needed
@@ -218,7 +249,7 @@ Metadata includes:
 
 ---
 
-## 🔍 Troubleshooting
+##  Troubleshooting
 
 **Error: Data not found**
 ```bash
@@ -261,7 +292,7 @@ python feature_selection.py --target primary
 
 ---
 
-## 🎯 Hierarchical Pipeline
+##  Hierarchical Pipeline
 
 Model 2 is part of a hierarchical system:
 
@@ -306,7 +337,7 @@ if not is_stationary:
 
 ---
 
-## 📝 Next Steps
+##  Next Steps
 
 After successful Model 2 training:
 
@@ -319,7 +350,7 @@ After successful Model 2 training:
 
 ---
 
-## 📚 References
+##  References
 
 - **sktime**: https://www.sktime.net/
 - **ROCKET**: Dempster et al., 2020

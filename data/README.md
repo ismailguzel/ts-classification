@@ -2,7 +2,7 @@
 
 This directory contains all data files for the project.
 
-## 📂 Structure
+##  Structure
 
 ```
 data/
@@ -42,7 +42,7 @@ data/
 
 ---
 
-## 📊 Data Files
+##  Data Files
 
 ### Raw Data (`raw/`)
 
@@ -88,7 +88,7 @@ Selected by `02-preprocessing/feature_selection.py`:
 
 ---
 
-## 🚀 Getting Started
+##  Getting Started
 
 ### Generate Data
 
@@ -155,7 +155,7 @@ rm -rf raw/ processed/ features/
 
 ---
 
-## 📝 Notes
+##  Notes
 
 - All data files are in `.gitignore` by default
 - Use `git-lfs` if you want to version control large data files

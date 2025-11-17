@@ -1,10 +1,22 @@
 #!/bin/bash
-# Unified smoke test runner covering raw, full features, and selected features scenarios.
+# ============================================================================
+# Hierarchical Time Series Classification - Smoke Test
+# ============================================================================
+# Quick validation pipeline for raw and features modes
+#
 # Usage examples:
 #   bash smoke_test.sh                     # run raw + features scenarios
 #   bash smoke_test.sh --mode raw          # run only the raw pipeline
 #   bash smoke_test.sh --scenarios raw,selected --with-model2
 #   bash smoke_test.sh --data-path data/raw/unified-test --features-path data/features/demo
+#
+# Output Structure:
+#   saved_models/
+#   ├── model1_binary_raw_rocket/      # RAW mode with ROCKET classifier
+#   ├── model1_binary_features/        # FEATURES mode (all sklearn models)
+#   ├── model2_nonstationary_raw_rocket/
+#   └── model2_nonstationary_features/
+# ============================================================================
 
 set -euo pipefail
 
@@ -48,7 +60,7 @@ normalize_scenarios() {
     fi
   done
   if [[ ${#SCENARIOS[@]} -eq 0 ]]; then
-    echo "❌ No scenarios specified" >&2
+    echo " No scenarios specified" >&2
     exit 1
   fi
 }
@@ -79,17 +91,17 @@ run_feature_extraction() {
   fi
 
   if [[ -z "$input_path" ]]; then
-    echo "❌ Feature extraction input path not provided" >&2
+    echo " Feature extraction input path not provided" >&2
     return 1
   fi
 
   if [[ ! -d "$input_path" ]]; then
-    echo "❌ Feature extraction input path not found: $input_path" >&2
+    echo " Feature extraction input path not found: $input_path" >&2
     return 1
   fi
 
   if [[ ! -f "$FEATURE_EXTRACTION_SCRIPT" ]]; then
-    echo "❌ Feature extraction script not found: $FEATURE_EXTRACTION_SCRIPT" >&2
+    echo " Feature extraction script not found: $FEATURE_EXTRACTION_SCRIPT" >&2
     return 1
   fi
 
@@ -134,12 +146,12 @@ run_feature_extraction() {
   fi
 
   if ! run_and_preview "$TRAIN_PREVIEW_LINES" "${cmd[@]}"; then
-    echo "❌ Feature extraction failed" >&2
+    echo " Feature extraction failed" >&2
     return 1
   fi
 
   FEATURE_DONE[$output_abs]=1
-  echo "✅ Feature extraction completed for $output_abs"
+  echo " Feature extraction completed for $output_abs"
   return 0
 }
 run_pipeline() {
@@ -161,10 +173,10 @@ run_pipeline() {
     resolved_data="$data_path"
     if [[ ! -d "$resolved_data" ]]; then
       if [[ -d "$FALLBACK_DATA_PATH" ]]; then
-        echo "⚠️  Training data not found at $resolved_data, falling back to $FALLBACK_DATA_PATH"
+        echo "  Training data not found at $resolved_data, falling back to $FALLBACK_DATA_PATH"
         resolved_data="$FALLBACK_DATA_PATH"
       else
-        echo "❌ Error: Training data not found at $resolved_data"
+        echo " Error: Training data not found at $resolved_data"
         echo "   Generate data first via 01-data-generation/generate.py"
         return 1
       fi
@@ -174,7 +186,7 @@ run_pipeline() {
   else
     resolved_features="$features_path"
     if [[ -z "$resolved_features" ]]; then
-      echo "❌ Error: Features path not provided for scenario '$scenario'"
+      echo " Error: Features path not provided for scenario '$scenario'"
       return 1
     fi
     local extraction_input="$data_path"
@@ -188,7 +200,7 @@ run_pipeline() {
       extraction_input="$FALLBACK_DATA_PATH"
     fi
     if [[ -z "$extraction_input" ]]; then
-      echo "❌ Unable to determine raw data path for feature extraction" >&2
+      echo " Unable to determine raw data path for feature extraction" >&2
       return 1
     fi
 
@@ -197,7 +209,7 @@ run_pipeline() {
     fi
 
     if [[ ! -d "$resolved_features" ]]; then
-      echo "❌ Error: Features path not found at $resolved_features"
+      echo " Error: Features path not found at $resolved_features"
       echo "   Feature extraction step did not produce the expected directory."
       return 1
     fi
@@ -226,7 +238,7 @@ run_pipeline() {
         --data-path "$data_arg" \
         --test-size 0.2 \
         --random-state 42; then
-      echo "❌ Model 1 training failed for scenario '$label'"
+      echo " Model 1 training failed for scenario '$label'"
       popd >/dev/null
       return 1
     fi
@@ -237,13 +249,13 @@ run_pipeline() {
         --features-path "$features_arg" \
         --test-size 0.2 \
         --random-state 42; then
-      echo "❌ Model 1 training failed for scenario '$label'"
+      echo " Model 1 training failed for scenario '$label'"
       popd >/dev/null
       return 1
     fi
   fi
   popd >/dev/null
-  echo "✅ Model 1 training completed"
+  echo " Model 1 training completed"
 
   pushd "$SCRIPT_DIR/03-models/hierarchical/model1_binary" >/dev/null
   local test_cmd=(python test_model1.py --n-samples "$N_SAMPLES")
@@ -254,12 +266,12 @@ run_pipeline() {
     test_cmd+=(--features-path "$features_arg")
   fi
   if ! run_and_preview "$TEST_PREVIEW_LINES" "${test_cmd[@]}"; then
-    echo "❌ Model 1 testing failed for scenario '$label'"
+    echo " Model 1 testing failed for scenario '$label'"
     popd >/dev/null
     return 1
   fi
   popd >/dev/null
-  echo "✅ Model 1 testing completed"
+  echo " Model 1 testing completed"
 
   if [[ $WITH_MODEL2 -eq 1 ]]; then
     pushd "$SCRIPT_DIR/03-models/hierarchical/model2_nonstationary" >/dev/null
@@ -275,7 +287,7 @@ run_pipeline() {
           --data-path "$data_arg" \
           --test-size 0.2 \
           --random-state 42; then
-        echo "❌ Model 2 training failed for scenario '$label'"
+        echo " Model 2 training failed for scenario '$label'"
         popd >/dev/null
         return 1
       fi
@@ -286,7 +298,7 @@ run_pipeline() {
           --features-path "$features_arg" \
           --test-size 0.2 \
           --random-state 42; then
-        echo "❌ Model 2 training failed for scenario '$label'"
+        echo " Model 2 training failed for scenario '$label'"
         popd >/dev/null
         return 1
       fi
@@ -301,15 +313,15 @@ run_pipeline() {
     fi
 
     if ! run_and_preview "$TEST_PREVIEW_LINES" "${test2_cmd[@]}"; then
-      echo "❌ Model 2 testing failed for scenario '$label'"
+      echo " Model 2 testing failed for scenario '$label'"
       popd >/dev/null
       return 1
     fi
     popd >/dev/null
-    echo "✅ Model 2 validation completed"
+    echo " Model 2 validation completed"
   fi
 
-  echo "✅ Scenario '$label' passed"
+  echo " Scenario '$label' passed"
   return 0
 }
 
@@ -420,7 +432,7 @@ echo "Feature output path: $feature_output_display"
 echo "================================================================================"
 
 if ! python -c "import pandas" 2>/dev/null; then
-  echo "❌ Error: Python environment not configured properly"
+  echo " Error: Python environment not configured properly"
   echo "   Ensure dependencies are installed (pip install -r requirements.txt)"
   exit 1
 fi
@@ -431,7 +443,7 @@ try:
     import pyarrow, sktime
     print("✓ pyarrow and sktime available")
 except Exception as exc:
-    print(f"⚠️  Optional check: {exc}")
+    print(f"  Optional check: {exc}")
 PY
 
 TOTAL=${#SCENARIOS[@]}
@@ -453,7 +465,7 @@ for scenario in "${SCENARIOS[@]}"; do
       unset path_to_use
       ;;
     *)
-      echo "❌ Unsupported scenario: $scenario" >&2
+      echo " Unsupported scenario: $scenario" >&2
       exit 1
       ;;
   esac
@@ -461,7 +473,7 @@ for scenario in "${SCENARIOS[@]}"; do
 done
 
 echo "================================================================================"
-echo "✅ Smoke test completed successfully ($COUNT/$TOTAL scenarios)"
+echo " Smoke test completed successfully ($COUNT/$TOTAL scenarios)"
 if [[ $WITH_MODEL2 -eq 1 ]]; then
   echo "  • Model 2 checks were included"
 fi

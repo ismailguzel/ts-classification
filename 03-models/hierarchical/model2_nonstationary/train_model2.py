@@ -29,13 +29,23 @@ Usage:
     
     # Choose specific classifier
     python train_model2.py --mode raw --classifier rocket
+
+Refactored to integrate with utils module for FEATURES mode while preserving
+RAW mode custom loaders for sktime compatibility.
 """
+
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+# Add parent directory to path for utils import
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 import pandas as pd
 import numpy as np
-from pathlib import Path
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 import pickle
 import time
 import argparse
@@ -43,26 +53,36 @@ import warnings
 import pyarrow.parquet as pq
 from concurrent.futures import ThreadPoolExecutor
 import gc
-warnings.filterwarnings('ignore')
-import time
-import argparse
-import warnings
-warnings.filterwarnings('ignore')
 import json
 from datetime import datetime
 
+# Import utils for FEATURES mode and evaluation
+from utils import (  # noqa: E402
+    ModelEvaluator,
+    load_features_and_labels,
+    split_train_test,
+    remove_series_id_leakage,
+    PRIMARY_CATEGORY_MAPPING,
+    PRIMARY_CLASS_NAMES,
+    DEFAULT_RANDOM_STATE,
+    DEFAULT_TEST_SIZE,
+)
 
-def ensure_series_column(df: pd.DataFrame, context: str) -> pd.DataFrame:
-    if 'series_id' in df.columns:
-        return df
-    if 'id' in df.columns:
-        return df.rename(columns={'id': 'series_id'})
-    raise ValueError(f"{context} requires a 'series_id' column; columns: {list(df.columns)[:5]}")
+warnings.filterwarnings('ignore')
 
+# Check optional dependencies
+try:
+    from xgboost import XGBClassifier
+    has_xgboost = True
+except ImportError:
+    has_xgboost = False
 
-def set_series_index(df: pd.DataFrame, context: str) -> pd.DataFrame:
-    df = ensure_series_column(df, context)
-    return df.set_index('series_id')
+try:
+    from catboost import CatBoostClassifier
+    has_catboost = True
+except ImportError:
+    has_catboost = False
+
 # Parse arguments
 parser = argparse.ArgumentParser(description='Train Model 2: Non-Stationary 5-Class Classification')
 parser.add_argument('--mode', type=str, default='raw', choices=['raw', 'features'],
@@ -80,17 +100,22 @@ parser.add_argument('--classifier', type=str, default='all',
                     help='Specific classifier to train (default: all)')
 parser.add_argument('--n-jobs', type=int, default=110,
                     help='Number of parallel jobs for model training (default: 110)')
-parser.add_argument('--output-dir', type=str, default=None,
-                    help='Directory to store structured metrics and predictions')
+parser.add_argument('--save-dir', type=str, default='saved_models',
+                    help='Directory to save model, metrics, and predictions')
 
 args = parser.parse_args()
 
 # Get n_jobs from arguments
 N_JOBS = args.n_jobs
 
-OUTPUT_DIR = Path(args.output_dir).resolve() if args.output_dir else None
-if OUTPUT_DIR:
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+# Unified save directory with mode-specific subdirectory
+base_save_dir = Path(args.save_dir).resolve()
+if args.mode == 'raw':
+    classifier_name = args.classifier.upper()
+    SAVE_DIR = base_save_dir / f"model2_nonstationary_{args.mode}_{classifier_name.lower()}"
+else:  # features mode
+    SAVE_DIR = base_save_dir / f"model2_nonstationary_{args.mode}"
+SAVE_DIR.mkdir(parents=True, exist_ok=True)
 
 # Global n_jobs setting for all models
 
@@ -114,7 +139,7 @@ def safe_predict_proba(model, X):
         try:
             return model.predict_proba(X)
         except Exception as exc:  # pragma: no cover - defensive
-            print(f"    ⚠️  predict_proba unavailable: {exc}")
+            print(f"      predict_proba unavailable: {exc}")
             return None
     return None
 
@@ -163,7 +188,7 @@ def load_single_file(fp):
         return series_list
         
     except Exception as e:
-        print(f"    ⚠️  Error reading {fp.name}: {str(e)[:80]}")
+        print(f"      Error reading {fp.name}: {str(e)[:80]}")
         return []
 
 
@@ -184,7 +209,7 @@ def load_parquet_files_parallel(files, batch_size=BATCH_SIZE, n_workers=N_WORKER
     Returns:
         tuple: (series_list, labels, series_ids) - Ready for train/test split
     """
-    print(f"\n⚡ Fast parallel loading with PyArrow (batch_size={batch_size}, workers={n_workers})")
+    print(f"\n Fast parallel loading with PyArrow (batch_size={batch_size}, workers={n_workers})")
     
     all_series = []
     all_labels = []
@@ -216,16 +241,9 @@ def load_parquet_files_parallel(files, batch_size=BATCH_SIZE, n_workers=N_WORKER
     
     return all_series, all_labels, all_ids
 
-# Define category mapping
-CATEGORY_MAPPING = {
-    'trend': 0,              # Trend (deterministic_trends in folder names)
-    'volatility': 1,         # Volatility
-    'stochastic': 2,         # Stochastic
-    'anomaly': 3,            # Anomaly (point & collective anomalies)
-    'structural_break': 4    # Structural Break (mean/variance/trend shifts)
-}
-
-CLASS_NAMES = ['Trend', 'Volatility', 'Stochastic', 'Anomaly', 'Structural Break']
+# Use constants from utils for consistency
+CATEGORY_MAPPING = PRIMARY_CATEGORY_MAPPING
+CLASS_NAMES = PRIMARY_CLASS_NAMES
 
 # ============================================================================
 # 1. Load and Prepare Data
@@ -237,7 +255,7 @@ if args.mode == 'raw':
     
     raw_path = Path(args.data_path)
     if not raw_path.exists():
-        print(f"❌ Error: Data path not found: {raw_path}")
+        print(f" Error: Data path not found: {raw_path}")
         print(f"    Please generate data first:")
         print(f"    cd ../../../01-data-generation && python generate_test.py")
         exit(1)
@@ -245,7 +263,7 @@ if args.mode == 'raw':
     # Search for parquet files recursively (they're in subdirectories by category)
     all_files = list(raw_path.rglob('*.parquet'))
     if not all_files:
-        print(f"❌ Error: No parquet files found in: {raw_path}")
+        print(f" Error: No parquet files found in: {raw_path}")
         print(f"    Searched recursively in all subdirectories")
         print(f"    Expected structure: {raw_path}/stationary/, {raw_path}/deterministic_trend_*, etc.")
         exit(1)
@@ -257,31 +275,14 @@ if args.mode == 'raw':
     print(f"Filtered to {len(files)} non-stationary files (excluded stationary)")
     
     if len(files) == 0:
-        print("❌ Error: No non-stationary files found!")
+        print(" Error: No non-stationary files found!")
         exit(1)
-    
-    # Show category distribution (non-stationary only)
-    categories = {}
-    for fp in files:
-        # Get the primary category (parent or grandparent folder)
-        # For nested structure like "deterministic_trend_quadratic/up/ar"
-        # we want "deterministic_trend_quadratic", not "ar"
-        parts = fp.parts
-        raw_idx = parts.index('unified-test') if 'unified-test' in parts else -1
-        
-        if raw_idx != -1 and raw_idx + 1 < len(parts):
-            primary_cat = parts[raw_idx + 1]  # First folder after unified-test
-            categories[primary_cat] = categories.get(primary_cat, 0) + 1
-    
-    print("\nNon-stationary category distribution (by primary category):")
-    for cat, count in sorted(categories.items()):
-        print(f"  {cat}: {count} files")
     
     # Load time series with fast parallel loading (PyArrow + ThreadPoolExecutor)
     series_list, labels, series_ids = load_parquet_files_parallel(files)
     
     if len(series_list) == 0:
-        print("❌ Error: No non-stationary series found!")
+        print(" Error: No non-stationary series found!")
         exit(1)
     
     print(f"\n✓ Loaded {len(series_list):,} non-stationary time series (parallel PyArrow loading)")
@@ -296,58 +297,19 @@ if args.mode == 'raw':
     unique_labels, counts = np.unique(labels, return_counts=True)
 
 else:
-    # FEATURES MODE: Load TSFresh features
+    # FEATURES MODE: Load TSFresh features using utils
     print("\n[1/6] Loading TSFresh features...")
     
     features_path = Path(args.features_path)
-
-    candidate_pairs = [
-        (features_path / 'features.parquet', features_path / 'labels.parquet'),
-        (features_path / 'features_primary_mutual_info.parquet', features_path / 'labels_primary.parquet'),
-        (features_path / 'primary/features.parquet', features_path / 'primary/labels.parquet')
-    ]
-
-    features_file = None
-    labels_file = None
-    for feat_file, lab_file in candidate_pairs:
-        if feat_file.exists() and lab_file.exists():
-            features_file, labels_file = feat_file, lab_file
-            break
-
-    if features_file is None or labels_file is None:
-        print(f"❌ Error: Features or labels file not found under {features_path}")
-        print("    Expected combinations: features.parquet+labels.parquet,"
-              " primary/ directory, or legacy mutual-info selection.")
-        exit(1)
-
-    X_df = set_series_index(pd.read_parquet(features_file), "Features table")
-    labels_df = ensure_series_column(pd.read_parquet(labels_file), "Labels table").set_index('series_id')
-    labels_df = labels_df.reindex(X_df.index)
-
-    if labels_df.isnull().any().any():
-        missing_ids = labels_df.index[labels_df.isnull().any(axis=1)].tolist()
-        print(f"❌ Error: Missing labels for series IDs: {missing_ids[:5]}")
-        exit(1)
-
-    if 'is_stationary' not in labels_df.columns:
-        print("❌ Error: 'is_stationary' column not found in labels table")
-        exit(1)
-
-    nonstat_mask = labels_df['is_stationary'] == False
-    X_df = X_df[nonstat_mask]
-    labels_df = labels_df[nonstat_mask]
-
-    print(f"✓ Filtered to {len(X_df):,} non-stationary series")
-
-    if X_df.empty:
-        print("❌ Error: No non-stationary series found!")
-        exit(1)
-
-    if 'primary_category' not in labels_df.columns:
-        print("❌ Error: 'primary_category' column missing in labels table")
-        exit(1)
-
-    labels = labels_df['primary_category'].map(CATEGORY_MAPPING).values
+    
+    # Use utils function for consistent feature/label loading
+    X_df, labels, labels_df = load_features_and_labels(
+        features_path=features_path,
+        target='primary'
+    )
+    
+    # Extract sample_ids from index
+    sample_ids = X_df.index.to_numpy()
     
     print(f"✓ Loaded features: {X_df.shape}")
     print(f"✓ Number of features: {X_df.shape[1]}")
@@ -356,7 +318,6 @@ else:
     # Store for later use
     X_features = X_df.values
     series_list = None  # Not used in features mode
-    sample_ids = X_df.index.to_numpy()
 
 # Check label distribution
 labels = np.array(labels)
@@ -403,13 +364,13 @@ if args.mode == 'raw':
     # Check for and handle NaN values
     nan_count = np.isnan(X).sum()
     if nan_count > 0:
-        print(f"⚠️  Found {nan_count} NaN values in data, replacing with 0")
+        print(f"  Found {nan_count} NaN values in data, replacing with 0")
         X = np.nan_to_num(X, nan=0.0)
     
     # Check for inf values
     inf_count = np.isinf(X).sum()
     if inf_count > 0:
-        print(f"⚠️  Found {inf_count} inf values in data, replacing with 0")
+        print(f"  Found {inf_count} inf values in data, replacing with 0")
         X = np.nan_to_num(X, nan=0.0, posinf=0.0, neginf=0.0)
     
     X = X.reshape(X.shape[0], 1, X.shape[1])  # (n_samples, 1, n_timepoints)
@@ -425,31 +386,20 @@ else:
     # Import sklearn classifiers
     from sklearn.ensemble import RandomForestClassifier
     from sklearn.svm import SVC
-    try:
-        from xgboost import XGBClassifier
-        has_xgboost = True
-    except ImportError:
-        has_xgboost = False
-        print("⚠️  XGBoost not installed, skipping XGBoost model")
-    
-    # Optional: CatBoost
-    try:
-        from catboost import CatBoostClassifier
-        has_catboost = True
-    except ImportError:
-        has_catboost = False
-        print("⚠️  CatBoost not installed, skipping CatBoost model")
-    
     from sklearn.preprocessing import StandardScaler
     
-    # Scale features
-    scaler = StandardScaler()
-    X = scaler.fit_transform(X_features)
+    # Optional dependencies already checked at top of file
+    if not has_xgboost:
+        print("  XGBoost not installed, skipping XGBoost model")
+    if not has_catboost:
+        print("  CatBoost not installed, skipping CatBoost model")
+    
+    # Don't scale yet - will scale after split to avoid data leakage
+    X = X_features
     y = labels
     
     print(f"✓ X shape: {X.shape}")
     print(f"✓ y shape: {y.shape}")
-    print(f"✓ Features scaled with StandardScaler")
 
 # ============================================================================
 # 3. Train/Test Split
@@ -464,6 +414,14 @@ X_train, X_test, y_train, y_test, train_ids, test_ids = train_test_split(
     random_state=args.random_state,
     stratify=y
 )
+
+# Scale features AFTER split to prevent data leakage
+if args.mode == 'features':
+    print("\n[4.5/6] Scaling features (fit on train only)...")
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train)  # Fit only on training data
+    X_test = scaler.transform(X_test)        # Transform test with train statistics
+    print(f"✓ Features scaled with StandardScaler (no data leakage)")
 
 train_ids = np.array(train_ids)
 test_ids = np.array(test_ids)
@@ -486,7 +444,7 @@ if args.mode == 'raw':
     
     # Model 1: TimeSeriesForest
     if args.classifier in ['all', 'tsf']:
-        print("\n🌲 Training TimeSeriesForestClassifier...")
+        print("\n Training TimeSeriesForestClassifier...")
         start_time = time.time()
         tsf = TimeSeriesForestClassifier(n_estimators=100, random_state=args.random_state, n_jobs=N_JOBS)
         tsf.fit(X_train, y_train)
@@ -512,7 +470,7 @@ if args.mode == 'raw':
     
     # Model 2: ROCKET (2000 kernels for 5-class)
     if args.classifier in ['all', 'rocket']:
-        print("\n🚀 Training ROCKET Classifier...")
+        print("\n Training ROCKET Classifier...")
         try:
             start_time = time.time()
             rocket = RocketClassifier(num_kernels=2000, random_state=args.random_state, n_jobs=N_JOBS)
@@ -537,12 +495,12 @@ if args.mode == 'raw':
             print(f"  ✓ Train Accuracy: {train_acc:.4f} ({100*train_acc:.2f}%)")
             print(f"  ✓ Training time: {train_time:.2f}s")
         except (AttributeError, ImportError) as e:
-            print(f"  ⚠️  ROCKET not available: {str(e)[:100]}")
-            print(f"  ⚠️  This may be due to NumPy 2.0 incompatibility. Consider downgrading to numpy<2.0")
+            print(f"    ROCKET not available: {str(e)[:100]}")
+            print(f"    This may be due to NumPy 2.0 incompatibility. Consider downgrading to numpy<2.0")
     
     # Model 3: Arsenal (ROCKET ensemble)
     if args.classifier in ['all', 'arsenal']:
-        print("\n🎯 Training Arsenal Classifier...")
+        print("\n Training Arsenal Classifier...")
         try:
             start_time = time.time()
             arsenal = Arsenal(num_kernels=2000, random_state=args.random_state, n_jobs=N_JOBS)
@@ -567,63 +525,37 @@ if args.mode == 'raw':
             print(f"  ✓ Train Accuracy: {train_acc:.4f} ({100*train_acc:.2f}%)")
             print(f"  ✓ Training time: {train_time:.2f}s")
         except (ImportError, AttributeError) as e:
-            print(f"  ⚠️  Arsenal not available: {str(e)[:100]}")
-            print(f"  ⚠️  This may be due to NumPy 2.0 incompatibility. Consider downgrading to numpy<2.0")
+            print(f"    Arsenal not available: {str(e)[:100]}")
+            print(f"    This may be due to NumPy 2.0 incompatibility. Consider downgrading to numpy<2.0")
 
 else:
-    # FEATURES MODE: Train sklearn classifiers
+    # FEATURES MODE: Train sklearn classifiers with ModelEvaluator
     
     # Model 1: Random Forest
-    print("\n🌲 Training Random Forest...")
+    print("\n Training Random Forest...")
     start_time = time.time()
     rf = RandomForestClassifier(n_estimators=200, random_state=args.random_state, n_jobs=N_JOBS)
     rf.fit(X_train, y_train)
     train_time = time.time() - start_time
     
-    y_pred = rf.predict(X_test)
-    y_train_pred = rf.predict(X_train)
-    acc = accuracy_score(y_test, y_pred)
-    train_acc = accuracy_score(y_train, y_train_pred)
-    y_proba = safe_predict_proba(rf, X_test)
+    evaluator_rf = ModelEvaluator('RandomForest', rf, CLASS_NAMES, output_dir=SAVE_DIR)
+    evaluator_rf.set_train_time(train_time)
+    results['RandomForest'] = evaluator_rf.evaluate(X_train, y_train, X_test, y_test, train_ids, test_ids)
     models['RandomForest'] = rf
-    results['RandomForest'] = {
-        'accuracy': acc,
-        'train_accuracy': train_acc,
-        'train_time': train_time,
-        'predictions': y_pred,
-        'train_predictions': y_train_pred,
-        'probabilities': y_proba
-    }
-    print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
-    print(f"  ✓ Train Accuracy: {train_acc:.4f} ({100*train_acc:.2f}%)")
-    print(f"  ✓ Training time: {train_time:.2f}s")
     
     # Model 2: XGBoost (if available)
     if has_xgboost:
-        print("\n🚀 Training XGBoost...")
+        print("\n Training XGBoost...")
         start_time = time.time()
         xgb = XGBClassifier(n_estimators=200, random_state=args.random_state, n_jobs=N_JOBS, 
                            eval_metric='mlogloss')
         xgb.fit(X_train, y_train)
         train_time = time.time() - start_time
         
-        y_pred = xgb.predict(X_test)
-        y_train_pred = xgb.predict(X_train)
-        acc = accuracy_score(y_test, y_pred)
-        train_acc = accuracy_score(y_train, y_train_pred)
-        y_proba = safe_predict_proba(xgb, X_test)
+        evaluator_xgb = ModelEvaluator('XGBoost', xgb, CLASS_NAMES, output_dir=SAVE_DIR)
+        evaluator_xgb.set_train_time(train_time)
+        results['XGBoost'] = evaluator_xgb.evaluate(X_train, y_train, X_test, y_test, train_ids, test_ids)
         models['XGBoost'] = xgb
-        results['XGBoost'] = {
-            'accuracy': acc,
-            'train_accuracy': train_acc,
-            'train_time': train_time,
-            'predictions': y_pred,
-            'train_predictions': y_train_pred,
-            'probabilities': y_proba
-        }
-        print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
-        print(f"  ✓ Train Accuracy: {train_acc:.4f} ({100*train_acc:.2f}%)")
-        print(f"  ✓ Training time: {train_time:.2f}s")
     
     # Model 3: CatBoost (if available)
     if has_catboost:
@@ -635,199 +567,115 @@ else:
             learning_rate=0.1,
             thread_count=N_JOBS,
             random_seed=args.random_state,
+            train_dir=str(SAVE_DIR / 'catboost_info'),  # Save CatBoost logs to save_dir
             verbose=0
         )
         cat.fit(X_train, y_train)
         train_time = time.time() - start_time
         
-        y_pred = cat.predict(X_test)
-        y_train_pred = cat.predict(X_train)
-        acc = accuracy_score(y_test, y_pred)
-        train_acc = accuracy_score(y_train, y_train_pred)
-        y_proba = safe_predict_proba(cat, X_test)
+        evaluator_cat = ModelEvaluator('CatBoost', cat, CLASS_NAMES, output_dir=SAVE_DIR)
+        evaluator_cat.set_train_time(train_time)
+        results['CatBoost'] = evaluator_cat.evaluate(X_train, y_train, X_test, y_test, train_ids, test_ids)
         models['CatBoost'] = cat
-        results['CatBoost'] = {
-            'accuracy': acc,
-            'train_accuracy': train_acc,
-            'train_time': train_time,
-            'predictions': y_pred,
-            'train_predictions': y_train_pred,
-            'probabilities': y_proba
-        }
-        print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
-        print(f"  ✓ Train Accuracy: {train_acc:.4f} ({100*train_acc:.2f}%)")
-        print(f"  ✓ Training time: {train_time:.2f}s")
     
     # Model 4: SVM (RBF kernel for multi-class)
-    print("\n⚡ Training SVM (RBF)...")
+    print("\n Training SVM (RBF)...")
     start_time = time.time()
     svm = SVC(kernel='rbf', random_state=args.random_state, probability=True)
     svm.fit(X_train, y_train)
     train_time = time.time() - start_time
     
-    y_pred = svm.predict(X_test)
-    y_train_pred = svm.predict(X_train)
-    acc = accuracy_score(y_test, y_pred)
-    train_acc = accuracy_score(y_train, y_train_pred)
-    y_proba = safe_predict_proba(svm, X_test)
+    evaluator_svm = ModelEvaluator('SVM_RBF', svm, CLASS_NAMES, output_dir=SAVE_DIR)
+    evaluator_svm.set_train_time(train_time)
+    results['SVM_RBF'] = evaluator_svm.evaluate(X_train, y_train, X_test, y_test, train_ids, test_ids)
     models['SVM_RBF'] = svm
-    results['SVM_RBF'] = {
-        'accuracy': acc,
-        'train_accuracy': train_acc,
-        'train_time': train_time,
-        'predictions': y_pred,
-        'train_predictions': y_train_pred,
-        'probabilities': y_proba
-    }
-    print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
-    print(f"  ✓ Train Accuracy: {train_acc:.4f} ({100*train_acc:.2f}%)")
-    print(f"  ✓ Training time: {train_time:.2f}s")
 
 # ============================================================================
 # 5. Evaluate and Compare
 # ============================================================================
 
-print("\n[6/6] Evaluation Results")
+print("\n[6/6] Saving Results")
 print("=" * 80)
 
-metrics_payload = {
+# Save comprehensive metrics to JSON files
+print(f"\nSaving results to: {SAVE_DIR}")
+
+# Save individual model metrics
+for model_name, result in results.items():
+    metrics_path = SAVE_DIR / f"model2_{args.mode}_{model_name}_metrics.json"
+    with open(metrics_path, 'w') as f:
+        json.dump(result, f, indent=2, default=str)
+    print(f"  ✓ {model_name} metrics: {metrics_path.name}")
+
+# For RAW mode, manually save predictions and misclassified samples
+# (FEATURES mode already handled by ModelEvaluator)
+if args.mode == 'raw':
+    print("\n Saving predictions for RAW mode models...")
+    all_predictions = []
+    
+    for model_name, result in results.items():
+        y_pred = result.get('predictions')
+        y_proba = result.get('probabilities')
+        
+        if y_pred is not None:
+            pred_data = {
+                'id': test_ids,
+                'true_label': y_test,
+                'predicted_label': y_pred,
+                'correct': (y_test == y_pred).astype(int),
+                'model': model_name
+            }
+            
+            # Add probability columns if available
+            if y_proba is not None and len(y_proba.shape) == 2:
+                for i, class_name in enumerate(CLASS_NAMES):
+                    pred_data[f'prob_{class_name}'] = y_proba[:, i]
+                pred_data['confidence'] = np.max(y_proba, axis=1)
+            
+            all_predictions.append(pd.DataFrame(pred_data))
+    
+    if all_predictions:
+        # Save all predictions
+        predictions_df = pd.concat(all_predictions, ignore_index=True)
+        predictions_path = SAVE_DIR / f"model2_{args.mode}_predictions.csv"
+        predictions_df.to_csv(predictions_path, index=False)
+        print(f"  ✓ All predictions: {predictions_path.name}")
+        
+        # Save misclassified samples
+        misclassified_df = predictions_df[predictions_df['correct'] == 0].copy()
+        if not misclassified_df.empty:
+            misclassified_path = SAVE_DIR / f"model2_{args.mode}_misclassified.csv"
+            misclassified_df.to_csv(misclassified_path, index=False)
+            print(f"  ✓ Misclassified samples: {misclassified_path.name} ({len(misclassified_df)} errors)")
+
+# Create summary comparison
+summary = {
     'mode': args.mode,
     'timestamp_utc': datetime.utcnow().isoformat(timespec='seconds'),
-    'n_train': int(len(X_train)),
-    'n_test': int(len(X_test)),
-    'train_sample_ids': train_ids.tolist(),
-    'test_sample_ids': test_ids.tolist(),
-    'class_names': CLASS_NAMES,
     'models': {}
 }
 
-prediction_frames = []
-
 for model_name, result in results.items():
-    print(f"\n📊 {model_name}")
-    print("-" * 80)
-    acc = float(result['accuracy'])
-    train_acc_value = result.get('train_accuracy', np.nan)
-    train_acc = float(train_acc_value) if train_acc_value is not None else np.nan
-    train_time = float(result['train_time'])
-    print(f"Accuracy      : {acc:.4f} ({100*acc:.2f}%)")
-    if not np.isnan(train_acc):
-        print(f"Train Accuracy: {train_acc:.4f} ({100*train_acc:.2f}%)")
-    print(f"Training Time : {train_time:.2f}s")
-
-    y_pred = np.array(result['predictions'])
-    y_train_pred = np.array(result.get('train_predictions', []))
-    y_proba = result.get('probabilities')
-
-    report_text = classification_report(
-        y_test,
-        y_pred,
-        target_names=CLASS_NAMES,
-        digits=4
-    )
-    print("\nClassification Report:")
-    print(report_text)
-
-    cm = confusion_matrix(y_test, y_pred)
-    print("\nConfusion Matrix:")
-    header = " " * 20 + " ".join([f"{name[:8]:>8s}" for name in CLASS_NAMES])
-    print(header)
-    for i, name in enumerate(CLASS_NAMES):
-        row_vals = " ".join([f"{cm[i, j]:8d}" for j in range(len(CLASS_NAMES))])
-        print(f"{name[:20]:20s} {row_vals}")
-
-    report_dict = classification_report(
-        y_test,
-        y_pred,
-        target_names=CLASS_NAMES,
-        output_dict=True,
-        zero_division=0
-    )
-    if y_train_pred.size:
-        train_report_dict = classification_report(
-            y_train,
-            y_train_pred,
-            target_names=CLASS_NAMES,
-            output_dict=True,
-            zero_division=0
-        )
-        train_cm = confusion_matrix(y_train, y_train_pred).tolist()
+    # Handle both RAW mode (flat structure) and FEATURES mode (nested structure)
+    if 'metrics' in result:
+        # FEATURES mode: nested structure
+        test_acc = result.get('metrics', {}).get('test', {}).get('accuracy', 0)
+        train_acc = result.get('metrics', {}).get('train', {}).get('accuracy', 0)
     else:
-        train_report_dict = {}
-        train_cm = []
-
-    y_pred_flat = np.asarray(y_pred).ravel()
-    y_test_flat = np.asarray(y_test).ravel()
-    test_ids_arr = np.asarray(test_ids).ravel()
-
-    misclassified_mask = (y_pred_flat != y_test_flat)
-    misclassified_count = int(np.sum(misclassified_mask))
-    if misclassified_count > 0:
-        preview_ids = test_ids_arr[misclassified_mask][:5]
-        print(f"  ⚠️  Misclassified samples: {misclassified_count} (examples: {preview_ids})")
-    else:
-        print("  ✓ No misclassifications on test fold")
-
-    model_metrics = {
-        'train_time_sec': train_time,
-        'test_accuracy': acc,
-        'train_accuracy': None if np.isnan(train_acc) else train_acc,
-        'classification_report': report_dict,
-        'confusion_matrix': cm.tolist(),
-        'train_classification_report': train_report_dict,
-        'train_confusion_matrix': train_cm,
-        'misclassified_count': misclassified_count,
-        'probability_available': y_proba is not None
+        # RAW mode: flat structure
+        test_acc = result.get('accuracy', 0)
+        train_acc = result.get('train_accuracy', 0)
+    
+    summary['models'][model_name] = {
+        'test_accuracy': test_acc,
+        'train_accuracy': train_acc,
+        'train_time_sec': result.get('train_time', 0)
     }
 
-    if y_proba is not None:
-        model_metrics['probability_shape'] = list(np.shape(y_proba))
-
-    metrics_payload['models'][model_name] = model_metrics
-
-    pred_df = pd.DataFrame({
-        'sample_id': test_ids_arr,
-        'true_label': y_test_flat,
-        'predicted_label': y_pred_flat,
-        'model_name': model_name
-    })
-
-    if y_proba is not None:
-        proba_array = np.asarray(y_proba)
-        for idx, cls_name in enumerate(CLASS_NAMES):
-            col_name = f"prob_{cls_name.lower().replace(' ', '_')}"
-            pred_df[col_name] = proba_array[:, idx]
-
-    prediction_frames.append(pred_df)
-
-if prediction_frames:
-    predictions_df = pd.concat(prediction_frames, ignore_index=True)
-    misclassified_df = predictions_df[predictions_df['true_label'] != predictions_df['predicted_label']].copy()
-else:
-    predictions_df = pd.DataFrame()
-    misclassified_df = pd.DataFrame()
-
-artifacts = {}
-
-if OUTPUT_DIR:
-    metrics_path = OUTPUT_DIR / f"model2_{args.mode}_metrics.json"
-    artifacts['metrics_json'] = str(metrics_path)
-
-    if not predictions_df.empty:
-        predictions_path = OUTPUT_DIR / f"model2_{args.mode}_predictions.csv"
-        predictions_df.to_csv(predictions_path, index=False)
-        artifacts['predictions_csv'] = str(predictions_path)
-
-        if not misclassified_df.empty:
-            misclassified_path = OUTPUT_DIR / f"model2_{args.mode}_misclassified.csv"
-            misclassified_df.to_csv(misclassified_path, index=False)
-            artifacts['misclassified_csv'] = str(misclassified_path)
-
-    metrics_payload['artifacts'] = artifacts
-    with open(metrics_path, 'w', encoding='utf-8') as f:
-        json.dump(metrics_payload, f, indent=2)
-else:
-    metrics_payload['artifacts'] = artifacts
+summary_path = SAVE_DIR / f"model2_{args.mode}_summary.json"
+with open(summary_path, 'w') as f:
+    json.dump(summary, f, indent=2)
+print(f"  ✓ Summary comparison: {summary_path.name}")
 
 # ============================================================================
 # 6. Save Best Model
@@ -838,18 +686,22 @@ print("SAVING BEST MODEL")
 print("=" * 80)
 
 # Select best model based on accuracy
-best_model_name = max(results, key=lambda x: results[x]['accuracy'])
-best_model = models[best_model_name]
-best_accuracy = results[best_model_name]['accuracy']
+def get_test_accuracy(result):
+    """Get test accuracy from either RAW or FEATURES mode result structure"""
+    if 'metrics' in result:
+        return result.get('metrics', {}).get('test', {}).get('accuracy', 0)
+    else:
+        return result.get('accuracy', 0)
 
-print(f"\n🏆 Best Model: {best_model_name}")
+best_model_name = max(results, key=lambda x: get_test_accuracy(results[x]))
+best_model = models[best_model_name]
+best_accuracy = get_test_accuracy(results[best_model_name])
+
+print(f"\n Best Model: {best_model_name}")
 print(f"   Accuracy: {best_accuracy:.4f} ({100*best_accuracy:.2f}%)")
 
-# Save model
-model_dir = Path('saved_models')
-model_dir.mkdir(exist_ok=True)
-
-model_path = model_dir / 'model2_nonstationary_classifier.pkl'
+# Save model to SAVE_DIR
+model_path = SAVE_DIR / 'model2_nonstationary_classifier.pkl'
 with open(model_path, 'wb') as f:
     pickle.dump(best_model, f)
 
@@ -866,20 +718,25 @@ metadata = {
     'n_classes': 5,
     'class_names': CLASS_NAMES,
     'category_mapping': CATEGORY_MAPPING,
+    'save_dir': str(SAVE_DIR),
 }
 
 # Add mode-specific metadata
 if args.mode == 'raw':
     metadata['fixed_length'] = fixed_length
-    metadata['feature_shape'] = X.shape[1:]
+    metadata['feature_shape'] = X_train.shape[1:]  # Use X_train shape after split
 else:
-    metadata['n_features'] = X.shape[1]
-    metadata['scaler'] = scaler
+    metadata['n_features'] = X_train.shape[1]  # Use X_train shape after split
 
-if OUTPUT_DIR:
-    metadata['metrics_output_dir'] = str(OUTPUT_DIR)
+# Save scaler separately for features mode (needed for inference)
+if args.mode == 'features':
+    scaler_path = SAVE_DIR / 'scaler.pkl'
+    with open(scaler_path, 'wb') as f:
+        pickle.dump(scaler, f)
+    metadata['scaler_path'] = str(scaler_path)
+    print(f"✓ Scaler saved to: {scaler_path}")
 
-metadata_path = model_dir / 'model2_metadata.pkl'
+metadata_path = SAVE_DIR / 'model2_metadata.pkl'
 with open(metadata_path, 'wb') as f:
     pickle.dump(metadata, f)
 
@@ -890,7 +747,7 @@ print(f"✓ Metadata saved to: {metadata_path}")
 # ============================================================================
 
 print("\n" + "=" * 80)
-print("✅ MODEL 2 TRAINING COMPLETE!")
+print(" MODEL 2 TRAINING COMPLETE!")
 print("=" * 80)
 print(f"\nMode: {args.mode.upper()}")
 print(f"Best Model: {best_model_name}")

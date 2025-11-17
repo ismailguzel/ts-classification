@@ -1,6 +1,6 @@
 # Model 1: Binary Classification
 
-## 🎯 Objective
+##  Objective
 
 Classify time series as **Stationary (0)** or **Non-Stationary (1)**.
 
@@ -77,7 +77,7 @@ Available classifiers:
 
 Requirements:
 - Raw data: `../../../data/raw/unified-5k/` (default)
-- Output: `saved_models/model1_binary_classifier.pkl`
+- Output: `saved_models/model1_binary_raw_<classifier>/`
 
 ### Training - FEATURES Mode
 
@@ -94,22 +94,19 @@ python train_model1.py --mode features --features-path ../../../data/features/un
 
 Requirements:
 - Features: `../../../data/features/unified-5k/selected/binary/` (default)
-- Output: `saved_models/model1_binary_classifier.pkl`
+- Output: `saved_models/model1_binary_features/`
 
 ### Testing
 
 ```bash
-# Test with default model and 100 samples
-python test_model1.py
+# Test RAW mode model
+python test_model1.py --model-path saved_models/model1_binary_raw_rocket/model1_binary_classifier.pkl
 
-# Test specific model
-python test_model1.py --model-path saved_models/model1_binary_classifier.pkl
+# Test FEATURES mode model
+python test_model1.py --model-path saved_models/model1_binary_features/model1_binary_classifier.pkl
 
 # Test with more samples
-python test_model1.py --n-samples 500
-
-# Test with specific model and more samples
-python test_model1.py --model-path saved_models/model1_binary_rocket.pkl --n-samples 500
+python test_model1.py --model-path saved_models/model1_binary_raw_rocket/model1_binary_classifier.pkl --n-samples 500
 ```
 
 Quick test on a subset to verify model works.
@@ -152,15 +149,49 @@ Script automatically:
 
 Output Files
 
+### RAW Mode Output Structure
 ```
 saved_models/
-├── model1_binary_classifier.pkl    # Best trained model
-└── model1_metadata.pkl              # Training metadata
+└── model1_binary_raw_<classifier>/      # e.g., model1_binary_raw_rocket
+    ├── model1_binary_classifier.pkl     # Best trained model
+    ├── model1_metadata.pkl              # Training metadata
+    ├── model1_raw_<CLASSIFIER>_metrics.json  # Model metrics
+    ├── model1_raw_predictions.csv       # Test predictions
+    ├── model1_raw_misclassified.csv     # Misclassified samples
+    └── model1_raw_summary.json          # Summary comparison
+```
+
+### FEATURES Mode Output Structure
+```
+saved_models/
+└── model1_binary_features/              # All sklearn models
+    ├── model1_binary_classifier.pkl     # Best trained model
+    ├── model1_metadata.pkl              # Training metadata
+    ├── scaler.pkl                       # Feature scaler
+    ├── predictions_<ModelName>.csv      # Per-model predictions
+    ├── misclassified_<ModelName>.csv    # Per-model misclassified
+    ├── model1_features_<ModelName>_metrics.json  # Per-model metrics
+    ├── model1_features_summary.json     # Summary comparison
+    └── catboost_info/                   # CatBoost logs
+```
+
+### AutoTrain Mode Output Structure
+```
+saved_models/
+└── model1_binary_autogluon/             # AutoGluon artifacts
+    ├── models/                          # Trained model files
+    ├── predictions_AutoGluon_Binary.csv
+    ├── misclassified_AutoGluon_Binary.csv
+    ├── leaderboard_test.csv
+    ├── leaderboard_train.csv
+    ├── model1_autotrain_metadata.pkl    # Training metadata
+    └── metrics/
+        └── AutoGluon_Binary_metrics.json
 ```
 
 Metadata includes:
 - Model name and type
-- Training mode (raw/features)
+- Training mode (raw/features/autotrain)
 - Evaluation metrics
 - Data shapes and parameters
 - Fixed length (for raw mode)
@@ -169,7 +200,7 @@ Metadata includes:
 
 ---
 
-## 💡 Tips
+##  Tips
 
 ### When to use RAW mode:
 - Quick baseline needed
@@ -185,7 +216,7 @@ Metadata includes:
 
 ---
 
-## 🔍 Troubleshooting
+##  Troubleshooting
 
 **Error: Data not found**
 ```bash
@@ -222,7 +253,7 @@ python feature_selection.py --target binary
 
 ---
 
-## 📝 Next Steps
+##  Next Steps
 
 After successful Model 1 training:
 
@@ -234,7 +265,7 @@ After successful Model 1 training:
 
 ---
 
-## 🎯 Hierarchical Pipeline
+##  Hierarchical Pipeline
 
 Model 1 is part of a hierarchical system:
 
@@ -259,7 +290,7 @@ What type of non-stationary?
 
 ---
 
-## 📚 References
+##  References
 
 - **sktime**: https://www.sktime.net/
 - **ROCKET**: Dempster et al., 2020

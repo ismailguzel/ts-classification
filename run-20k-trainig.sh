@@ -1,4 +1,21 @@
 #!/bin/bash
+# ============================================================================
+# Hierarchical Time Series Classification - 20K Training Pipeline
+# ============================================================================
+# This script trains all models (Model 1 & Model 2) with different modes:
+#   - RAW mode: Uses raw time series with sktime classifiers
+#   - FEATURES mode: Uses TSFresh-extracted features with sklearn classifiers
+#   - AutoGluon: AutoML with extracted features
+#
+# Output Structure:
+#   saved_models/
+#   ├── model1_binary_raw_<classifier>/      # RAW mode outputs
+#   ├── model1_binary_features/              # FEATURES mode outputs
+#   ├── model1_binary_autogluon/             # AutoGluon outputs
+#   ├── model2_nonstationary_raw_<classifier>/
+#   ├── model2_nonstationary_features/
+#   └── model2_nonstationary_autogluon/
+# ============================================================================
 
 # Load required module
 module load apps/truba-ai/gpu-2024.0
@@ -7,7 +24,7 @@ module load apps/truba-ai/gpu-2024.0
 echo "=== Starting Model 1 Training ==="
 cd /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model1_binary
 
-# RAW mode
+# RAW mode (trains all classifiers: rocket, arsenal, tsforest)
 echo "Training Model 1 - RAW mode"
 conda activate ts-sktime
 mkdir -p ./out
@@ -37,9 +54,7 @@ echo "Training Model 1 - AutoGluon All Features"
 conda activate ts-autogluon
 mkdir -p ./out
 python -u autotrain_models1.py \
-    --engine autogluon \
     --features-path ../../../data/features/unified-20k/allfeatures \
-    --save-dir ./save_models/unified-20k/autogluon/allfeatures \
     --time-limit 3600 \
     --presets medium_quality_faster_train \
     2>&1 | tee ./out/autogluon_allfeatures-20k.out
@@ -48,37 +63,16 @@ python -u autotrain_models1.py \
 echo "Training Model 1 - AutoGluon Selected Features"
 mkdir -p ./out
 python -u autotrain_models1.py \
-    --engine autogluon \
     --features-path ../../../data/features/unified-20k/selected \
-    --save-dir ./save_models/unified-20k/autogluon/selected \
     --time-limit 3600 \
     --presets medium_quality_faster_train \
     2>&1 | tee ./out/autogluon_selected-20k.out
-
-# PyCaret (all features)
-echo "Training Model 1 - PyCaret All Features"
-conda activate ts-pycaret
-mkdir -p ./out
-python -u autotrain_models1.py \
-    --engine pycaret \
-    --features-path ../../../data/features/unified-20k/allfeatures \
-    --save-dir ./save_models/unified-20k/pycaret/allfeatures \
-    2>&1 | tee ./out/pycaret_allfeatures-20k.out
-
-# PyCaret (selected features)
-echo "Training Model 1 - PyCaret Selected Features"
-mkdir -p ./out
-python -u autotrain_models1.py \
-    --engine pycaret \
-    --features-path ../../../data/features/unified-20k/selected \
-    --save-dir ./save_models/unified-20k/pycaret/selected \
-    2>&1 | tee ./out/pycaret_selected-20k.out
 
 ### Model 2 (5-Class Classification)
 echo "=== Starting Model 2 Training ==="
 cd /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model2_nonstationary
 
-# RAW mode
+# RAW mode (trains all classifiers: rocket, arsenal, tsforest)
 echo "Training Model 2 - RAW mode"
 conda activate ts-sktime
 mkdir -p ./out
@@ -108,9 +102,7 @@ echo "Training Model 2 - AutoGluon All Features"
 conda activate ts-autogluon
 mkdir -p ./out
 python -u autotrain_models2.py \
-    --engine autogluon \
     --features-path ../../../data/features/unified-20k/allfeatures \
-    --save-dir ./save_models/unified-20k/autogluon/allfeatures \
     --time-limit 3600 \
     --presets medium_quality_faster_train \
     2>&1 | tee ./out/autogluon2_allfeatures-20k.out
@@ -119,30 +111,9 @@ python -u autotrain_models2.py \
 echo "Training Model 2 - AutoGluon Selected Features"
 mkdir -p ./out
 python -u autotrain_models2.py \
-    --engine autogluon \
     --features-path ../../../data/features/unified-20k/selected \
-    --save-dir ./save_models/unified-20k/autogluon/selected \
     --time-limit 3600 \
     --presets medium_quality_faster_train \
     2>&1 | tee ./out/autogluon2_selected-20k.out
-
-# PyCaret (all features)
-echo "Training Model 2 - PyCaret All Features"
-conda activate ts-pycaret
-mkdir -p ./out
-python -u autotrain_models2.py \
-    --engine pycaret \
-    --features-path ../../../data/features/unified-20k/allfeatures \
-    --save-dir ./save_models/unified-20k/pycaret/allfeatures \
-    2>&1 | tee ./out/pycaret2_allfeatures-20k.out
-
-# PyCaret (selected features)
-echo "Training Model 2 - PyCaret Selected Features"
-mkdir -p ./out
-python -u autotrain_models2.py \
-    --engine pycaret \
-    --features-path ../../../data/features/unified-20k/selected \
-    --save-dir ./save_models/unified-20k/pycaret/selected \
-    2>&1 | tee ./out/pycaret2_selected-20k.out
 
 echo "=== All training completed ==="

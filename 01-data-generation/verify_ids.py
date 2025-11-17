@@ -40,7 +40,7 @@ def verify_ids(data_path: Path, sample_duplicates: int = 10) -> int:
         try:
             ids = pd.read_parquet(pf, columns=["series_id"])['series_id'].astype(int)
         except Exception as e:
-            print(f"  ⚠️  Failed to read series_id from {pf}: {e}")
+            print(f"    Failed to read series_id from {pf}: {e}")
             return 1
         unique_ids = set(ids.unique().tolist())
         per_file_counts.append(len(unique_ids))
@@ -68,10 +68,10 @@ def verify_ids(data_path: Path, sample_duplicates: int = 10) -> int:
         print("\nExamples of overlapping IDs:")
         for oid, _ in list(dupes.items())[:sample_duplicates]:
             print(f"  - {oid}")
-        print("\n❌ ID collisions detected. Ensure start_id is propagated or regenerate.")
+        print("\n ID collisions detected. Ensure start_id is propagated or regenerate.")
         return 1
 
-    print("\n✅ No overlaps found. series_id values are globally unique.")
+    print("\n No overlaps found. series_id values are globally unique.")
     return 0
 
 

@@ -270,7 +270,7 @@ class FeatureSelector:
         labels_df_std = labels_df_copy[label_cols]
         labels_df_std.to_parquet(std_labels_file, index=False)
 
-        print(f"\n✅ Selected features and standardized files saved successfully!")
+        print(f"\n Selected features and standardized files saved successfully!")
 
 
 def main():

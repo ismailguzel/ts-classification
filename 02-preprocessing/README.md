@@ -4,7 +4,7 @@ Data preprocessing and feature engineering pipeline.
 
 ## Overview
 
-⚠️ Note: Preprocessing is optional. Modeller RAW (sktime) veya FEATURES (sklearn) modlarında çalıştırılabilir.
+ Note: Preprocessing is optional. Modeller RAW (sktime) veya FEATURES (sklearn) modlarında çalıştırılabilir.
 
 This directory contains scripts for:
 1. **Feature Extraction**: Extract time series features using TSFresh
@@ -12,81 +12,94 @@ This directory contains scripts for:
 
 ---
 
-## 📂 Structure
+##  Structure
 
 ```
 02-preprocessing/
-├── extract_features.py        # TSFresh feature extraction (sequential)
-├── extract_dask.py            # TSFresh feature extraction (Dask parallel)
+├── extract_dask.py            # TSFresh feature extraction (Dask parallel, RECOMMENDED)
 ├── feature_selection.py       # Feature selection methods
+├── topological-features/      # Experimental: Topological data analysis (TDA)
+│   ├── topological_features.py
+│   ├── test_topological.py
+│   ├── topological_demo.ipynb
+│   └── README.md
 └── README.md                   # This file
 ```
 
+**Note:** `extract_features.py` has been deprecated. Use `extract_dask.py` for all feature extraction (faster, more efficient).
+
+**Experimental**: `topological-features/` contains research code for TDA-based features (not integrated in main pipeline).
+
 ---
 
-## 🚀 Quick Start
+##  Quick Start
 
-### 1. Extract Features with TSFresh
+### 1. Extract Features with TSFresh (extract_dask.py)
 
-#### Option A: Sequential Processing (extract_features.py)
+**Feature Set Options:**
+- `minimal`: ~780 features (**RECOMMENDED**, default - fast, good coverage)
+- `efficient`: optimized subset for classification
+- `comprehensive`: ~1200+ features (slow, high memory, for research)
 
-```bash
-# Default: unified-5k dataset (quick start)
-python extract_features.py --feature-set efficient --n-jobs 4
-
-# For specific datasets
-python extract_features.py \
-    --input ../data/raw/unified-test \
-    --output ../data/features/unified-test/allfeatures \
-    --feature-set efficient \
-    --n-jobs 4
-
-# For larger datasets (20K example)
-python -u extract_features.py \
-    --input ../data/raw/unified-20k \
-    --output ../data/features/unified-20k/allfeatures \
-    --chunk-size 30 \
-    --feature-set efficient \
-    --n-jobs 110 2>&1 | tee extraction-20k.out
-```
-
-#### Option B: Dask Parallel Processing (extract_dask.py) ⚡ Faster
+#### Basic Usage
 
 ```bash
-# Default: unified-5k dataset
-python extract_dask.py --n-workers 4 --threads-per-worker 2
+# Quick start with minimal features (recommended)
+python extract_dask.py \
+    --input ../data/raw/unified-5k \
+    --output ../data/features/unified-5k/minimal \
+    --feature-set minimal \
+    --n-workers 4 \
+    --threads-per-worker 2
 
-# For larger datasets with Dask distributed computing
+# Large dataset (20K series)
 python extract_dask.py \
     --input ../data/raw/unified-20k \
-    --output ../data/features/unified-20k/allfeatures \
+    --output ../data/features/unified-20k/minimal \
+    --feature-set minimal \
     --n-workers 55 \
     --threads-per-worker 1 \
     --memory-limit 0
 
-# With scheduler address (if using external Dask cluster)
+# Comprehensive features (for research/comparison)
 python extract_dask.py \
     --input ../data/raw/unified-20k \
-    --output ../data/features/unified-20k/allfeatures \
-    --scheduler-address tcp://localhost:8786
+    --output ../data/features/unified-20k/comprehensive \
+    --feature-set comprehensive \
+    --n-workers 55
 ```
 
-**extract_features.py Options:**
-- `--feature-set`: `minimal`, `efficient`, `comprehensive`
-- `--n-jobs`: Number of parallel processes
-- `--chunk-size`: Files per chunk (default: 10)
+#### Advanced Options
 
-**extract_dask.py Options:**
-- `--feature-set`: `minimal`, `efficient`, `comprehensive`
+```bash
+# With external Dask scheduler
+python extract_dask.py \
+    --input ../data/raw/unified-20k \
+    --output ../data/features/unified-20k/minimal \
+    --scheduler-address tcp://localhost:8786
+
+# Smoke test (limited files)
+python extract_dask.py \
+    --input ../data/raw/unified-20k \
+    --output ../data/features/test \
+    --max-files 20
+```
+
+**Command-line Options:**
+- `--input`: Input directory with parquet files
+- `--output`: Output directory for features
+- `--feature-set`: `minimal` (default), `efficient`, or `comprehensive`
 - `--n-workers`: Number of Dask workers
 - `--threads-per-worker`: Threads per worker
 - `--memory-limit`: Memory limit per worker (0 = unlimited)
 - `--scheduler-address`: External Dask scheduler (optional)
+- `--max-files`: Limit files for testing
+- `--no-client`: Don't create Dask client (use default scheduler)
 
-**Output (both methods):**
+**Output Files:**
 - `features.parquet` - Extracted features
-- `labels.parquet` - Target labels
-- `feature_names.txt` - Feature names list
+- `labels.parquet` - Classification labels
+- `feature_names.txt` - List of all feature names
 
 ## Feature Selection
 
@@ -285,7 +298,7 @@ Poor feature quality?
 
 ---
 
-## 📚 References
+##  References
 
 - TSFresh Documentation: https://tsfresh.readthedocs.io/
 - Feature Engineering Guide: https://tsfresh.readthedocs.io/en/latest/text/feature_extraction.html

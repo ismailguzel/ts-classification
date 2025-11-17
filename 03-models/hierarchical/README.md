@@ -2,7 +2,7 @@
 
 Bu klasör, hiyerarşik zaman serisi sınıflandırma sistemi için eğitim scriptlerini içerir.
 
-## 📁 Klasör Yapısı
+##  Klasör Yapısı
 
 ```
 03-models/hierarchical/
@@ -21,7 +21,7 @@ Bu klasör, hiyerarşik zaman serisi sınıflandırma sistemi için eğitim scri
 └── submit_training.sh          # Interactive job submission helper
 ```
 
-## 🎯 Hiyerarşik Sistem
+##  Hiyerarşik Sistem
 
 ```
                     ┌─────────────────┐
@@ -218,17 +218,29 @@ python autotrain_models2.py --engine autogluon \
 Eğitilen modelleri test dataseti üzerinde değerlendirin:
 
 ```bash
-# Test Model 1
+# Test Model 1 (RAW mode)
 cd model1_binary
 python test_model1.py \
-    --model-path saved_models/model1_binary_rocket_*.pkl \
+    --model-path saved_models/model1_binary_raw_rocket/model1_binary_classifier.pkl \
     --data-path ../../../data/raw/unified-test \
     --output-path results/
 
-# Test Model 2
+# Test Model 1 (FEATURES mode)
+python test_model1.py \
+    --model-path saved_models/model1_binary_features/model1_binary_classifier.pkl \
+    --data-path ../../../data/raw/unified-test \
+    --output-path results/
+
+# Test Model 2 (RAW mode)
 cd ../model2_nonstationary
 python test_model2.py \
-    --model-path saved_models/model2_nonstationary_rocket_*.pkl \
+    --model-path saved_models/model2_nonstationary_raw_rocket/model2_nonstationary_classifier.pkl \
+    --data-path ../../../data/raw/unified-test \
+    --output-path results/
+
+# Test Model 2 (FEATURES mode)
+python test_model2.py \
+    --model-path saved_models/model2_nonstationary_features/model2_nonstationary_classifier.pkl \
     --data-path ../../../data/raw/unified-test \
     --output-path results/
 ```
@@ -239,12 +251,12 @@ Test scriptleri şunları hesaplar:
 - Per-class metrics
 - Classification report
 
-## 📚 Daha Fazla Bilgi
+##  Daha Fazla Bilgi
 
 - **Model 1 Detayları**: `model1_binary/README.md`
 - **Model 2 Detayları**: `model2_nonstationary/README.md`
 
-## 🔗 Workflow
+##  Workflow
 
 ```bash
 # 1. Veri generation (01-data-generation/)
@@ -262,7 +274,7 @@ python test_model1.py --model-path models/model1_arsenal_raw.pkl
 python test_model2.py --model-path models/model2_arsenal_raw.pkl
 ```
 
-## ⚠️ Önemli Notlar
+##  Önemli Notlar
 
 1. **Veri seti gerekli**: Training yapmadan önce `01-data-generation/` ile veri oluşturun
 2. **HIVECOTEV2 çok yavaş**: Bu classifier sadece research/benchmark için kullanın

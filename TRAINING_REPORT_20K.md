@@ -6,19 +6,19 @@
 
 ---
 
-## 📊 Executive Summary
+##  Executive Summary
 
 This report analyzes the complete training pipeline for hierarchical time series classification on the unified-20k dataset, consisting of approximately 20,000 synthetic time series samples with balanced stationary/non-stationary distribution.
 
 ### Key Achievements
-- ✅ **Model 1 (Binary):** Perfect or near-perfect classification (99.97-100% accuracy)
-- ✅ **Model 2 (5-Class):** Excellent multi-class performance (81.44-98.47% accuracy)
-- ✅ **Full Pipeline:** Successfully trained 11+ model variants across 3 training modes
-- ✅ **Best Configuration:** AutoGluon with all features achieves optimal performance
+-  **Model 1 (Binary):** Perfect or near-perfect classification (99.97-100% accuracy)
+-  **Model 2 (5-Class):** Excellent multi-class performance (81.44-98.47% accuracy)
+-  **Full Pipeline:** Successfully trained 11+ model variants across 3 training modes
+-  **Best Configuration:** AutoGluon with all features achieves optimal performance
 
 ---
 
-## 🎯 Dataset Overview
+##  Dataset Overview
 
 ### Data Generation
 - **Scale:** unified-20k
@@ -47,7 +47,7 @@ Structural Break: 1,660 samples (18.1%)
 
 ---
 
-## 📈 Model 1: Binary Classification (Stationary vs Non-Stationary)
+##  Model 1: Binary Classification (Stationary vs Non-Stationary)
 
 ### Training Results Summary
 
@@ -112,7 +112,7 @@ Structural Break: 1,660 samples (18.1%)
 
 ---
 
-## 🔬 Model 2: 5-Class Non-Stationary Classification
+##  Model 2: 5-Class Non-Stationary Classification
 
 ### Training Results Summary
 
@@ -202,7 +202,7 @@ Structural Break           9        6       34       25      258
 
 ---
 
-## ⚠️ Issues Encountered
+##  Issues Encountered
 
 ### 1. Model 2 - Selected Features (train_model2.py) FAILED
 **Error:**
@@ -215,12 +215,12 @@ columns: ['is_stationary', 'primary_category', 'sub_category']
 - Script expects `series_id` column
 - Labels file missing this identifier column
 
-**Status:** ❌ NOT COMPLETED
+**Status:**  NOT COMPLETED
 **Impact:** Cannot train standard sklearn models on selected features
 
 ---
 
-## 💡 Key Findings & Recommendations
+##  Key Findings & Recommendations
 
 ### Performance Hierarchy
 ```
@@ -239,9 +239,9 @@ Model 2 (5-Class):    AutoGluon (all) > XGBoost (all) > AutoGluon (selected)
 
 | Mode | Speed | Accuracy | Interpretability | Resource Usage |
 |------|-------|----------|------------------|----------------|
-| **RAW** | ⚡⚡⚡ Fast | ⭐⭐⭐ Good (81%) | ❌ Limited | 💾 High memory |
-| **FEATURES (selected)** | ⚡⚡ Fast | ⭐⭐⭐⭐ Excellent (98%) | ✅ High | 💾 Low memory |
-| **AutoML (all)** | ⚡ Slow | ⭐⭐⭐⭐⭐ Best (98.5%) | ⚠️ Limited | 💾 Medium |
+| **RAW** |  Fast | ⭐⭐⭐ Good (81%) |  Limited | 💾 High memory |
+| **FEATURES (selected)** |  Fast | ⭐⭐⭐⭐ Excellent (98%) |  High | 💾 Low memory |
+| **AutoML (all)** |  Slow | ⭐⭐⭐⭐⭐ Best (98.5%) |  Limited | 💾 Medium |
 
 ### Recommendations
 
@@ -262,7 +262,7 @@ Model 2 (5-Class):    AutoGluon (all) > XGBoost (all) > AutoGluon (selected)
 
 ---
 
-## 📁 Saved Models Location
+##  Saved Models Location
 
 ### Model 1 (Binary)
 ```
@@ -285,12 +285,12 @@ Model 2 (5-Class):    AutoGluon (all) > XGBoost (all) > AutoGluon (selected)
 
 ---
 
-## 🚀 Next Steps
+##  Next Steps
 
 ### Immediate Actions:
-1. ✅ Fix `series_id` column issue in `feature_selection.py` or `train_model2.py`
-2. 📊 Generate test set predictions using best models
-3. 🔗 Build hierarchical pipeline (Model 1 → Model 2)
+1.  Fix `series_id` column issue in `feature_selection.py` or `train_model2.py`
+2.  Generate test set predictions using best models
+3.  Build hierarchical pipeline (Model 1 → Model 2)
 
 ### Future Improvements:
 1. **Hyperparameter Tuning:** Fine-tune XGBoost and AutoGluon on selected features
@@ -301,20 +301,20 @@ Model 2 (5-Class):    AutoGluon (all) > XGBoost (all) > AutoGluon (selected)
 
 ---
 
-## 📊 Training Time Summary
+##  Training Time Summary
 
 | Model | Experiment | Features | Training Time | Throughput |
 |-------|------------|----------|---------------|------------|
 | **Model 1** | AutoGluon (all) | 777 | 293s | 52 samples/s |
 | **Model 1** | AutoGluon (selected) | 100 | 192s | 80 samples/s |
-| **Model 1** | XGBoost (all) | 777 | 5.4s | ⚡ 2,835 samples/s |
-| **Model 1** | XGBoost (selected) | 100 | 3.7s | ⚡ 4,137 samples/s |
+| **Model 1** | XGBoost (all) | 777 | 5.4s |  2,835 samples/s |
+| **Model 1** | XGBoost (selected) | 100 | 3.7s |  4,137 samples/s |
 | **Model 1** | TimeSeriesForest | Raw | 27.2s | 562 samples/s |
 | **Model 1** | ROCKET | Raw | 27.4s | 558 samples/s |
 | **Model 1** | Arsenal | Raw | 145s | 105 samples/s |
 | **Model 2** | AutoGluon (all) | 777 | 293s | 25 samples/s |
 | **Model 2** | AutoGluon (selected) | 100 | 192s | 38 samples/s |
-| **Model 2** | XGBoost (all) | 777 | 10s | ⚡ 732 samples/s |
+| **Model 2** | XGBoost (all) | 777 | 10s |  732 samples/s |
 | **Model 2** | TimeSeriesForest | Raw | 19s | 386 samples/s |
 
 **Key Observations:** 
@@ -324,7 +324,7 @@ Model 2 (5-Class):    AutoGluon (all) > XGBoost (all) > AutoGluon (selected)
 
 ---
 
-## 🎓 Lessons Learned
+##  Lessons Learned
 
 1. **Binary classification is much easier than multi-class** - Perfect scores achievable with proper features
 2. **Feature extraction is crucial for multi-class** - TSFresh features provide 17% improvement over raw time series
@@ -335,7 +335,7 @@ Model 2 (5-Class):    AutoGluon (all) > XGBoost (all) > AutoGluon (selected)
 
 ---
 
-## 📝 Conclusion
+##  Conclusion
 
 The hierarchical time series classification pipeline on the unified-20k dataset demonstrates **excellent performance** across both levels:
 

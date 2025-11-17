@@ -27,7 +27,7 @@ Input Time Series
 
 ---
 
-## 📂 Project Structure
+##  Project Structure
 
 ```
 hierarchical-ts-classification/
@@ -38,9 +38,9 @@ hierarchical-ts-classification/
 │   └── jobs-slurm/              # Optional SLURM job scripts
 │
 ├── 02-preprocessing/            # Feature engineering (OPTIONAL)
-│   ├── extract_features.py     # TSFresh feature extraction (sequential)
 │   ├── extract_dask.py          # TSFresh feature extraction (Dask parallel)
 │   ├── feature_selection.py    # Feature selection methods
+│   ├── topological-features/    # Experimental: TDA-based features
 │   └── README.md                # Preprocessing docs
 │
 ├── 03-models/hierarchical/      # Hierarchical models
@@ -123,8 +123,8 @@ cd ../model2_nonstationary
 python test_model2.py
 
 # Test specific models
-python test_model1.py --model-path saved_models/model1_binary_rocket.pkl
-python test_model2.py --model-path saved_models/model2_nonstationary_arsenal.pkl
+python test_model1.py --model-path saved_models/model1_binary_raw_rocket/model1_binary_classifier.pkl
+python test_model2.py --model-path saved_models/model2_nonstationary_raw_arsenal/model2_nonstationary_classifier.pkl
 ```
 
 ### Alternative Workflows
@@ -143,22 +143,18 @@ python train_model1.py --mode features
 # After feature extraction and selection
 cd 03-models/hierarchical/model1_binary
 
-# Using AutoGluon (recommended)
+# Using AutoGluon
 python autotrain_models1.py \
-    --engine autogluon \
     --features-path ../../../data/features/unified-5k/selected \
     --time-limit 3600 \
     --presets medium_quality_faster_train
 
-# Using PyCaret (alternative)
-python autotrain_models1.py \
-    --engine pycaret \
-    --features-path ../../../data/features/unified-5k/selected \
-    --folds 5
-
 # Model 2 AutoTrain
 cd ../model2_nonstationary
-python autotrain_models2.py --engine autogluon --features-path ../../../data/features/unified-5k/selected
+python autotrain_models2.py \
+    --features-path ../../../data/features/unified-5k/selected \
+    --time-limit 3600 \
+    --presets medium_quality_faster_train
 ```
 
 **Note:** AutoTrain requires feature extraction first (see 02-preprocessing/).
@@ -231,7 +227,7 @@ bash smoke_test.sh
 |------|-------|-------------|-------------|
 | **RAW** | Time series | sktime (ROCKET, Arsenal) | Quick start, baseline |
 | **FEATURES** | TSFresh features | sklearn (XGBoost, SVM) | Feature analysis, interpretability |
-| **AutoTrain** | TSFresh features | AutoML (AutoGluon, PyCaret) | Automated tuning |
+| **AutoTrain** | TSFresh features | AutoML (AutoGluon) | Automated tuning |
 
 See individual README files for detailed configuration options.
 
@@ -262,7 +258,7 @@ Detailed documentation in subdirectories:
 
 ---
 
-## 🚀 Example Commands (20K Dataset)
+##  Example Commands (20K Dataset)
 
 ### Data Generation
 ```bash
@@ -328,7 +324,6 @@ python -u train_model1.py \
 conda activate ts-autogluon
 # AutoGluon (all features)
 python -u autotrain_models1.py \
-    --engine autogluon \
     --features-path ../../../data/features/unified-20k/allfeatures \
     --save-dir ./save_models/unified-20k/autogluon/allfeatures \
     --time-limit 3600 \
@@ -337,27 +332,11 @@ python -u autotrain_models1.py \
 
 # AutoGluon (selected features)
 python -u autotrain_models1.py \
-    --engine autogluon \
     --features-path ../../../data/features/unified-20k/selected \
     --save-dir ./save_models/unified-20k/autogluon/selected \
     --time-limit 3600 \
     --presets medium_quality_faster_train \
     2>&1 | tee autogluon_selected-20k.out
-
-conda activate ts-pycaret
-# PyCaret (all features)
-python -u autotrain_models1.py \
-    --engine pycaret \
-    --features-path ../../../data/features/unified-20k/allfeatures \
-    --save-dir ./save_models/unified-20k/pycaret/allfeatures \
-    2>&1 | tee pycaret_allfeatures-20k.out
-
-# PyCaret (selected features)
-python -u autotrain_models1.py \
-    --engine pycaret \
-    --features-path ../../../data/features/unified-20k/selected \
-    --save-dir ./save_models/unified-20k/pycaret/selected \
-    2>&1 | tee pycaret_selected-20k.out
 ```
 
 ### Model 2 (5-Class Classification)
@@ -371,6 +350,7 @@ python -u train_model2.py \
     2>&1 | tee train2_raw-20k.out
 
 # FEATURES mode (all features)
+# Note: Model 2 automatically filters out stationary samples
 python -u train_model2.py \
     --mode features \
     --features-path ../../../data/features/unified-20k/allfeatures \
@@ -385,7 +365,6 @@ python -u train_model2.py \
 conda activate ts-autogluon
 # AutoGluon (all features)
 python -u autotrain_models2.py \
-    --engine autogluon \
     --features-path ../../../data/features/unified-20k/allfeatures \
     --save-dir ./save_models/unified-20k/autogluon/allfeatures \
     --time-limit 3600 \
@@ -394,28 +373,11 @@ python -u autotrain_models2.py \
 
 # AutoGluon (selected features)
 python -u autotrain_models2.py \
-    --engine autogluon \
     --features-path ../../../data/features/unified-20k/selected \
     --save-dir ./save_models/unified-20k/autogluon/selected \
     --time-limit 3600 \
     --presets medium_quality_faster_train \
     2>&1 | tee autogluon2_selected-20k.out
-
-
-conda activate ts-pycaret
-# PyCaret (all features)
-python -u autotrain_models2.py \
-    --engine pycaret \
-    --features-path ../../../data/features/unified-20k/allfeatures \
-    --save-dir ./save_models/unified-20k/pycaret/allfeatures \
-    2>&1 | tee pycaret2_allfeatures-20k.out
-
-# PyCaret (selected features)
-python -u autotrain_models2.py \
-    --engine pycaret \
-    --features-path ../../../data/features/unified-20k/selected \
-    --save-dir ./save_models/unified-20k/pycaret/selected \
-    2>&1 | tee pycaret2_selected-20k.out
 ```
 
 ---
@@ -431,7 +393,7 @@ Contributions are welcome! Please:
 
 ---
 
-## 📝 License
+##  License
 
 This project is licensed under the MIT License.
 
@@ -444,7 +406,7 @@ This project is licensed under the MIT License.
 
 ---
 
-## 🔗 References
+##  References
 
 - TSFresh: https://tsfresh.readthedocs.io/
 - scikit-learn: https://scikit-learn.org/

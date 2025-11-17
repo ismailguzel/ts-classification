@@ -1,23 +1,41 @@
 """
-Extract TSFresh features for hierarchical classification using Dask.
+Extract TSFresh features for hierarchical classification using Dask parallel execution.
+
+Supports multiple feature sets:
+- minimal: ~780 features (RECOMMENDED, fastest, good balance)
+- efficient: optimized subset for classification
+- comprehensive: ~1200+ features (slow, high memory)
 
 Run from the `02-preprocessing` directory.
 
 Usage:
-    python extract_dask.py --input ../data/raw/unified-20k --output ../data/features/unified-20k/allfeatures --n-workers 55 --memory-limit 0
+    # Recommended: minimal feature set (default)
+    python extract_dask.py \
+        --input ../data/raw/unified-20k \
+        --output ../data/features/unified-20k/allfeatures \
+        --feature-set minimal \
+        --n-workers 55 \
+        --memory-limit 0
+
+    # Comprehensive feature set (for research/comparison)
+    python extract_dask.py \
+        --input ../data/raw/unified-20k \
+        --output ../data/features/unified-20k/comprehensive \
+        --feature-set comprehensive \
+        --n-workers 55
 
     # Smoke test on a small subset
-    python extract_dask.py --input ../data/raw/unified-20k --output ../data/features/test-dask --max-files 20
+    python extract_dask.py \
+        --input ../data/raw/unified-20k \
+        --output ../data/features/test-dask \
+        --max-files 20
 
 Tune --n-workers, --threads-per-worker, or point --scheduler-address at your existing cluster.
 
-This script reads the time series parquet files with dask, builds the feature
-extraction graph via tsfresh, and materialises the result with `compute()`.
-
 Outputs under the specified `--output` directory:
-    - features.parquet
-    - labels.parquet
-    - feature_names.txt
+    - features.parquet      (extracted features)
+    - labels.parquet        (classification labels)
+    - feature_names.txt     (list of all feature names)
 """
 
 from __future__ import annotations
@@ -42,9 +60,9 @@ except ImportError:  # pragma: no cover - optional dependency
 from tsfresh import extract_features
 from tsfresh.utilities.dataframe_functions import impute
 from tsfresh.feature_extraction import (
-    ComprehensiveFCParameters,
-    EfficientFCParameters,
     MinimalFCParameters,
+    EfficientFCParameters,
+    ComprehensiveFCParameters,
 )
 
 
@@ -70,24 +88,49 @@ class DaskConfig:
 
 
 class DaskTSFreshFeatureExtractor:
-    """Extract TSFresh features using Dask-backed execution."""
+    """
+    Extract TSFresh features using Dask-backed execution.
+    
+    Supports three feature sets:
+    - minimal: ~780 features (RECOMMENDED, default)
+    - efficient: optimized subset for classification
+    - comprehensive: ~1200+ features (slow, high memory)
+    """
 
-    def __init__(self, feature_set: str = "efficient") -> None:
-        self.feature_set = feature_set
-        self.extraction_settings = self._select_feature_set(feature_set)
+    def __init__(self, feature_set: str = "minimal") -> None:
+        """
+        Initialize extractor.
+        
+        Args:
+            feature_set: 'minimal' (default), 'efficient', or 'comprehensive'
+        """
+        self.feature_set = feature_set.lower()
+        self.extraction_settings = self._select_feature_set(self.feature_set)
         self.client: Optional[Client] = None  # type: ignore[assignment]
-
+        
+        feature_counts = {
+            'minimal': '~780',
+            'efficient': 'optimized',
+            'comprehensive': '~1200+'
+        }
+        print(f"ℹ️  Using TSFresh {feature_set.capitalize()}FCParameters "
+              f"({feature_counts.get(self.feature_set, 'unknown')} features)")
+        print("   Dask-backed parallel execution enabled.")
+    
     @staticmethod
     def _select_feature_set(feature_set: str):
-        """Return TSFresh extraction parameters for the requested feature set."""
-        feature_set = feature_set.lower()
+        """Select TSFresh feature extraction parameters."""
         if feature_set == "minimal":
             return MinimalFCParameters()
-        if feature_set == "comprehensive":
-            return ComprehensiveFCParameters()
-        if feature_set == "efficient":
+        elif feature_set == "efficient":
             return EfficientFCParameters()
-        raise ValueError(f"Unknown feature set: {feature_set}")
+        elif feature_set == "comprehensive":
+            return ComprehensiveFCParameters()
+        else:
+            raise ValueError(
+                f"Unknown feature set: {feature_set}. "
+                "Choose: 'minimal', 'efficient', or 'comprehensive'"
+            )
 
     def start_client(self, config: DaskConfig) -> None:
         """Create a Dask client based on the provided configuration."""
@@ -242,7 +285,7 @@ class DaskTSFreshFeatureExtractor:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Extract TSFresh features on parquet files using Dask"
+        description="Extract TSFresh features using Dask parallel execution"
     )
     parser.add_argument(
         "--input",
@@ -259,9 +302,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--feature-set",
         type=str,
-        default="efficient",
+        default="minimal",
         choices=["minimal", "efficient", "comprehensive"],
-        help="TSFresh feature set to use",
+        help="TSFresh feature set: minimal (~780, RECOMMENDED), efficient, or comprehensive (~1200+)",
     )
     parser.add_argument(
         "--max-files",
