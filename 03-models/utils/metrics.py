@@ -87,6 +87,11 @@ class ModelEvaluator:
         if self.output_dir and test_ids is not None and y_test_proba is not None:
             self._save_predictions(test_ids, y_test, y_test_pred, y_test_proba)
         
+        # Extract feature importance if available
+        feature_importance = None
+        if self.feature_names is not None:
+            feature_importance = self.extract_feature_importance()
+        
         self.results = {
             'model_name': self.model_name,
             'train_time': self.train_time,
@@ -108,6 +113,9 @@ class ModelEvaluator:
             'confusion_matrices': {'train': train_cm, 'test': test_cm},
             'timestamp_utc': datetime.utcnow().isoformat(timespec='seconds')
         }
+        
+        if feature_importance:
+            self.results['feature_importance'] = feature_importance
         
         print(f"{'='*80}\n")
         return self.results
@@ -157,6 +165,47 @@ class ModelEvaluator:
             'misclassified_count': len(misclassified_df)
         }
     
+    def extract_feature_importance(self):
+        """Extract feature importance from tree-based models."""
+        importance_dict = None
+        
+        # Try different attribute names for feature importance
+        if hasattr(self.model, 'feature_importances_'):
+            importances = self.model.feature_importances_
+        elif hasattr(self.model, 'get_feature_importance'):
+            # CatBoost specific
+            try:
+                importances = self.model.get_feature_importance()
+            except:
+                importances = None
+        else:
+            importances = None
+        
+        if importances is not None and self.feature_names is not None:
+            if len(importances) == len(self.feature_names):
+                # Sort by importance
+                indices = np.argsort(importances)[::-1]
+                
+                importance_dict = {
+                    'features': [self.feature_names[i] for i in indices],
+                    'importances': [float(importances[i]) for i in indices]
+                }
+                
+                # Save top features to separate CSV
+                if self.output_dir:
+                    top_n = min(50, len(indices))  # Top 50 features
+                    importance_df = pd.DataFrame({
+                        'feature': [self.feature_names[i] for i in indices[:top_n]],
+                        'importance': [importances[i] for i in indices[:top_n]],
+                        'rank': range(1, top_n + 1)
+                    })
+                    
+                    importance_file = self.output_dir / f'feature_importance_{self.model_name}.csv'
+                    importance_df.to_csv(importance_file, index=False)
+                    print(f"✓ Feature importance saved to: {importance_file}")
+        
+        return importance_dict
+    
     def save_results(self, output_path):
         """Save complete results to JSON."""
         output_path = Path(output_path)
@@ -165,6 +214,12 @@ class ModelEvaluator:
             output_path = output_path / f'{self.model_name}_metrics.json'
         
         output_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        # Try to extract feature importance before saving
+        if self.feature_names is not None:
+            feature_importance = self.extract_feature_importance()
+            if feature_importance:
+                self.results['feature_importance'] = feature_importance
         
         with open(output_path, 'w') as f:
             json.dump(self.results, f, indent=2, default=str)

@@ -1,0 +1,210 @@
+================================================================================
+MODEL 1 AUTOTRAIN - Binary Classification (AutoGluon)
+================================================================================
+Features path: ../../../data/features/unified-20k/selected
+Test size    : 0.2
+================================================================================
+
+[1/3] Loading features and labels...
+✓ Loading from target subdirectory 'binary'
+  Features: ../../../data/features/unified-20k/selected/binary/features.parquet
+  Labels:   ../../../data/features/unified-20k/selected/binary/labels.parquet
+  Features shape: (19134, 101)
+  Labels shape:   (19134, 2)
+  Aligned samples: 19,134
+
+  Class distribution:
+    0:  9,988 ( 52.2%)
+    1:  9,146 ( 47.8%)
+✓ Features shape: (19134, 100)
+✓ Samples       : 19134
+
+[2/3] Train/Test split...
+Train: 15,307  Test: 3,827
+
+[3/3] Training with AutoGluon...
+Warning: path already exists! This predictor may overwrite an existing predictor! path="saved_models/model1_binary_autogluon"
+Preset alias specified: 'medium_quality_faster_train' maps to 'medium_quality'.
+Verbosity: 2 (Standard Logging)
+=================== System Info ===================
+AutoGluon Version:  1.4.0
+Python Version:     3.12.12
+Operating System:   Linux
+Platform Machine:   x86_64
+Platform Version:   #1 SMP PREEMPT_DYNAMIC Sat Sep 16 09:55:41 UTC 2023
+CPU Count:          224
+Memory Avail:       475.80 GB / 503.06 GB (94.6%)
+Disk Space Avail:   850.54 GB / 505708.16 GB (0.2%)
+===================================================
+Presets specified: ['medium_quality_faster_train']
+Using hyperparameters preset: hyperparameters='default'
+Beginning AutoGluon training ... Time limit = 3600s
+AutoGluon will save models to "/arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model1_binary/saved_models/model1_binary_autogluon"
+Train Data Rows:    15307
+Train Data Columns: 100
+Label Column:       _label
+Problem Type:       binary
+Preprocessing data ...
+Selected class <--> label mapping:  class 1 = 1, class 0 = 0
+Using Feature Generators to preprocess the data ...
+Fitting AutoMLPipelineFeatureGenerator...
+	Available Memory:                    487193.36 MB
+	Train Data (Original)  Memory Usage: 11.68 MB (0.0% of available memory)
+	Inferring data type of each feature based on column values. Set feature_metadata_in to manually specify special dtypes of the features.
+	Stage 1 Generators:
+		Fitting AsTypeFeatureGenerator...
+	Stage 2 Generators:
+		Fitting FillNaFeatureGenerator...
+	Stage 3 Generators:
+		Fitting IdentityFeatureGenerator...
+	Stage 4 Generators:
+		Fitting DropUniqueFeatureGenerator...
+	Stage 5 Generators:
+		Fitting DropDuplicatesFeatureGenerator...
+	Unused Original Features (Count: 1): ['data__mean_abs_change']
+		These features were not used to generate any of the output features. Add a feature generator compatible with these features to utilize them.
+		Features can also be unused if they carry very little information, such as being categorical but having almost entirely unique values or being duplicates of other features.
+		These features do not need to be present at inference time.
+		('float', []) : 1 | ['data__mean_abs_change']
+	Types of features in original data (raw dtype, special dtypes):
+		('float', []) : 99 | ['data__agg_autocorrelation__f_agg_"mean"__maxlag_40', 'data__agg_autocorrelation__f_agg_"median"__maxlag_40', 'data__agg_linear_trend__attr_"intercept"__chunk_len_10__f_agg_"mean"', 'data__agg_linear_trend__attr_"intercept"__chunk_len_10__f_agg_"var"', 'data__agg_linear_trend__attr_"intercept"__chunk_len_50__f_agg_"mean"', ...]
+	Types of features in processed data (raw dtype, special dtypes):
+		('float', []) : 99 | ['data__agg_autocorrelation__f_agg_"mean"__maxlag_40', 'data__agg_autocorrelation__f_agg_"median"__maxlag_40', 'data__agg_linear_trend__attr_"intercept"__chunk_len_10__f_agg_"mean"', 'data__agg_linear_trend__attr_"intercept"__chunk_len_10__f_agg_"var"', 'data__agg_linear_trend__attr_"intercept"__chunk_len_50__f_agg_"mean"', ...]
+	0.4s = Fit runtime
+	99 features in original data used to generate 99 features in processed data.
+	Train Data (Processed) Memory Usage: 11.56 MB (0.0% of available memory)
+Data preprocessing and feature engineering runtime = 0.49s ...
+AutoGluon will gauge predictive performance using evaluation metric: 'accuracy'
+	To change this, specify the eval_metric parameter of Predictor()
+Automatically generating train/validation split with holdout_frac=0.1, Train Rows: 13776, Val Rows: 1531
+User-specified model hyperparameters to be fit:
+{
+	'NN_TORCH': [{}],
+	'GBM': [{'extra_trees': True, 'ag_args': {'name_suffix': 'XT'}}, {}, {'learning_rate': 0.03, 'num_leaves': 128, 'feature_fraction': 0.9, 'min_data_in_leaf': 3, 'ag_args': {'name_suffix': 'Large', 'priority': 0, 'hyperparameter_tune_kwargs': None}}],
+	'CAT': [{}],
+	'XGB': [{}],
+	'FASTAI': [{}],
+	'RF': [{'criterion': 'gini', 'ag_args': {'name_suffix': 'Gini', 'problem_types': ['binary', 'multiclass']}}, {'criterion': 'entropy', 'ag_args': {'name_suffix': 'Entr', 'problem_types': ['binary', 'multiclass']}}, {'criterion': 'squared_error', 'ag_args': {'name_suffix': 'MSE', 'problem_types': ['regression', 'quantile']}}],
+	'XT': [{'criterion': 'gini', 'ag_args': {'name_suffix': 'Gini', 'problem_types': ['binary', 'multiclass']}}, {'criterion': 'entropy', 'ag_args': {'name_suffix': 'Entr', 'problem_types': ['binary', 'multiclass']}}, {'criterion': 'squared_error', 'ag_args': {'name_suffix': 'MSE', 'problem_types': ['regression', 'quantile']}}],
+}
+Fitting 11 L1 models, fit_strategy="sequential" ...
+Fitting model: LightGBMXT ... Training model for up to 3599.51s of the 3599.51s of remaining time.
+	Fitting with cpus=112, gpus=0, mem=0.1/475.5 GB
+	0.9804	 = Validation score   (accuracy)
+	8.43s	 = Training   runtime
+	0.0s	 = Validation runtime
+Fitting model: LightGBM ... Training model for up to 3591.06s of the 3591.06s of remaining time.
+	Fitting with cpus=112, gpus=0, mem=0.1/475.5 GB
+	0.9811	 = Validation score   (accuracy)
+	4.7s	 = Training   runtime
+	0.01s	 = Validation runtime
+Fitting model: RandomForestGini ... Training model for up to 3586.33s of the 3586.33s of remaining time.
+	Fitting with cpus=224, gpus=0
+	0.9745	 = Validation score   (accuracy)
+	2.16s	 = Training   runtime
+	0.3s	 = Validation runtime
+Fitting model: RandomForestEntr ... Training model for up to 3583.80s of the 3583.80s of remaining time.
+	Fitting with cpus=224, gpus=0
+	0.9745	 = Validation score   (accuracy)
+	1.77s	 = Training   runtime
+	0.3s	 = Validation runtime
+Fitting model: CatBoost ... Training model for up to 3581.66s of the 3581.66s of remaining time.
+	Fitting with cpus=112, gpus=0
+	0.9791	 = Validation score   (accuracy)
+	8.84s	 = Training   runtime
+	0.01s	 = Validation runtime
+Fitting model: ExtraTreesGini ... Training model for up to 3572.80s of the 3572.80s of remaining time.
+	Fitting with cpus=224, gpus=0
+	0.9706	 = Validation score   (accuracy)
+	2.05s	 = Training   runtime
+	0.28s	 = Validation runtime
+Fitting model: ExtraTreesEntr ... Training model for up to 3570.36s of the 3570.36s of remaining time.
+	Fitting with cpus=224, gpus=0
+	0.9732	 = Validation score   (accuracy)
+	1.75s	 = Training   runtime
+	0.29s	 = Validation runtime
+Fitting model: NeuralNetFastAI ... Training model for up to 3568.22s of the 3568.22s of remaining time.
+	Fitting with cpus=112, gpus=0, mem=0.1/474.0 GB
+	0.9758	 = Validation score   (accuracy)
+	18.79s	 = Training   runtime
+	0.03s	 = Validation runtime
+Fitting model: XGBoost ... Training model for up to 3549.37s of the 3549.37s of remaining time.
+	Fitting with cpus=112, gpus=0
+	0.983	 = Validation score   (accuracy)
+	2.62s	 = Training   runtime
+	0.01s	 = Validation runtime
+Fitting model: NeuralNetTorch ... Training model for up to 3546.73s of the 3546.73s of remaining time.
+	Fitting with cpus=112, gpus=0, mem=0.1/473.9 GB
+	0.9745	 = Validation score   (accuracy)
+	28.84s	 = Training   runtime
+	0.04s	 = Validation runtime
+Fitting model: LightGBMLarge ... Training model for up to 3517.83s of the 3517.83s of remaining time.
+	Fitting with cpus=112, gpus=0, mem=0.1/473.8 GB
+	0.9804	 = Validation score   (accuracy)
+	16.12s	 = Training   runtime
+	0.0s	 = Validation runtime
+Fitting model: WeightedEnsemble_L2 ... Training model for up to 360.00s of the 3501.68s of remaining time.
+	Ensemble Weights: {'NeuralNetFastAI': 0.455, 'XGBoost': 0.364, 'LightGBMXT': 0.182}
+	0.9856	 = Validation score   (accuracy)
+	0.06s	 = Training   runtime
+	0.0s	 = Validation runtime
+AutoGluon training complete, total runtime = 98.44s ... Best model: WeightedEnsemble_L2 | Estimated inference throughput: 33920.6 rows/s (1531 batch size)
+Disabling decision threshold calibration for metric `accuracy` due to having fewer than 10000 rows of validation data for calibration, to avoid overfitting (1531 rows).
+	`accuracy` is generally not improved through threshold calibration. Force calibration via specifying `calibrate_decision_threshold=True`.
+TabularPredictor saved. To load, use: predictor = TabularPredictor.load("/arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model1_binary/saved_models/model1_binary_autogluon")
+
+✓ AutoGluon training completed in 99.4s
+
+================================================================================
+EVALUATING MODEL: AutoGluon_Binary
+================================================================================
+
+ ACCURACY:
+  Train: 0.9874
+  Test:  0.9689
+
+ WEIGHTED METRICS:
+  Test Precision: 0.9692
+  Test Recall:    0.9689
+  Test F1:        0.9689
+✓ Predictions saved to: saved_models/model1_binary_autogluon/predictions_AutoGluon_Binary.csv
+✓ Misclassified samples saved to: saved_models/model1_binary_autogluon/misclassified_AutoGluon_Binary.csv (119 errors)
+================================================================================
+
+✓ Metrics saved to: saved_models/model1_binary_autogluon/metrics/AutoGluon_Binary_metrics.json
+
+[Extracting Feature Importance from AutoGluon...]
+These features in provided data are not utilized by the predictor and will be ignored: ['data__mean_abs_change']
+Computing feature importance via permutation shuffling for 99 features using 3827 rows with 5 shuffle sets...
+	48.71s	= Expected runtime (9.74s per shuffle set)
+	51.84s	= Actual runtime (Completed 5 of 5 shuffle sets)
+  ⚠ Could not extract feature importance: DataFrame.sort_values() missing 1 required positional argument: 'by'
+
+================================================================================
+MODEL EVALUATION SUMMARY
+================================================================================
+Train Accuracy : 0.9874
+Train F1       : 0.9874
+Test Accuracy  : 0.9689
+Test F1        : 0.9689
+================================================================================
+
+
+================================================================================
+ AUTOTRAIN COMPLETE
+================================================================================
+Engine     : autogluon
+Train Acc  : 0.9874
+Test Acc   : 0.9689
+
+ Output Structure:
+   saved_models/model1_binary_autogluon/
+   ├── models/                              # Trained model files
+   ├── predictions_AutoGluon_Binary.csv     # Test predictions with probabilities
+   ├── misclassified_AutoGluon_Binary.csv   # Misclassified samples
+   ├── leaderboard_test.csv                 # Test performance leaderboard
+   ├── leaderboard_train.csv                # Train performance leaderboard
+   ├── model1_autotrain_metadata.pkl        # Training metadata
+   └── metrics/
+       └── AutoGluon_Binary_metrics.json    # Detailed metrics
+================================================================================

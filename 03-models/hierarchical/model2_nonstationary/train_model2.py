@@ -398,8 +398,12 @@ else:
     X = X_features
     y = labels
     
+    # Save feature names before converting to array (will be lost after scaling)
+    feature_names = X_df.columns.tolist()
+    
     print(f"✓ X shape: {X.shape}")
     print(f"✓ y shape: {y.shape}")
+    print(f"✓ Feature names: {len(feature_names)}")
 
 # ============================================================================
 # 3. Train/Test Split
@@ -539,6 +543,7 @@ else:
     train_time = time.time() - start_time
     
     evaluator_rf = ModelEvaluator('RandomForest', rf, CLASS_NAMES, output_dir=SAVE_DIR)
+    evaluator_rf.set_feature_names(feature_names)  # Set feature names for importance extraction
     evaluator_rf.set_train_time(train_time)
     results['RandomForest'] = evaluator_rf.evaluate(X_train, y_train, X_test, y_test, train_ids, test_ids)
     models['RandomForest'] = rf
@@ -553,6 +558,7 @@ else:
         train_time = time.time() - start_time
         
         evaluator_xgb = ModelEvaluator('XGBoost', xgb, CLASS_NAMES, output_dir=SAVE_DIR)
+        evaluator_xgb.set_feature_names(feature_names)  # Set feature names for importance extraction
         evaluator_xgb.set_train_time(train_time)
         results['XGBoost'] = evaluator_xgb.evaluate(X_train, y_train, X_test, y_test, train_ids, test_ids)
         models['XGBoost'] = xgb
@@ -574,6 +580,7 @@ else:
         train_time = time.time() - start_time
         
         evaluator_cat = ModelEvaluator('CatBoost', cat, CLASS_NAMES, output_dir=SAVE_DIR)
+        evaluator_cat.set_feature_names(feature_names)  # Set feature names for importance extraction
         evaluator_cat.set_train_time(train_time)
         results['CatBoost'] = evaluator_cat.evaluate(X_train, y_train, X_test, y_test, train_ids, test_ids)
         models['CatBoost'] = cat
@@ -586,6 +593,7 @@ else:
     train_time = time.time() - start_time
     
     evaluator_svm = ModelEvaluator('SVM_RBF', svm, CLASS_NAMES, output_dir=SAVE_DIR)
+    evaluator_svm.set_feature_names(feature_names)  # Set feature names (SVM doesn't have importance)
     evaluator_svm.set_train_time(train_time)
     results['SVM_RBF'] = evaluator_svm.evaluate(X_train, y_train, X_test, y_test, train_ids, test_ids)
     models['SVM_RBF'] = svm

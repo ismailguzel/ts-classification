@@ -10,110 +10,140 @@
 # Output Structure:
 #   saved_models/
 #   ├── model1_binary_raw_<classifier>/      # RAW mode outputs
-#   ├── model1_binary_features/              # FEATURES mode outputs
-#   ├── model1_binary_autogluon/             # AutoGluon outputs
+#   ├── model1_binary_features/              # FEATURES mode outputs + feature_importance CSVs
+#   ├── model1_binary_autogluon/             # AutoGluon outputs + feature_importance CSVs
 #   ├── model2_nonstationary_raw_<classifier>/
-#   ├── model2_nonstationary_features/
-#   └── model2_nonstationary_autogluon/
+#   ├── model2_nonstationary_features/       # + feature_importance CSVs
+#   └── model2_nonstationary_autogluon/      # + feature_importance CSVs
 # ============================================================================
+
+set -e  # Exit on error
+# Note: set -u removed - causes issues with conda activation scripts
 
 # Load required module
 module load apps/truba-ai/gpu-2024.0
 
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+echo -e "${GREEN}============================================================================${NC}"
+echo -e "${GREEN}Starting 20K Training Pipeline${NC}"
+echo -e "${GREEN}============================================================================${NC}"
+echo "Start time: $(date)"
+echo ""
+
 ### Model 1 (Binary Classification)
-echo "=== Starting Model 1 Training ==="
+echo -e "\n${YELLOW}=== Starting Model 1 Training ===${NC}\n"
 cd /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model1_binary
 
-# RAW mode (trains all classifiers: rocket, arsenal, tsforest)
-echo "Training Model 1 - RAW mode"
+# Activate sktime environment
+echo -e "${GREEN}[1/5] Activating ts-sktime environment${NC}"
 conda activate ts-sktime
-mkdir -p ./out
-python -u train_model1.py \
-    --mode raw \
-    --data-path ../../../data/raw/unified-20k \
-    2>&1 | tee ./out/train_raw-20k.out
 
-# FEATURES mode (all features)
-echo "Training Model 1 - All Features"
-mkdir -p ./out
-python -u train_model1.py \
-    --mode features \
-    --features-path ../../../data/features/unified-20k/allfeatures \
-    2>&1 | tee ./out/train_allfeatures-20k.out
+# RAW mode (trains all classifiers: rocket, arsenal, tsforest)
+# ⚠️ COMMENTED OUT - RAW mode training is very slow, use FEATURES mode instead
+# echo -e "\n${GREEN}[2/5] Training Model 1 - RAW mode${NC}"
+# mkdir -p ./out
+# python -u train_model1.py \
+#     --mode raw \
+#     --data-path ../../../data/raw/unified-20k \
+#     2>&1 | tee ./out/train_raw-20k.out
+# echo -e "${GREEN}✓ RAW mode completed${NC}"
 
-# FEATURES mode (selected features)
-echo "Training Model 1 - Selected Features"
+# FEATURES mode (selected features) - with feature importance
+echo -e "\n${GREEN}[3/5] Training Model 1 - Selected Features (with feature importance)${NC}"
 mkdir -p ./out
 python -u train_model1.py \
     --mode features \
     --features-path ../../../data/features/unified-20k/selected \
     2>&1 | tee ./out/train_selected-20k.out
+echo -e "${GREEN}✓ Selected features completed${NC}"
+echo -e "${YELLOW}  → Feature importance CSVs saved in saved_models/model1_binary_features/${NC}"
 
-# AutoGluon (all features)
-echo "Training Model 1 - AutoGluon All Features"
+# AutoGluon (selected features) - with feature importance
+echo -e "\n${GREEN}[4/5] Activating ts-autogluon environment${NC}"
 conda activate ts-autogluon
-mkdir -p ./out
-python -u autotrain_models1.py \
-    --features-path ../../../data/features/unified-20k/allfeatures \
-    --time-limit 3600 \
-    --presets medium_quality_faster_train \
-    2>&1 | tee ./out/autogluon_allfeatures-20k.out
 
-# AutoGluon (selected features)
-echo "Training Model 1 - AutoGluon Selected Features"
+echo -e "\n${GREEN}[5/5] Training Model 1 - AutoGluon Selected Features (with feature importance)${NC}"
 mkdir -p ./out
 python -u autotrain_models1.py \
     --features-path ../../../data/features/unified-20k/selected \
     --time-limit 3600 \
     --presets medium_quality_faster_train \
     2>&1 | tee ./out/autogluon_selected-20k.out
+echo -e "${GREEN}✓ AutoGluon completed${NC}"
+echo -e "${YELLOW}  → Feature importance CSVs saved in saved_models/model1_binary_autogluon/${NC}"
+
+echo -e "\n${GREEN}Model 1 training completed!${NC}"
+echo -e "Results saved in: saved_models/model1_binary_*/"
+echo ""
 
 ### Model 2 (5-Class Classification)
-echo "=== Starting Model 2 Training ==="
+echo -e "\n${YELLOW}=== Starting Model 2 Training ===${NC}\n"
 cd /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model2_nonstationary
 
-# RAW mode (trains all classifiers: rocket, arsenal, tsforest)
-echo "Training Model 2 - RAW mode"
+# Activate sktime environment
+echo -e "${GREEN}[1/5] Activating ts-sktime environment${NC}"
 conda activate ts-sktime
-mkdir -p ./out
-python -u train_model2.py \
-    --mode raw \
-    --data-path ../../../data/raw/unified-20k \
-    2>&1 | tee ./out/train2_raw-20k.out
 
-# FEATURES mode (all features)
-echo "Training Model 2 - All Features"
-mkdir -p ./out
-python -u train_model2.py \
-    --mode features \
-    --features-path ../../../data/features/unified-20k/allfeatures \
-    2>&1 | tee ./out/train2_allfeatures-20k.out
+# RAW mode (trains all classifiers: rocket, arsenal, tsforest)
+# ⚠️ COMMENTED OUT - RAW mode training is very slow, use FEATURES mode instead
+# echo -e "\n${GREEN}[2/5] Training Model 2 - RAW mode${NC}"
+# mkdir -p ./out
+# python -u train_model2.py \
+#     --mode raw \
+#     --data-path ../../../data/raw/unified-20k \
+#     2>&1 | tee ./out/train2_raw-20k.out
+# echo -e "${GREEN}✓ RAW mode completed${NC}"
 
-# FEATURES mode (selected features)
-echo "Training Model 2 - Selected Features"
+# FEATURES mode (selected features) - with feature importance
+echo -e "\n${GREEN}[3/5] Training Model 2 - Selected Features (with feature importance)${NC}"
 mkdir -p ./out
 python -u train_model2.py \
     --mode features \
     --features-path ../../../data/features/unified-20k/selected \
     2>&1 | tee ./out/train2_selected-20k.out
+echo -e "${GREEN}✓ Selected features completed${NC}"
+echo -e "${YELLOW}  → Feature importance CSVs saved in saved_models/model2_nonstationary_features/${NC}"
 
-# AutoGluon (all features)
-echo "Training Model 2 - AutoGluon All Features"
+# AutoGluon (selected features) - with feature importance
+echo -e "\n${GREEN}[4/5] Activating ts-autogluon environment${NC}"
 conda activate ts-autogluon
-mkdir -p ./out
-python -u autotrain_models2.py \
-    --features-path ../../../data/features/unified-20k/allfeatures \
-    --time-limit 3600 \
-    --presets medium_quality_faster_train \
-    2>&1 | tee ./out/autogluon2_allfeatures-20k.out
 
-# AutoGluon (selected features)
-echo "Training Model 2 - AutoGluon Selected Features"
+echo -e "\n${GREEN}[5/5] Training Model 2 - AutoGluon Selected Features (with feature importance)${NC}"
 mkdir -p ./out
 python -u autotrain_models2.py \
     --features-path ../../../data/features/unified-20k/selected \
     --time-limit 3600 \
     --presets medium_quality_faster_train \
     2>&1 | tee ./out/autogluon2_selected-20k.out
+echo -e "${GREEN}✓ AutoGluon completed${NC}"
+echo -e "${YELLOW}  → Feature importance CSVs saved in saved_models/model2_nonstationary_autogluon/${NC}"
 
-echo "=== All training completed ==="
+echo -e "\n${GREEN}Model 2 training completed!${NC}"
+echo -e "Results saved in: saved_models/model2_nonstationary_*/"
+
+echo -e "\n${GREEN}============================================================================${NC}"
+echo -e "${GREEN}ALL TRAINING COMPLETED!${NC}"
+echo -e "${GREEN}============================================================================${NC}"
+echo "End time: $(date)"
+echo ""
+echo -e "${YELLOW}Summary:${NC}"
+echo "  Model 1 (Binary): saved_models/model1_binary_*/"
+echo "  Model 2 (5-Class): saved_models/model2_nonstationary_*/"
+echo ""
+echo -e "${YELLOW}Feature Importance:${NC}"
+echo "  ✓ Feature importance CSVs available in:"
+echo "    - model1_binary_features/feature_importance_*.csv"
+echo "    - model1_binary_autogluon/feature_importance_*.csv"
+echo "    - model2_nonstationary_features/feature_importance_*.csv"
+echo "    - model2_nonstationary_autogluon/feature_importance_*.csv"
+echo ""
+echo -e "${YELLOW}Next Steps:${NC}"
+echo "  1. Review metrics in saved_models/*/*.json"
+echo "  2. Analyze errors: cd 04-postprocessing && python visualize_errors_simple.py"
+echo "  3. Visualize misclassified: python visualize_misclassified.py --id <ID> --model <model1/model2>"
+echo ""

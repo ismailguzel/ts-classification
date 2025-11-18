@@ -158,6 +158,41 @@ def train_autogluon(
     # Save comprehensive metrics (JSON format from ModelEvaluator)
     metrics_dir = save_path / "metrics"
     evaluator.save_results(metrics_dir)
+    
+    # Extract feature importance from AutoGluon
+    print("\n[Extracting Feature Importance from AutoGluon...]")
+    try:
+        # Get feature importance (returns DataFrame with feature names as index)
+        feature_importance = predictor.feature_importance(test_df)
+        
+        if feature_importance is not None and not feature_importance.empty:
+            # AutoGluon returns DataFrame with columns ['importance', 'stddev', 'p_value', 'n', 'p99_high', 'p99_low']
+            # We only need 'importance' column
+            
+            # Sort by importance column (descending) and get top 50
+            if 'importance' in feature_importance.columns:
+                feature_importance_sorted = feature_importance.sort_values(
+                    by='importance', ascending=False
+                ).head(50)
+                
+                # Keep only feature name and importance
+                fi_df = feature_importance_sorted[['importance']].copy()
+                fi_df.index.name = 'feature_name'
+                
+                # Save to CSV
+                fi_path = save_path / "feature_importance_AutoGluon.csv"
+                fi_df.to_csv(fi_path)
+                print(f"✓ Feature importance saved to: {fi_path}")
+                print(f"  Top 5 features:")
+                for idx, (feat, row) in enumerate(feature_importance_sorted.head(5).iterrows(), 1):
+                    feat_display = feat.replace('data__', '').replace('__', ' ')[:55]
+                    print(f"    {idx}. {feat_display}: {row['importance']:.4f}")
+            else:
+                print("  ⚠ 'importance' column not found in feature_importance DataFrame")
+        else:
+            print("  ⚠ Feature importance not available from AutoGluon")
+    except Exception as e:
+        print(f"  ⚠ Could not extract feature importance: {e}")
 
     lb_test_path = None
     lb_train_path = None

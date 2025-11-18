@@ -1,0 +1,97 @@
+{
+  "model_name": "AutoGluon_Binary",
+  "train_time": 99.36720514297485,
+  "metrics": {
+    "train": {
+      "accuracy": 0.9873913895603319,
+      "precision": 0.9875859224069745,
+      "recall": 0.9873913895603319,
+      "f1": 0.9873843565120608
+    },
+    "test": {
+      "accuracy": 0.9689051476352234,
+      "precision": 0.9691787991348847,
+      "recall": 0.9689051476352234,
+      "f1": 0.9688823947925013
+    }
+  },
+  "classification_reports": {
+    "train": {
+      "Stationary": {
+        "precision": 0.9785197005032528,
+        "recall": 0.997747183979975,
+        "f1-score": 0.9880399082853071,
+        "support": 7990.0
+      },
+      "Non-Stationary": {
+        "precision": 0.9974860335195531,
+        "recall": 0.976083094164275,
+        "f1-score": 0.9866685086689231,
+        "support": 7317.0
+      },
+      "accuracy": 0.9873913895603319,
+      "macro avg": {
+        "precision": 0.9880028670114029,
+        "recall": 0.9869151390721249,
+        "f1-score": 0.9873542084771151,
+        "support": 15307.0
+      },
+      "weighted avg": {
+        "precision": 0.9875859224069745,
+        "recall": 0.9873913895603319,
+        "f1-score": 0.9873843565120608,
+        "support": 15307.0
+      }
+    },
+    "test": {
+      "Stationary": {
+        "precision": 0.9589643380556913,
+        "recall": 0.9824824824824825,
+        "f1-score": 0.9705809641532757,
+        "support": 1998.0
+      },
+      "Non-Stationary": {
+        "precision": 0.9803370786516854,
+        "recall": 0.9540732640787315,
+        "f1-score": 0.9670268772513162,
+        "support": 1829.0
+      },
+      "accuracy": 0.9689051476352234,
+      "macro avg": {
+        "precision": 0.9696507083536883,
+        "recall": 0.968277873280607,
+        "f1-score": 0.9688039207022959,
+        "support": 3827.0
+      },
+      "weighted avg": {
+        "precision": 0.9691787991348847,
+        "recall": 0.9689051476352234,
+        "f1-score": 0.9688823947925013,
+        "support": 3827.0
+      }
+    }
+  },
+  "confusion_matrices": {
+    "train": [
+      [
+        7972,
+        18
+      ],
+      [
+        175,
+        7142
+      ]
+    ],
+    "test": [
+      [
+        1963,
+        35
+      ],
+      [
+        84,
+        1745
+      ]
+    ]
+  },
+  "timestamp_utc": "2025-11-18T15:17:37"
+}
