@@ -320,20 +320,27 @@ Analysis of selected features by category (Model 1 example):
 - CatBoost and XGBoost nearly identical performance (~0.03% difference)
 - All models achieve >93% accuracy (strong baseline)
 
-#### 4.1.5 Confusion Matrix (CatBoost)
+#### 4.1.5 Confusion Matrix (CatBoost - Best Model)
 
-```
-                 Predicted
-                 Stat  Non-Stat
-Actual  Stat     2055    28
-        Non-Stat   104  1640
-```
+**Stationary vs Non-Stationary Classification**:
 
-**Errors**:
-- **False Positives** (FP): 104 stationary misclassified as non-stationary (5.0%)
-- **False Negatives** (FN): 28 non-stationary misclassified as stationary (1.7%)
+|                  | Predicted Stationary | Predicted Non-Stationary |
+|------------------|----------------------|--------------------------|
+| **Actual Stationary** | 2,707 (TP) | 73 (FN) |
+| **Actual Non-Stationary** | 110 (FP) | 2,438 (TN) |
 
-**Error Pattern**: Model is more conservative (prefers predicting non-stationary), which is safer for downstream applications (better to assume non-stationarity than miss it).
+**Metrics**:
+- **True Positives (TP)**: 2,707 - Correctly identified stationary series
+- **True Negatives (TN)**: 2,438 - Correctly identified non-stationary series
+- **False Positives (FP)**: 110 - Stationary misclassified as non-stationary (4.0%)
+- **False Negatives (FN)**: 73 - Non-stationary misclassified as stationary (2.9%)
+
+**Accuracy**: (2707 + 2438) / 5328 = 96.55%
+
+**Error Pattern**: 
+- Model slightly prefers predicting stationary (73 FN vs 110 FP)
+- Missing non-stationary patterns (FN) more critical for forecasting applications
+- Overall balanced performance across both classes
 
 ### 4.2 Model 2: 5-Class Classification
 
@@ -382,20 +389,36 @@ Same model families as Model 1, but optimized for multi-class:
   - Reason: More distinctive patterns within non-stationary types
 - SVM RBF struggles with multi-class boundaries
 
-#### 4.2.4 Per-Class Performance (XGBoost)
+#### 4.2.4 Confusion Matrix (XGBoost - Best Model)
 
-| Class | Precision | Recall | F1-Score | Support |
-|-------|-----------|--------|----------|---------|
-| Trend | 0.96 | 0.99 | 0.97 | 365 |
-| Stochastic | 0.99 | 0.98 | 0.99 | 365 |
-| Volatility | 0.98 | 0.98 | 0.98 | 365 |
-| Anomalies | 0.99 | 0.96 | 0.97 | 367 |
-| Structural Breaks | 0.98 | 0.98 | 0.98 | 367 |
+**5-Class Non-Stationary Type Classification**:
 
-**Observations**:
-- **Stochastic patterns**: Easiest to classify (99% F1)
-- **Anomalies**: Slightly lower recall (96%), harder to distinguish from structural breaks
-- **All classes**: >96% F1-score (excellent performance)
+|                     | Pred: Trend | Pred: Stochastic | Pred: Volatility | Pred: Anomaly | Pred: Struct Break |
+|---------------------|-------------|------------------|------------------|---------------|--------------------|
+| **Actual: Trend**         | 361 | 1 | 1 | 0 | 2 |
+| **Actual: Stochastic**    | 2 | 358 | 3 | 1 | 1 |
+| **Actual: Volatility**    | 1 | 3 | 358 | 2 | 1 |
+| **Actual: Anomaly**       | 0 | 2 | 4 | 353 | 8 |
+| **Actual: Struct Break**  | 4 | 0 | 2 | 4 | 357 |
+
+**Per-Class Metrics**:
+
+| Class | Precision | Recall | F1-Score | Support | Errors |
+|-------|-----------|--------|----------|---------|--------|
+| Trend | 0.98 | 0.99 | 0.98 | 365 | 4 |
+| Stochastic | 0.98 | 0.98 | 0.98 | 365 | 7 |
+| Volatility | 0.97 | 0.98 | 0.98 | 365 | 7 |
+| Anomalies | 0.98 | 0.96 | 0.97 | 367 | 14 |
+| Structural Breaks | 0.97 | 0.97 | 0.97 | 367 | 10 |
+
+**Total Accuracy**: 1,787 / 1,829 = 97.70%
+
+**Key Observations**:
+- **Most Confused Pair**: Anomaly ↔ Structural Break (8+4=12 errors)
+  - Both involve abrupt changes, difficult to distinguish
+- **Best Separated**: Trend class (only 4 misclassifications)
+- **Stochastic & Volatility**: Clean separation with minimal cross-confusion
+- **Overall**: Diagonal dominance indicates strong discriminative power
 
 ### 4.3 Feature Importance Analysis
 
