@@ -146,61 +146,21 @@ echo -e "${BLUE}─────────────────────�
 
 # Count figures
 TOTAL_FIGURES=$(find 04-postprocessing/figures/ -name "*.png" -type f 2>/dev/null | wc -l)
-ERROR_FIGS=$(find 04-postprocessing/figures/ -name "error_analysis*.png" -type f 2>/dev/null | wc -l)
-FEATURE_FIGS=$(find 04-postprocessing/figures/ -name "feature_importance*.png" -type f 2>/dev/null | wc -l)
-MISCLASS_FIGS=$(find 04-postprocessing/figures/ -name "misclassified_*.png" -type f 2>/dev/null | wc -l)
-
-# Get metrics from JSON files (Model 1)
-MODEL1_BEST=$(find 03-models/hierarchical/model1_binary/saved_models/model1_binary_features/ \
-    -name "*_summary.json" -type f 2>/dev/null | head -1)
-if [ -f "$MODEL1_BEST" ]; then
-    MODEL1_ACC=$(python3 -c "import json; print(f\"{json.load(open('$MODEL1_BEST'))['best_model']['test_accuracy']*100:.2f}%\")" 2>/dev/null || echo "N/A")
-    MODEL1_NAME=$(python3 -c "import json; print(json.load(open('$MODEL1_BEST'))['best_model']['model_name'])" 2>/dev/null || echo "N/A")
-else
-    MODEL1_ACC="N/A"
-    MODEL1_NAME="N/A"
-fi
-
-# Get metrics from JSON files (Model 2)
-MODEL2_BEST=$(find 03-models/hierarchical/model2_nonstationary/saved_models/model2_nonstationary_features/ \
-    -name "*_summary.json" -type f 2>/dev/null | head -1)
-if [ -f "$MODEL2_BEST" ]; then
-    MODEL2_ACC=$(python3 -c "import json; print(f\"{json.load(open('$MODEL2_BEST'))['best_model']['test_accuracy']*100:.2f}%\")" 2>/dev/null || echo "N/A")
-    MODEL2_NAME=$(python3 -c "import json; print(json.load(open('$MODEL2_BEST'))['best_model']['model_name'])" 2>/dev/null || echo "N/A")
-else
-    MODEL2_ACC="N/A"
-    MODEL2_NAME="N/A"
-fi
 
 echo -e "${GREEN}============================================================================${NC}"
 echo -e "${GREEN}POST-PROCESSING COMPLETE!${NC}"
 echo -e "${GREEN}============================================================================${NC}"
 echo "End time: $(date)"
 echo ""
-echo -e "${YELLOW}📊 SUMMARY STATISTICS${NC}"
+echo -e "${YELLOW}📊 GENERATED FIGURES: $TOTAL_FIGURES total${NC}"
 echo -e "${BLUE}────────────────────────────────────────────────────────────────────────────${NC}"
 echo ""
-echo -e "  Model Performance:"
-echo -e "    Model 1 (Binary):      $MODEL1_ACC ($MODEL1_NAME)"
-echo -e "    Model 2 (5-Class):     $MODEL2_ACC ($MODEL2_NAME)"
-echo ""
-echo -e "  Generated Figures:       $TOTAL_FIGURES total"
-echo -e "    Error Analysis:        $ERROR_FIGS figures"
-echo -e "    Feature Importance:    $FEATURE_FIGS figures"
-echo -e "    Misclassified Samples: $MISCLASS_FIGS figures"
-echo ""
-echo -e "${YELLOW}📁 OUTPUT DIRECTORY${NC}"
-echo -e "${BLUE}────────────────────────────────────────────────────────────────────────────${NC}"
-echo "  04-postprocessing/figures/"
-echo ""
-ls -1 figures/*.png 2>/dev/null | sed 's/^/    /' || echo "    (no figures found)"
+ls -1 figures/*.png 2>/dev/null | sed 's/^/  ✓ /' || echo "  (no figures found)"
 echo ""
 echo -e "${YELLOW}📖 NEXT STEPS${NC}"
 echo -e "${BLUE}────────────────────────────────────────────────────────────────────────────${NC}"
 echo "  1. Review figures in: 04-postprocessing/figures/"
 echo "  2. Check detailed metrics: 03-models/hierarchical/*/saved_models/*/*.json"
-echo "  3. Generate paper-ready report: See REPORT_GUIDE.md"
-echo "  4. Visualize specific misclassified samples:"
-echo "     python visualize_misclassified.py --id <ID> --model <model1/model2> --save-fig"
+echo "  3. See complete technical report: TECHNICAL_REPORT.md"
 echo ""
 echo -e "${GREEN}============================================================================${NC}"

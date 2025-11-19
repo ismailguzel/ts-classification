@@ -108,7 +108,7 @@ def load_feature_importance(model_dir):
     return all_importance
 
 
-def plot_top_features(all_importance, top_n=20, save_fig=False, output_dir=None, model_name=''):
+def plot_top_features(all_importance, top_n=20, save_fig=False, output_dir=None, model_name='', show_plot=True):
     """Plot top N features for each classifier."""
     
     n_classifiers = len(all_importance)
@@ -175,10 +175,13 @@ def plot_top_features(all_importance, top_n=20, save_fig=False, output_dir=None,
         plt.savefig(output_file, dpi=150, bbox_inches='tight')
         print(f"\n✓ Figure saved to: {output_file}")
     
-    plt.show()
+    if show_plot:
+        plt.show()
+    else:
+        plt.close()
 
 
-def plot_category_distribution(all_importance, save_fig=False, output_dir=None, model_name=''):
+def plot_category_distribution(all_importance, save_fig=False, output_dir=None, model_name='', show_plot=True):
     """Plot importance distribution by category for each classifier."""
     
     n_classifiers = len(all_importance)
@@ -197,18 +200,38 @@ def plot_category_distribution(all_importance, save_fig=False, output_dir=None, 
         
         # Use global color mapping
         colors = [CATEGORY_COLORS.get(cat, CATEGORY_COLORS['other']) for cat in category_importance.index]
-        wedges, texts, autotexts = ax1.pie(category_importance.values, 
-                                           labels=category_importance.index,
-                                           autopct='%1.1f%%',
-                                           colors=colors,
-                                           startangle=90)
         
-        for text in texts:
-            text.set_fontsize(10)
+        # Calculate percentages
+        total = category_importance.sum()
+        percentages = (category_importance.values / total) * 100
+        
+        # Custom autopct function - only show for larger slices
+        def autopct_func(pct):
+            return f'{pct:.1f}%' if pct >= 8 else ''
+        
+        # Create pie chart without labels initially
+        wedges, texts, autotexts = ax1.pie(category_importance.values, 
+                                           labels=None,  # No automatic labels
+                                           autopct=autopct_func,
+                                           colors=colors,
+                                           startangle=90,
+                                           pctdistance=0.75,
+                                           explode=[0.05 if p < 8 else 0 for p in percentages])  # Explode small slices
+        
+        # Style percentage texts inside pie
         for autotext in autotexts:
             autotext.set_color('white')
-            autotext.set_fontsize(9)
+            autotext.set_fontsize(10)
             autotext.set_fontweight('bold')
+        
+        # Add legend instead of labels to avoid overlap
+        legend_labels = [f'{cat.capitalize()}: {pct:.1f}%' 
+                        for cat, pct in zip(category_importance.index, percentages)]
+        ax1.legend(wedges, legend_labels, 
+                  title="Categories",
+                  loc="center left",
+                  bbox_to_anchor=(1, 0, 0.5, 1),
+                  fontsize=9)
         
         ax1.set_title(f'{classifier_name}\nCategory Distribution', 
                      fontsize=12, fontweight='bold')
@@ -239,7 +262,10 @@ def plot_category_distribution(all_importance, save_fig=False, output_dir=None, 
         plt.savefig(output_file, dpi=150, bbox_inches='tight')
         print(f"✓ Figure saved to: {output_file}")
     
-    plt.show()
+    if show_plot:
+        plt.show()
+    else:
+        plt.close()
 
 
 def print_category_summary(all_importance):
@@ -336,18 +362,20 @@ def main():
     print_category_summary(all_importance)
     
     # Create visualizations
-    if not args.no_plot:
+    if args.save_fig or not args.no_plot:
         print(f"\n[3/3] Generating visualizations...")
         
         output_dir = Path('figures') if args.save_fig else None
         if output_dir:
             output_dir.mkdir(parents=True, exist_ok=True)
         
+        show_plot = not args.no_plot
+        
         # Plot top features
-        plot_top_features(all_importance, args.top, args.save_fig, output_dir, args.model)
+        plot_top_features(all_importance, args.top, args.save_fig, output_dir, args.model, show_plot)
         
         # Plot category distribution
-        plot_category_distribution(all_importance, args.save_fig, output_dir, args.model)
+        plot_category_distribution(all_importance, args.save_fig, output_dir, args.model, show_plot)
     
     print(f"\n{'='*80}")
     print("✓ Analysis complete!")

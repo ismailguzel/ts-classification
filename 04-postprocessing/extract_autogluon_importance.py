@@ -21,14 +21,14 @@ print("="*80 + "\n")
 models = [
     {
         'name': 'Model 1 (Binary)',
-        'autogluon_path': Path('03-models/hierarchical/model1_binary/saved_models/model1_binary_autogluon'),
-        'features_path': Path('data/features/unified-20k/selected'),
+        'autogluon_path': Path('../03-models/hierarchical/model1_binary/saved_models/model1_binary_autogluon'),
+        'features_path': Path('../data/features/unified-20k/selected'),
         'target': 'binary'
     },
     {
         'name': 'Model 2 (5-Class)',
-        'autogluon_path': Path('03-models/hierarchical/model2_nonstationary/saved_models/model2_nonstationary_autogluon'),
-        'features_path': Path('data/features/unified-20k/selected'),
+        'autogluon_path': Path('../03-models/hierarchical/model2_nonstationary/saved_models/model2_nonstationary_autogluon'),
+        'features_path': Path('../data/features/unified-20k/selected'),
         'target': 'primary'
     }
 ]
