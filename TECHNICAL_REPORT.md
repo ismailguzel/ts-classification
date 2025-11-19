@@ -1,3 +1,7 @@
+---
+marp: true
+---
+
 # Hierarchical Time Series Classification: A Comprehensive Study
 
 **Technical Report**  
