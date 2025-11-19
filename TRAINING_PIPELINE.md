@@ -47,33 +47,23 @@ tail -f training.log
 
 ## Output Structure
 
-```
-03-models/hierarchical/
-├── model1_binary/
-│   ├── saved_models/
-│   │   ├── model1_binary_raw_rocket/
-│   │   │   ├── predictions_*.csv
-│   │   │   ├── misclassified_*.csv
-│   │   │   └── *_metrics.json
-│   │   ├── model1_binary_features/
-│   │   │   ├── predictions_*.csv
-│   │   │   ├── misclassified_*.csv
-│   │   │   ├── feature_importance_RandomForest.csv ⭐ NEW
-│   │   │   ├── feature_importance_XGBoost.csv ⭐ NEW
-│   │   │   ├── feature_importance_CatBoost.csv ⭐ NEW
-│   │   │   └── *_metrics.json
-│   │   └── model1_binary_autogluon/
-│   │       ├── predictions_*.csv
-│   │       ├── misclassified_*.csv
-│   │       ├── feature_importance_AutoGluon_Binary.csv ⭐ NEW
-│   │       └── *_metrics.json
-│   └── out/
-│       ├── train_raw-20k.out
-│       ├── train_selected-20k.out
-│       └── autogluon_selected-20k.out
-└── model2_nonstationary/
-    └── (same structure as model1)
-```
+### Training Outputs
+
+**Model Files:**
+- `model*_classifier.pkl` - Trained model (RAW/FEATURES modes)
+- `model*_features_summary.json` - Comprehensive evaluation metrics
+- `predictions_*.csv` - All test predictions with true labels
+- `misclassified_*.csv` - Incorrectly classified samples
+- `feature_importance_*.csv` - Top 50 features (FEATURES/AutoGluon modes)
+
+**Organized by Mode:**
+- `model1_binary_raw_*` - sktime classifiers
+- `model1_binary_features` - sklearn classifiers with feature importance
+- `model1_binary_autogluon` - AutoML ensemble with feature importance
+- `model2_nonstationary_*` - Same structure for 5-class model
+
+**Logs:**
+- Training outputs saved to `out/*.out` files
 
 ## Training Time Estimates
 
@@ -123,7 +113,7 @@ data__augmented_dickey_fuller__attr_"teststat"__autolag_"AIC",0.12038395,3
 
 ### Check Current Status
 ```bash
-# View last 50 lines of output
+# View last 50 lines of training output
 tail -50 03-models/hierarchical/model1_binary/out/train_selected-20k.out
 
 # Watch training in real-time
@@ -135,45 +125,42 @@ tail -f 03-models/hierarchical/model1_binary/out/train_selected-20k.out
 # Search for errors in logs
 grep -i error 03-models/hierarchical/*/out/*.out
 
-# Check if feature importance files were created
-find 03-models/hierarchical/*/saved_models -name "feature_importance*.csv"
+# Verify feature importance files were created
+find 03-models/hierarchical/*/saved_models -name "feature_importance*.csv" | wc -l
+# Expected: 8 files (4 for Model 1, 4 for Model 2)
 ```
 
 ## After Training
 
-### 1. Review Metrics
+### 1. Generate Visualizations
 ```bash
-# Check Model 1 performance
+# Run automated post-processing pipeline
+./run-postprocessing.sh
+```
+
+**Output**: 6 publication-quality figures
+- Error analysis for both models (confusion matrices, misclassification patterns)
+- Feature importance visualizations (top-20 comparisons, category breakdowns)
+- Detailed logs saved to `04-postprocessing/visualization.out`
+
+### 2. Review Results
+```bash
+# Check detailed metrics
 cat 03-models/hierarchical/model1_binary/saved_models/model1_binary_features/model1_features_summary.json
 
-# Check Model 2 performance
-cat 03-models/hierarchical/model2_nonstationary/saved_models/model2_nonstationary_features/model2_features_summary.json
+# View generated figures
+ls -lh 04-postprocessing/figures/
+
+# Read comprehensive analysis
+less 04-postprocessing/visualization.out
 ```
 
-### 2. Analyze Errors
-```bash
-cd 04-postprocessing
-
-# Model 1 error analysis
-python visualize_errors_simple.py --model model1 --save-fig
-
-# Model 2 error analysis
-python visualize_errors_simple.py --model model2 --save-fig
-```
-
-### 3. Visualize Misclassified Samples
-```bash
-# Find worst cases from error analysis, then:
-python visualize_misclassified.py --id <SERIES_ID> --model model1 --save-fig
-python visualize_misclassified.py --id <SERIES_ID> --model model2 --save-fig
-```
-
-### 4. Examine Feature Importance
+### 3. Examine Specific Features
 ```bash
 # View top 10 features for XGBoost
 head -11 03-models/hierarchical/model1_binary/saved_models/model1_binary_features/feature_importance_XGBoost.csv
 
-# Compare across models
+# Compare feature importance across models
 for model in RandomForest XGBoost CatBoost; do
     echo "=== $model ==="
     head -6 03-models/hierarchical/model1_binary/saved_models/model1_binary_features/feature_importance_${model}.csv
@@ -210,59 +197,42 @@ pkill -f train_model
 ## Notes
 
 - Script uses `set -e` to stop on first error
-- All output is saved to `./out/` directories
-- Feature importance is extracted during `evaluate()` call
+- All training logs saved to `out/` directories
+- Feature importance automatically extracted for tree-based models
 - IDs in CSV files are actual `series_id` from data generation
 - Each model directory is independent (can train separately)
+- RAW mode trains sktime classifiers (ROCKET, Arsenal)
+- FEATURES mode trains sklearn classifiers (RF, XGBoost, CatBoost, SVM)
+- AutoGluon mode trains ensemble with automated hyperparameter tuning
 
-## Example Full Run
+## Complete Workflow Example
 
 ```bash
-# Start training
+# Step 1: Generate data (if not already done)
+cd 01-data-generation
+python generate.py --scale 20k
+
+# Step 2: Extract and select features (if not already done)
+cd ../02-preprocessing
+python extract_dask.py --input ../data/raw/unified-20k --output ../data/features/unified-20k/allfeatures
+python feature_selection.py --input ../data/features/unified-20k/allfeatures --output ../data/features/unified-20k/selected
+
+# Step 3: Train all models
+cd ..
 ./run-20k-trainig.sh
 
-# Output will show:
-============================================================================
-Starting 20K Training Pipeline
-============================================================================
-Start time: Mon Nov 18 17:00:00 +03 2024
+# Step 4: Generate visualizations
+./run-postprocessing.sh
 
-=== Starting Model 1 Training ===
-[1/5] Activating ts-sktime environment
-[2/5] Training Model 1 - RAW mode
-✓ RAW mode completed
-[3/5] Training Model 1 - Selected Features (with feature importance)
-✓ Selected features completed
-  → Feature importance CSVs saved in saved_models/model1_binary_features/
-[4/5] Activating ts-autogluon environment
-[5/5] Training Model 1 - AutoGluon Selected Features (with feature importance)
-✓ AutoGluon completed
-  → Feature importance CSVs saved in saved_models/model1_binary_autogluon/
-
-Model 1 training completed!
-Results saved in: saved_models/model1_binary_*/
-
-=== Starting Model 2 Training ===
-...
-
-============================================================================
-ALL TRAINING COMPLETED!
-============================================================================
-End time: Tue Nov 19 01:00:00 +03 2024
-
-Summary:
-  Model 1 (Binary): saved_models/model1_binary_*/
-  Model 2 (5-Class): saved_models/model2_nonstationary_*/
-
-Feature Importance:
-  ✓ Feature importance CSVs available in:
-    - model1_binary_features/feature_importance_*.csv
-    - model1_binary_autogluon/feature_importance_*.csv
-    - model2_nonstationary_features/feature_importance_*.csv
-    - model2_nonstationary_autogluon/feature_importance_*.csv
-
-Next Steps:
-  1. Review metrics in saved_models/*/*.json
-  2. Analyze errors: cd 04-postprocessing && python visualize_errors_simple.py
-  3. Visualize misclassified: python visualize_misclassified.py --id <ID> --model <model1/model2>
+# Step 5: Review results
+cat TECHNICAL_REPORT.md
+open 04-postprocessing/figures/*.png
 ```
+
+## Next Steps After Training
+
+1. **Review Performance**: Check `TECHNICAL_REPORT.md` for comprehensive analysis
+2. **Examine Figures**: View `04-postprocessing/figures/` for error analysis and feature importance
+3. **Analyze Logs**: Read `04-postprocessing/visualization.out` for detailed statistics
+4. **Compare Models**: Review JSON metrics in `saved_models/*/model*_summary.json`
+5. **Investigate Errors**: Examine `misclassified_*.csv` files for error patterns
