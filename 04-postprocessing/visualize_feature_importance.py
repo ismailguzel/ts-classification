@@ -82,8 +82,48 @@ def categorize_feature(feature_name):
     return 'other'
 
 
-def load_feature_importance(model_dir):
-    """Load all feature importance CSV files from model directory."""
+def normalize_importance(df, method='sum'):
+    """
+    Normalize feature importance to make different models comparable.
+    
+    Args:
+        df: DataFrame with 'importance' column
+        method: 'sum' (sum to 1.0) or 'minmax' (scale to 0-1)
+    
+    Returns:
+        DataFrame with additional 'importance_normalized' column
+    """
+    df = df.copy()
+    
+    if method == 'sum':
+        # Normalize so all importances sum to 1.0 (percentage)
+        total = df['importance'].sum()
+        if total > 0:
+            df['importance_normalized'] = df['importance'] / total
+        else:
+            df['importance_normalized'] = 0.0
+    
+    elif method == 'minmax':
+        # Scale to 0-1 range
+        min_val = df['importance'].min()
+        max_val = df['importance'].max()
+        if max_val > min_val:
+            df['importance_normalized'] = (df['importance'] - min_val) / (max_val - min_val)
+        else:
+            df['importance_normalized'] = 0.0
+    
+    return df
+
+
+def load_feature_importance(model_dir, normalize=True, normalize_method='sum'):
+    """
+    Load all feature importance CSV files from model directory.
+    
+    Args:
+        model_dir: Path to saved models directory
+        normalize: Whether to normalize importance values
+        normalize_method: 'sum' (sum to 1.0) or 'minmax' (scale to 0-1)
+    """
     model_path = Path(model_dir)
     
     all_importance = {}
@@ -100,15 +140,22 @@ def load_feature_importance(model_dir):
             # Add category column
             df['category'] = df['feature'].apply(categorize_feature)
             
+            # Normalize importance if requested
+            if normalize:
+                df = normalize_importance(df, method=normalize_method)
+                # Use normalized values for plotting
+                df['importance_raw'] = df['importance'].copy()
+                df['importance'] = df['importance_normalized']
+            
             all_importance[classifier_name] = df
-            print(f"  ✓ {classifier_name}: {len(df)} features")
+            print(f"  {classifier_name}: {len(df)} features")
         except Exception as e:
-            print(f"  ✗ Error loading {file.name}: {e}")
+            print(f"  Error loading {file.name}: {e}")
     
     return all_importance
 
 
-def plot_top_features(all_importance, top_n=20, save_fig=False, output_dir=None, model_name='', show_plot=True):
+def plot_top_features(all_importance, top_n=20, save_fig=False, output_dir=None, model_name='', show_plot=True, normalized=False):
     """Plot top N features for each classifier."""
     
     n_classifiers = len(all_importance)
@@ -117,7 +164,8 @@ def plot_top_features(all_importance, top_n=20, save_fig=False, output_dir=None,
     if n_classifiers == 1:
         axes = [axes]
     
-    fig.suptitle(f'Top {top_n} Most Important Features by Classifier', 
+    title_suffix = ' (Normalized)' if normalized else ''
+    fig.suptitle(f'Top {top_n} Most Important Features by Classifier{title_suffix}', 
                 fontsize=16, fontweight='bold', y=0.995)
     
     for idx, (classifier_name, df) in enumerate(all_importance.items()):
@@ -144,9 +192,17 @@ def plot_top_features(all_importance, top_n=20, save_fig=False, output_dir=None,
         
         ax.set_yticks(y_pos)
         ax.set_yticklabels(shortened_names, fontsize=9)
-        ax.set_xlabel('Importance', fontsize=12)
-        ax.set_title(f'{classifier_name}\nTotal Importance: {top_features["importance"].sum():.3f}',
-                    fontsize=13, fontweight='bold')
+        
+        xlabel = 'Normalized Importance' if normalized else 'Importance'
+        ax.set_xlabel(xlabel, fontsize=12)
+        
+        total_imp = top_features["importance"].sum()
+        if normalized:
+            ax.set_title(f'{classifier_name}\nTotal Importance: {total_imp:.3f} ({total_imp*100:.1f}%)',
+                        fontsize=13, fontweight='bold')
+        else:
+            ax.set_title(f'{classifier_name}\nTotal Importance: {total_imp:.3f}',
+                        fontsize=13, fontweight='bold')
         ax.grid(axis='x', alpha=0.3)
         ax.invert_yaxis()
         
@@ -173,7 +229,7 @@ def plot_top_features(all_importance, top_n=20, save_fig=False, output_dir=None,
         model_suffix = f'_{model_name}' if model_name else ''
         output_file = output_dir / f'feature_importance_top{top_n}_comparison{model_suffix}.png'
         plt.savefig(output_file, dpi=150, bbox_inches='tight')
-        print(f"\n✓ Figure saved to: {output_file}")
+        print(f"Figure saved to: {output_file}")
     
     if show_plot:
         plt.show()
@@ -181,7 +237,7 @@ def plot_top_features(all_importance, top_n=20, save_fig=False, output_dir=None,
         plt.close()
 
 
-def plot_category_distribution(all_importance, save_fig=False, output_dir=None, model_name='', show_plot=True):
+def plot_category_distribution(all_importance, save_fig=False, output_dir=None, model_name='', show_plot=True, normalized=False):
     """Plot importance distribution by category for each classifier."""
     
     n_classifiers = len(all_importance)
@@ -190,7 +246,8 @@ def plot_category_distribution(all_importance, save_fig=False, output_dir=None, 
     if n_classifiers == 1:
         axes = axes.reshape(-1, 1)
     
-    fig.suptitle('Feature Importance by Category', fontsize=16, fontweight='bold')
+    title_suffix = ' (Normalized)' if normalized else ''
+    fig.suptitle(f'Feature Importance by Category{title_suffix}', fontsize=16, fontweight='bold')
     
     for idx, (classifier_name, df) in enumerate(all_importance.items()):
         # Top subplot: Pie chart
@@ -260,7 +317,7 @@ def plot_category_distribution(all_importance, save_fig=False, output_dir=None, 
         model_suffix = f'_{model_name}' if model_name else ''
         output_file = output_dir / f'feature_importance_categories{model_suffix}.png'
         plt.savefig(output_file, dpi=150, bbox_inches='tight')
-        print(f"✓ Figure saved to: {output_file}")
+        print(f"Figure saved to: {output_file}")
     
     if show_plot:
         plt.show()
@@ -316,6 +373,9 @@ def main():
                        help='Save figures to figures/')
     parser.add_argument('--no-plot', action='store_true',
                        help='Skip plotting, only show statistics')
+    parser.add_argument('--normalize', type=str, choices=['sum', 'minmax', 'none'],
+                       default='sum',
+                       help='Normalize importance: sum (sum to 1.0), minmax (scale to 0-1), none (raw values)')
     
     args = parser.parse_args()
     
@@ -335,14 +395,20 @@ def main():
     print(f"{'='*80}")
     print(f"Model: {config['name']}")
     print(f"Saved Models: {saved_models_dir}")
+    print(f"Normalization: {args.normalize}")
     print(f"{'='*80}\n")
     
     # Load feature importance
     print(f"[1/3] Loading feature importance files...")
-    all_importance = load_feature_importance(saved_models_dir)
+    normalize = (args.normalize != 'none')
+    all_importance = load_feature_importance(
+        saved_models_dir, 
+        normalize=normalize, 
+        normalize_method=args.normalize if normalize else 'sum'
+    )
     
     if not all_importance:
-        print(f"\n✗ Error: No feature importance files found in {saved_models_dir}")
+        print(f"\nError: No feature importance files found in {saved_models_dir}")
         print(f"    Expected files: feature_importance_*.csv")
         sys.exit(1)
     
@@ -350,10 +416,10 @@ def main():
     if args.classifier:
         if args.classifier in all_importance:
             all_importance = {args.classifier: all_importance[args.classifier]}
-            print(f"\n✓ Filtered to classifier: {args.classifier}")
+            print(f"\nFiltered to classifier: {args.classifier}")
         else:
             available = ', '.join(all_importance.keys())
-            print(f"\n✗ Error: Classifier '{args.classifier}' not found")
+            print(f"\nError: Classifier '{args.classifier}' not found")
             print(f"    Available: {available}")
             sys.exit(1)
     
@@ -370,15 +436,16 @@ def main():
             output_dir.mkdir(parents=True, exist_ok=True)
         
         show_plot = not args.no_plot
+        is_normalized = (args.normalize != 'none')
         
         # Plot top features
-        plot_top_features(all_importance, args.top, args.save_fig, output_dir, args.model, show_plot)
+        plot_top_features(all_importance, args.top, args.save_fig, output_dir, args.model, show_plot, is_normalized)
         
         # Plot category distribution
-        plot_category_distribution(all_importance, args.save_fig, output_dir, args.model, show_plot)
+        plot_category_distribution(all_importance, args.save_fig, output_dir, args.model, show_plot, is_normalized)
     
     print(f"\n{'='*80}")
-    print("✓ Analysis complete!")
+    print("Analysis complete!")
     print(f"{'='*80}\n")
 
 

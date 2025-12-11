@@ -98,18 +98,13 @@ Requirements:
 
 ### Testing
 
-```bash
-# Test RAW mode model
-python test_model1.py --model-path saved_models/model1_binary_raw_rocket/model1_binary_classifier.pkl
+Training automatically evaluates the model on test data and saves:
+- Predictions CSV
+- Metrics JSON
+- Misclassified samples CSV
+- Feature importance (for FEATURES mode)
 
-# Test FEATURES mode model
-python test_model1.py --model-path saved_models/model1_binary_features/model1_binary_classifier.pkl
-
-# Test with more samples
-python test_model1.py --model-path saved_models/model1_binary_raw_rocket/model1_binary_classifier.pkl --n-samples 500
-```
-
-Quick test on a subset to verify model works.
+Results are saved in the `saved_models/model1_binary_<mode>/` directory.
 
 ---
 
@@ -175,23 +170,9 @@ saved_models/
     └── catboost_info/                   # CatBoost logs
 ```
 
-### AutoTrain Mode Output Structure
-```
-saved_models/
-└── model1_binary_autogluon/             # AutoGluon artifacts
-    ├── models/                          # Trained model files
-    ├── predictions_AutoGluon_Binary.csv
-    ├── misclassified_AutoGluon_Binary.csv
-    ├── leaderboard_test.csv
-    ├── leaderboard_train.csv
-    ├── model1_autotrain_metadata.pkl    # Training metadata
-    └── metrics/
-        └── AutoGluon_Binary_metrics.json
-```
-
-Metadata includes:
+Metadata (saved as `.pkl` files) includes:
 - Model name and type
-- Training mode (raw/features/autotrain)
+- Training mode (raw/features)
 - Evaluation metrics
 - Data shapes and parameters
 - Fixed length (for raw mode)
@@ -258,7 +239,7 @@ python feature_selection.py --target binary
 After successful Model 1 training:
 
 1. **Review Results**: Check classification report and confusion matrix
-2. **Test Model**: Run `python test_model1.py`
+2. **Review Results**: Check saved metrics and predictions
 3. **Compare Modes**: Try both raw and features modes
 4. **Proceed to Model 2**: Train 5-class non-stationary classifier
 5. **Build Pipeline**: Combine Model 1 + Model 2 for hierarchical classification

@@ -9,7 +9,7 @@ Usage:
     python generate.py --scale 30k    # ~30K samples
     python generate.py --scale 50k    # ~50K samples
     python generate.py --scale 75k    # ~75K samples
-    python generate.py --scale 90k    # 90K samples (default)
+    python generate.py --scale 20k    # 20K samples (default)
     python generate.py --scale 120k   # ~120K samples
     python generate.py --scale 150k   # ~150K samples
     python generate.py --scale 200k   # ~200K samples
@@ -63,9 +63,9 @@ print("ts-stationary library imported successfully")
 
 # Parse arguments
 parser = argparse.ArgumentParser(description='Generate synthetic time series dataset')
-parser.add_argument('--scale', type=str, default='90k',
+parser.add_argument('--scale', type=str, default='20k',
                     choices=['test', '5k', '10k', '20k', '30k', '50k', '75k', '90k', '120k', '150k', '200k'],
-                    help='Dataset scale (default: 90k)')
+                    help='Dataset scale (default: 20k)')
 args = parser.parse_args()
 
 # Load configuration for selected scale
@@ -160,7 +160,7 @@ for base in noise_config['bases']:
         start_id=reserve_ids(noise_config['per_base'])
     )
     print(f"  >>> {base} completed")
-print(f"  ✓ Generated {noise_config['total']:,} stationary series\n")
+print(f"  Generated {noise_config['total']:,} stationary series\n")
 
 # ============================================================================
 # 2. DETERMINISTIC TRENDS (9,000)
@@ -189,7 +189,7 @@ for trend_type in trend_config['trend_types']:
                 sign=sign,
                 start_id=reserve_ids(trend_config['per_combination'])
             )
-print(f"  ✓ Generated {trend_config['total']:,} trend series\n")
+print(f"  Generated {trend_config['total']:,} trend series\n")
 
 # ============================================================================
 # 3. STOCHASTIC (9,000)
@@ -213,7 +213,7 @@ for stype in stochastic_config['types']:
         length_range=LENGTH_CONFIG['long'],
         start_id=reserve_ids(stochastic_config['per_type'])
     )
-print(f"  ✓ Generated {stochastic_config['total']:,} stochastic series\n")
+print(f"  Generated {stochastic_config['total']:,} stochastic series\n")
 
 # ============================================================================
 # 4. VOLATILITY (9,000)
@@ -236,7 +236,7 @@ for vtype in volatility_config['types']:
         length_range=LENGTH_CONFIG['long'],
         start_id=reserve_ids(volatility_config['per_type'])
     )
-print(f"  ✓ Generated {volatility_config['total']:,} volatility series\n")
+print(f"  Generated {volatility_config['total']:,} volatility series\n")
 
 # ============================================================================
 # 5. POINT ANOMALIES - SINGLE (3,000)
@@ -256,7 +256,7 @@ for base in point_single_config['bases']:
             location=location,
             start_id=reserve_ids(point_single_config['per_combination'])
         )
-print(f"  ✓ Generated {point_single_config['total']:,} point anomaly (single) series\n")
+print(f"  Generated {point_single_config['total']:,} point anomaly (single) series\n")
 
 # ============================================================================
 # 6. POINT ANOMALIES - MULTIPLE (3,000)
@@ -274,7 +274,7 @@ for base in point_multiple_config['bases']:
         anomaly_type='multiple',
         start_id=reserve_ids(point_multiple_config['per_base'])
     )
-print(f"  ✓ Generated {point_multiple_config['total']:,} point anomaly (multiple) series\n")
+print(f"  Generated {point_multiple_config['total']:,} point anomaly (multiple) series\n")
 
 # ============================================================================
 # 7. COLLECTIVE ANOMALIES (3,000)
@@ -294,7 +294,7 @@ for base in collective_config['bases']:
         length_range=LENGTH_CONFIG['long'],
         start_id=reserve_ids(collective_config['per_base'])
     )
-print(f"  ✓ Generated {collective_config['total']:,} collective anomaly series\n")
+print(f"  Generated {collective_config['total']:,} collective anomaly series\n")
 
 # ============================================================================
 # 8. STRUCTURAL BREAKS - MEAN SHIFT (3,000)
@@ -314,7 +314,7 @@ for base in mean_shift_config['bases']:
         length_range=LENGTH_CONFIG['long'],
         start_id=reserve_ids(mean_shift_config['per_base'])
     )
-print(f"  ✓ Generated {mean_shift_config['total']:,} mean shift series\n")
+    print(f"  Generated {mean_shift_config['total']:,} mean shift series\n")
 
 # ============================================================================
 # 9. STRUCTURAL BREAKS - VARIANCE SHIFT (3,000)
@@ -334,7 +334,7 @@ for base in variance_shift_config['bases']:
         length_range=LENGTH_CONFIG['long'],
         start_id=reserve_ids(variance_shift_config['per_base'])
     )
-print(f"  ✓ Generated {variance_shift_config['total']:,} variance shift series\n")
+print(f"  Generated {variance_shift_config['total']:,} variance shift series\n")
 
 # ============================================================================
 # 10. STRUCTURAL BREAKS - TREND SHIFT (3,000)
@@ -362,7 +362,7 @@ for base in trend_shift_config['bases']:
             length_range=LENGTH_CONFIG['long'],
             start_id=reserve_ids(trend_shift_config['per_combination'])
         )
-print(f"  ✓ Generated {trend_shift_config['total']:,} trend shift series\n")
+print(f"  Generated {trend_shift_config['total']:,} trend shift series\n")
 
 # ============================================================================
 # SUMMARY
@@ -387,8 +387,8 @@ print(f"Scale:            {args.scale.upper()}")
 print(f"Total series:     {total_generated:,}")
 print(f"Output directory: {output_path.absolute()}")
 print("="*70)
-print("  • Model 2 (5-class): cd ../03-models/hierarchical/model2_nonstationary && python train_model2.py")
+print("  Model 2 (5-class): cd ../03-models/hierarchical/model2_nonstationary && python train_model2.py")
 print("\nOptional - Feature Engineering:")
-print("  • TSFresh features: cd ../02-preprocessing && python extract_features.py")
+print("  TSFresh features: cd ../02-preprocessing && python feature_extraction.py")
 print("="*70)
 

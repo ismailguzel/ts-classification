@@ -68,11 +68,15 @@ class FeatureSelector:
             features_df = features_df.set_index('series_id')
         elif 'id' in features_df.columns:
             features_df = features_df.rename(columns={'id': 'series_id'}).set_index('series_id')
+        elif 'index' in features_df.columns:
+            features_df = features_df.rename(columns={'index': 'series_id'}).set_index('series_id')
 
         if 'series_id' in labels_df.columns:
             labels_df = labels_df.set_index('series_id')
         elif 'id' in labels_df.columns:
             labels_df = labels_df.rename(columns={'id': 'series_id'}).set_index('series_id')
+        elif 'index' in labels_df.columns:
+            labels_df = labels_df.rename(columns={'index': 'series_id'}).set_index('series_id')
 
         return features_df, labels_df
     
@@ -270,7 +274,7 @@ class FeatureSelector:
         labels_df_std = labels_df_copy[label_cols]
         labels_df_std.to_parquet(std_labels_file, index=False)
 
-        print(f"\n Selected features and standardized files saved successfully!")
+        print(f"\nSelected features and standardized files saved successfully!")
 
 
 def main():

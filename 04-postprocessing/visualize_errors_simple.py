@@ -51,9 +51,9 @@ def load_misclassified_data(model_dir):
             df = pd.read_csv(file)
             classifier_name = file.stem.replace('misclassified_', '')
             all_misclassified[classifier_name] = df
-            print(f"  ✓ {classifier_name}: {len(df)} misclassified samples")
+            print(f"  {classifier_name}: {len(df)} misclassified samples")
         except Exception as e:
-            print(f"  ✗ Error loading {file.name}: {e}")
+            print(f"  Error loading {file.name}: {e}")
     
     return all_misclassified
 
@@ -128,7 +128,7 @@ def plot_error_distribution(all_misclassified, class_names, model_name, save_fig
         output_dir.mkdir(parents=True, exist_ok=True)
         output_file = output_dir / f'error_analysis_{model_name.lower().replace(" ", "_")}.png'
         plt.savefig(output_file, dpi=150, bbox_inches='tight')
-        print(f"\n✓ Figure saved to: {output_file}")
+        print(f"\nFigure saved to: {output_file}")
     
     plt.show()
 
@@ -201,11 +201,11 @@ def main():
     all_misclassified = load_misclassified_data(saved_models_dir)
     
     if not all_misclassified:
-        print(f"\n✗ Error: No misclassified files found in {saved_models_dir}")
+        print(f"\nError: No misclassified files found in {saved_models_dir}")
         sys.exit(1)
     
     total_errors = sum(len(df) for df in all_misclassified.values())
-    print(f"\n✓ Total misclassified samples: {total_errors}")
+    print(f"\nTotal misclassified samples: {total_errors}")
     
     # Print worst cases
     print(f"\n[2/3] Analyzing worst cases...")
@@ -218,7 +218,7 @@ def main():
                                config['name'], args.save_fig)
     
     print(f"\n{'='*80}")
-    print("✓ Analysis complete!")
+    print("Analysis complete!")
     print(f"{'='*80}\n")
 
 

@@ -2,7 +2,7 @@
 
 Post-processing and analysis tools for trained models.
 
-## 🎯 Main Tools (Production Ready)
+## Main Tools (Production Ready)
 
 ### 1. `visualize_errors_simple.py` - Batch Error Analysis
 
@@ -87,21 +87,31 @@ Analyze and visualize feature importance across classifiers with automatic categ
 **Usage:**
 
 ```bash
-# Analyze Model 1 feature importance
+# Analyze Model 1 feature importance (default: sum normalization)
 python visualize_feature_importance.py --model model1
 
 # Show top 30 features and save figures
 python visualize_feature_importance.py --model model1 --top 30 --save-fig
 
+# Use different normalization methods
+python visualize_feature_importance.py --model model1 --normalize sum      # Sum to 1.0 (default)
+python visualize_feature_importance.py --model model1 --normalize minmax   # Scale to 0-1
+python visualize_feature_importance.py --model model1 --normalize none     # Raw values
+
 # Analyze specific classifier only
 python visualize_feature_importance.py --model model2 --classifier XGBoost --top 20
 
-# Model 2 with figures
-python visualize_feature_importance.py --model model2 --save-fig
+# Model 2 with figures and normalization
+python visualize_feature_importance.py --model model2 --save-fig --normalize sum
 
 # Skip plotting, only show statistics
 python visualize_feature_importance.py --model model1 --no-plot
 ```
+
+**Normalization Methods:**
+- `sum` (default): Normalize so importances sum to 1.0 (percentages). Best for comparing relative importance across different models.
+- `minmax`: Scale to 0-1 range. Preserves relative differences within each model.
+- `none`: Use raw importance values from each model. Note: CatBoost uses SHAP values (larger scale), while RF/XGBoost are already normalized.
 
 **Output:**
 - Top N features comparison (horizontal bar plots, color-coded by category)
@@ -116,7 +126,6 @@ python visualize_feature_importance.py --model model1 --no-plot
 
 **Feature Importance Sources:**
 - RandomForest, XGBoost, CatBoost: `feature_importances_` attribute
-- AutoGluon: `predictor.feature_importance()` method
 - All sources automatically detected and loaded
 
 ## 📁 Directory Structure
@@ -124,28 +133,16 @@ python visualize_feature_importance.py --model model1 --no-plot
 ```
 04-postprocessing/
 ├── README.md                              # This documentation
-├── visualize_errors_simple.py            # Batch error analysis ⭐
-├── visualize_misclassified.py            # Individual time series viz ⭐
-├── visualize_feature_importance.py       # Feature importance analysis ⭐
-├── figures/                               # Saved visualizations (auto-created)
-│   ├── misclassified_15255_XGBoost.png
-│   ├── top_features_comparison.png
-│   └── category_distribution.png
-└── [test scripts]                         # Can be deleted after validation
-    ├── demo_visualization.py              # Demo with sample data (OPTIONAL)
-    └── test_categorization.py             # Feature category test (OPTIONAL)
+├── visualize_errors_simple.py            # Batch error analysis
+├── visualize_misclassified.py            # Individual time series viz
+├── visualize_feature_importance.py       # Feature importance analysis
+└── figures/                               # Saved visualizations (auto-created)
+    ├── misclassified_15255_XGBoost.png
+    ├── top_features_comparison.png
+    └── category_distribution.png
 ```
 
-## 🧪 Test/Demo Scripts (Optional - Can Be Deleted)
-
-These scripts were created for development and testing. They are **not needed** for production use:
-
-- **`demo_visualization.py`**: Creates demo feature importance plots using hardcoded sample data. Useful for testing visualization layout without running full training.
-- **`test_categorization.py`**: Tests the feature categorization logic. Useful for verifying category assignments.
-
-You can safely delete these files once you've validated the main tools work correctly with your trained models.
-
-## 🚀 Quick Start
+## Quick Start
 
 After training completes, analyze results:
 
@@ -165,12 +162,6 @@ python visualize_feature_importance.py --model model2 --top 20 --save-fig
 ```
 
 All figures will be saved to `figures/` directory.
-
-### 5. `export_results.py`
-Export results in various formats:
-- LaTeX tables for papers
-- Excel spreadsheets
-- Interactive HTML reports
 
 ## Installation
 

@@ -121,14 +121,13 @@ python train_model2.py --mode features --features-path ../../../data/features/un
 ### Testing
 
 ```bash
-# Test RAW mode model
-python test_model2.py --model-path saved_models/model2_nonstationary_raw_rocket/model2_nonstationary_classifier.pkl
+Training automatically evaluates the model on test data and saves:
+- Predictions CSV
+- Metrics JSON  
+- Misclassified samples CSV
+- Feature importance (for FEATURES mode)
 
-# Test FEATURES mode model
-python test_model2.py --model-path saved_models/model2_nonstationary_features/model2_nonstationary_classifier.pkl
-
-# Test with more samples
-python test_model2.py --model-path saved_models/model2_nonstationary_raw_rocket/model2_nonstationary_classifier.pkl --n-samples 500
+Results are saved in the `saved_models/model2_nonstationary_<mode>/` directory.
 ```
 
 ---
@@ -207,23 +206,9 @@ saved_models/
     └── catboost_info/                        # CatBoost logs
 ```
 
-#### AutoTrain Mode Output Structure
-```
-saved_models/
-└── model2_nonstationary_autogluon/           # AutoGluon artifacts
-    ├── models/                               # Trained model files
-    ├── predictions_AutoGluon_5Class.csv
-    ├── misclassified_AutoGluon_5Class.csv
-    ├── leaderboard_test.csv
-    ├── leaderboard_train.csv
-    ├── model2_autotrain_metadata.pkl         # Training metadata
-    └── metrics/
-        └── AutoGluon_5Class_metrics.json
-```
-
-Metadata includes:
+Metadata (saved as `.pkl` files) includes:
 - Model name and type
-- Training mode (raw/features/autotrain)
+- Training mode (raw/features)
 - Evaluation metrics
 - Class names and mapping
 - Data shapes and parameters
@@ -342,7 +327,7 @@ if not is_stationary:
 After successful Model 2 training:
 
 1. **Review Results**: Check classification report and confusion matrix
-2. **Test Model**: Run `python test_model2.py`
+2. **Review Metrics**: Check saved metrics JSON files
 3. **Analyze Confusion**: Which classes are confused? (common: trend/structural_break, stochastic/volatility)
 4. **Compare Modes**: Try both raw and features modes
 5. **Build Pipeline**: Combine Model 1 + Model 2 for hierarchical classification

@@ -63,6 +63,15 @@ def standardize_identifier_column(df, target_name='series_id', set_as_index=Fals
         if set_as_index:
             return df
         return df.reset_index()
+
+    # Has 'index' column (common artifact of reset_index)
+    if 'index' in df.columns:
+        # Verify it looks like an ID (integer)
+        if pd.api.types.is_integer_dtype(df['index']):
+            df = df.rename(columns={'index': target_name})
+            if set_as_index:
+                return df.set_index(target_name)
+            return df
     
     raise ValueError(
         f"No identifier column found. Expected '{target_name}' or 'id'. "
@@ -194,7 +203,7 @@ def load_features_and_labels(features_path, target='binary', verbose=True):
         )
     
     if verbose:
-        print(f"✓ Loading from {source_desc}")
+        print(f"Loading from {source_desc}")
         print(f"  Features: {feat_file}")
         print(f"  Labels:   {lab_file}")
     
@@ -227,7 +236,7 @@ def load_features_and_labels(features_path, target='binary', verbose=True):
             if not non_stat_mask.all():
                 n_filtered = (~non_stat_mask).sum()
                 if verbose:
-                    print(f"  ⚠ Filtering out {n_filtered:,} stationary samples for primary classification")
+                    print(f"  Filtering out {n_filtered:,} stationary samples for primary classification")
                 X_df = X_df[non_stat_mask]
                 labels_df = labels_df[non_stat_mask]
                 if verbose:
@@ -298,8 +307,7 @@ def remove_series_id_leakage(df):
     """
     Remove series_id from DataFrame to prevent data leakage.
     
-    This is critical for AutoGluon/PyCaret training to ensure
-    the model doesn't learn from IDs.
+    This is critical for training to ensure the model doesn't learn from IDs.
     
     Args:
         df: DataFrame potentially containing series_id

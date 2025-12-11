@@ -8,17 +8,16 @@ Bu klasör, hiyerarşik zaman serisi sınıflandırma sistemi için eğitim scri
 03-models/hierarchical/
 ├── model1_binary/              # Binary classification (Stationary vs Non-Stationary)
 │   ├── train_model1.py        # Training script
-│   ├── test_model1.py         # Test script
-│   ├── slurm_train_model1.sh  # Example SLURM script
 │   └── README.md              # Model 1 documentation
 │
 ├── model2_nonstationary/       # 5-class classification (Non-Stationary types)
 │   ├── train_model2.py        # Training script
-│   ├── test_model2.py         # Test script
-│   ├── slurm_train_model2.sh  # Example SLURM script
 │   └── README.md              # Model 2 documentation
 │
-└── submit_training.sh          # Interactive job submission helper
+└── utils/                      # Shared utilities
+    ├── data_utils.py          # Data loading functions
+    ├── metrics.py             # Evaluation metrics
+    └── constants.py           # Shared constants
 ```
 
 ##  Hiyerarşik Sistem
@@ -129,11 +128,14 @@ TSFresh features ile çalışır. sklearn classifiers kullanır.
 ```bash
 # Önce features extract edin
 cd ../../02-preprocessing
-python extract_features.py
+python extract_dask.py --input ../data/raw/unified-20k --output ../data/features/unified-20k/minimal
+
+# Feature selection
+python feature_selection.py --input ../data/features/unified-20k/minimal --output ../data/features/unified-20k/selected
 
 # Sonra FEATURES mode ile eğitin
 cd ../03-models/hierarchical/model1_binary
-python train_model1.py --mode features --features-path ../../../data/features/selected
+python train_model1.py --mode features --features-path ../../../data/features/unified-20k/selected
 ```
 
 **Avantajlar**:
@@ -141,38 +143,6 @@ python train_model1.py --mode features --features-path ../../../data/features/se
 - Feature importance analysis
 - Daha hızlı inference (features pre-computed)
 
-### 3. AutoTrain Mode (AutoML)
-
-Otomatik model seçimi ve hiperparametre optimizasyonu için AutoML framework'leri kullanır.
-
-```bash
-# AutoGluon ile
-cd model1_binary
-python autotrain_models1.py --engine autogluon \
-    --features-path ../../../data/features/selected \
-    --time-limit 3600 --presets medium_quality_faster_train
-
-# PyCaret ile
-python autotrain_models1.py --engine pycaret \
-    --features-path ../../../data/features/selected \
-    --folds 5
-```
-
-**Desteklenen Engines**:
-- `autogluon`: AutoGluon Tabular (ensemble + stacking)
-- `pycaret`: PyCaret Classification (20+ model karşılaştırma)
-
-**Avantajlar**:
-- Otomatik model seçimi ve hyperparameter tuning
-- Ensemble ve stacking modelleri
-- Minimal manual tuning gereksinimi
-- Production-ready model artifacts
-
-**Gereksinimler**:
-- Önceden extract edilmiş features (FEATURES mode preprocessing gerekli)
-- AutoGluon veya PyCaret kurulu olmalı
-
-<!-- Performance comparison removed to keep documentation usage-focused. -->
 
 ## Kullanım Önerileri
 
@@ -200,50 +170,16 @@ python train_model1.py --mode raw --classifier all
 python train_model2.py --mode raw --classifier all
 ```
 
-### AutoML ile Hızlı Baseline
 
-```bash
-# AutoGluon ile otomatik model seçimi
-cd model1_binary
-python autotrain_models1.py --engine autogluon \
-    --features-path ../../../data/features/selected
+## Model Evaluation
 
-cd ../model2_nonstationary
-python autotrain_models2.py --engine autogluon \
-    --features-path ../../../data/features/selected
-```
+Training scripts automatically evaluate models on the test set and save:
+- Predictions (CSV)
+- Metrics (JSON)
+- Misclassified samples (CSV)
+- Feature importance (for FEATURES mode)
 
-## Testing Models
-
-Eğitilen modelleri test dataseti üzerinde değerlendirin:
-
-```bash
-# Test Model 1 (RAW mode)
-cd model1_binary
-python test_model1.py \
-    --model-path saved_models/model1_binary_raw_rocket/model1_binary_classifier.pkl \
-    --data-path ../../../data/raw/unified-test \
-    --output-path results/
-
-# Test Model 1 (FEATURES mode)
-python test_model1.py \
-    --model-path saved_models/model1_binary_features/model1_binary_classifier.pkl \
-    --data-path ../../../data/raw/unified-test \
-    --output-path results/
-
-# Test Model 2 (RAW mode)
-cd ../model2_nonstationary
-python test_model2.py \
-    --model-path saved_models/model2_nonstationary_raw_rocket/model2_nonstationary_classifier.pkl \
-    --data-path ../../../data/raw/unified-test \
-    --output-path results/
-
-# Test Model 2 (FEATURES mode)
-python test_model2.py \
-    --model-path saved_models/model2_nonstationary_features/model2_nonstationary_classifier.pkl \
-    --data-path ../../../data/raw/unified-test \
-    --output-path results/
-```
+Results are saved in `saved_models/model*_<mode>/` directories.
 
 Test scriptleri şunları hesaplar:
 - Evaluation metrics

@@ -152,12 +152,12 @@ class ModelEvaluator:
             misclassified_file = f'misclassified_{self.model_name}.csv'
         
         pred_df.to_csv(output_file, index=False)
-        print(f"✓ Predictions saved to: {output_file}")
+        print(f"Predictions saved to: {output_file}")
         
         misclassified_df = pred_df[pred_df['correct'] == 0].copy()
         if not misclassified_df.empty:
             misclassified_df.to_csv(misclassified_file, index=False)
-            print(f"✓ Misclassified samples saved to: {misclassified_file} ({len(misclassified_df)} errors)")
+            print(f"Misclassified samples saved to: {misclassified_file} ({len(misclassified_df)} errors)")
         
         self.results['prediction_files'] = {
             'predictions_csv': str(output_file),
@@ -202,7 +202,7 @@ class ModelEvaluator:
                     
                     importance_file = self.output_dir / f'feature_importance_{self.model_name}.csv'
                     importance_df.to_csv(importance_file, index=False)
-                    print(f"✓ Feature importance saved to: {importance_file}")
+                    print(f"Feature importance saved to: {importance_file}")
         
         return importance_dict
     
@@ -224,4 +224,4 @@ class ModelEvaluator:
         with open(output_path, 'w') as f:
             json.dump(self.results, f, indent=2, default=str)
         
-        print(f"✓ Metrics saved to: {output_path}")
+        print(f"Metrics saved to: {output_path}")

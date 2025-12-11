@@ -8,7 +8,7 @@ All series use LONG length (1000–10000).
 # Scaling Function
 # ============================================================================
 def create_scaled_config(scale_factor):
-    """Create scaled configuration based on 90K baseline."""
+    """Create scaled configuration based on baseline."""
     return {
         'stationary': {
             'per_base': int(11250 * scale_factor),
@@ -88,7 +88,6 @@ SCALE_CONFIGS = {
 }
 
 # Backward compatibility
-COUNTS_90K = SCALE_CONFIGS['90k']
 COUNTS_TEST = SCALE_CONFIGS['test']
 
 # ============================================================================

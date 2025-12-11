@@ -223,7 +223,7 @@ def plot_time_series(ts_data, series_id, pred_info, classifier_name,
         output_dir.mkdir(parents=True, exist_ok=True)
         output_file = output_dir / f'misclassified_{series_id}_{classifier_name}.png'
         plt.savefig(output_file, dpi=150, bbox_inches='tight')
-        print(f"\n✓ Figure saved to: {output_file}")
+        print(f"\nFigure saved to: {output_file}")
     
     plt.show()
 
@@ -290,23 +290,23 @@ Examples:
     )
     
     if pred_info is None:
-        print(f"✗ Error: Series ID {args.id} not found in predictions/misclassified files")
+        print(f"Error: Series ID {args.id} not found in predictions/misclassified files")
         print(f"  Searched in: {saved_models_dir}")
         sys.exit(1)
     
     status = "MISCLASSIFIED" if is_misclassified else "CORRECTLY CLASSIFIED"
-    print(f"✓ Found prediction: {status} by {classifier_name}")
+    print(f"Found prediction: {status} by {classifier_name}")
     
     # Load time series data
     print(f"\n[2/3] Loading time series data...")
     ts_data, category = load_time_series(args.id, raw_data_dir)
     
     if ts_data is None:
-        print(f"✗ Error: Series ID {args.id} not found in raw data")
+        print(f"Error: Series ID {args.id} not found in raw data")
         print(f"  Searched in: {raw_data_dir}")
         sys.exit(1)
     
-    print(f"✓ Loaded time series from category: {category}")
+    print(f"Loaded time series from category: {category}")
     print(f"  Length: {len(ts_data)}")
     
     # Compute statistics
@@ -321,7 +321,7 @@ Examples:
     )
     
     print(f"\n{'='*80}")
-    print("✓ Visualization complete!")
+    print("Visualization complete!")
     print(f"{'='*80}\n")
 
 

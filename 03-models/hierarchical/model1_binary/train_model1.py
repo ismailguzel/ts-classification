@@ -260,15 +260,15 @@ def load_parquet_files_parallel(files, batch_size=BATCH_SIZE, n_workers=N_WORKER
                 if target_total is not None:
                     if balance and per_class is not None:
                         if class_counts[0] >= per_class and class_counts[1] >= per_class:
-                            print(f"\n  ✓ Reached balanced target: {class_counts}")
+                            print(f"\n  Reached balanced target: {class_counts}")
                             return all_series, all_labels, all_ids
                     else:
                         if len(all_series) >= target_total:
-                            print(f"\n  ✓ Reached max series target: {len(all_series)}")
+                            print(f"\n  Reached max series target: {len(all_series)}")
                             return all_series[:target_total], all_labels[:target_total], all_ids[:target_total]
             
             # Show progress
-            print(f"  ✓ Batch {batch_num}: Total series so far: {len(all_series):,}")
+            print(f"  Batch {batch_num}: Total series so far: {len(all_series):,}")
             
             # Memory cleanup every batch
             gc.collect()
@@ -318,7 +318,7 @@ if args.mode == 'raw':
         rng=args.seed
     )
     
-    print(f"\n✓ Loaded {len(series_list):,} time series (parallel PyArrow loading)")
+    print(f"\nLoaded {len(series_list):,} time series (parallel PyArrow loading)")
     print(f"  Labels: {len(labels):,}")
     print(f"  Memory-efficient: No full dataset loaded at once")
     if args.balance:
@@ -345,9 +345,9 @@ else:
     # Extract sample_ids from index
     sample_ids = X_df.index.to_numpy()
     
-    print(f"✓ Loaded features: {X_df.shape}")
-    print(f"✓ Number of features: {X_df.shape[1]}")
-    print(f"✓ Number of samples: {X_df.shape[0]}")
+    print(f"Loaded features: {X_df.shape}")
+    print(f"Number of features: {X_df.shape[1]}")
+    print(f"Number of samples: {X_df.shape[0]}")
 
     # Store for later use
     X_features = X_df.values
@@ -416,8 +416,8 @@ if args.mode == 'raw':
     X = X.reshape(X.shape[0], 1, X.shape[1])  # (n_samples, 1, n_timepoints)
     y = labels
     
-    print(f"✓ X shape: {X.shape}")
-    print(f"✓ y shape: {y.shape}")
+    print(f"X shape: {X.shape}")
+    print(f"y shape: {y.shape}")
 
 else:
     # Features mode: Use TSFresh features directly
@@ -441,9 +441,9 @@ else:
     # Save feature names before converting to array (will be lost after scaling)
     feature_names = X_df.columns.tolist()
     
-    print(f"✓ X shape: {X.shape}")
-    print(f"✓ y shape: {y.shape}")
-    print(f"✓ Feature names: {len(feature_names)}")
+    print(f"X shape: {X.shape}")
+    print(f"y shape: {y.shape}")
+    print(f"Feature names: {len(feature_names)}")
 
 # ============================================================================
 # 3. Train/Test Split
@@ -468,7 +468,7 @@ if args.mode == 'features':
     scaler = StandardScaler()
     X_train = scaler.fit_transform(X_train)  # Fit only on training data
     X_test = scaler.transform(X_test)        # Transform test with train statistics
-    print(f"✓ Features scaled with StandardScaler (no data leakage)")
+    print(f"Features scaled with StandardScaler (no data leakage)")
 
 print(f"Train set: {len(X_train):,} samples")
 print(f"Test set:  {len(X_test):,} samples")
@@ -516,7 +516,7 @@ if args.mode == 'raw':
         del tsf, y_pred, y_train_pred, y_proba
         import gc
         gc.collect()
-        print("  ✓ Memory cleaned")
+        print("  Memory cleaned")
     
     # Model 2: ROCKET (SOTA)
     if args.classifier in ['all', 'rocket']:
@@ -541,9 +541,9 @@ if args.mode == 'raw':
                 'train_predictions': y_train_pred,
                 'probabilities': y_proba
             }
-            print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
-            print(f"  ✓ Train Accuracy: {train_acc:.4f} ({100*train_acc:.2f}%)")
-            print(f"  ✓ Training time: {train_time:.2f}s")
+            print(f"  Accuracy: {acc:.4f} ({100*acc:.2f}%)")
+            print(f"  Train Accuracy: {train_acc:.4f} ({100*train_acc:.2f}%)")
+            print(f"  Training time: {train_time:.2f}s")
         except (AttributeError, ImportError) as e:
             print(f"    ROCKET not available: {str(e)[:100]}")
             print(f"    This may be due to NumPy 2.0 incompatibility. Consider downgrading to numpy<2.0")
@@ -571,9 +571,9 @@ if args.mode == 'raw':
                 'train_predictions': y_train_pred,
                 'probabilities': y_proba
             }
-            print(f"  ✓ Accuracy: {acc:.4f} ({100*acc:.2f}%)")
-            print(f"  ✓ Train Accuracy: {train_acc:.4f} ({100*train_acc:.2f}%)")
-            print(f"  ✓ Training time: {train_time:.2f}s")
+            print(f"  Accuracy: {acc:.4f} ({100*acc:.2f}%)")
+            print(f"  Train Accuracy: {train_acc:.4f} ({100*train_acc:.2f}%)")
+            print(f"  Training time: {train_time:.2f}s")
         except (ImportError, AttributeError) as e:
             print(f"    Arsenal not available: {str(e)[:100]}")
             print(f"    This may be due to NumPy 2.0 incompatibility. Consider downgrading to numpy<2.0")
@@ -611,7 +611,7 @@ else:
     
     # Model 3: CatBoost (if available)
     if has_catboost:
-        print("\n🐱 Training CatBoost...")
+        print("\n Training CatBoost...")
         start_time = time.time()
         cat = CatBoostClassifier(
             iterations=200,
@@ -658,7 +658,7 @@ for model_name, result in results.items():
     metrics_path = SAVE_DIR / f"model1_{args.mode}_{model_name}_metrics.json"
     with open(metrics_path, 'w') as f:
         json.dump(result, f, indent=2, default=str)
-    print(f"  ✓ {model_name} metrics: {metrics_path.name}")
+    print(f"  {model_name} metrics: {metrics_path.name}")
 
 # For RAW mode, manually save predictions and misclassified samples
 # (FEATURES mode already handled by ModelEvaluator)
@@ -692,14 +692,14 @@ if args.mode == 'raw':
         predictions_df = pd.concat(all_predictions, ignore_index=True)
         predictions_path = SAVE_DIR / f"model1_{args.mode}_predictions.csv"
         predictions_df.to_csv(predictions_path, index=False)
-        print(f"  ✓ All predictions: {predictions_path.name}")
+        print(f"  All predictions: {predictions_path.name}")
         
         # Save misclassified samples
         misclassified_df = predictions_df[predictions_df['correct'] == 0].copy()
         if not misclassified_df.empty:
             misclassified_path = SAVE_DIR / f"model1_{args.mode}_misclassified.csv"
             misclassified_df.to_csv(misclassified_path, index=False)
-            print(f"  ✓ Misclassified samples: {misclassified_path.name} ({len(misclassified_df)} errors)")
+            print(f"  Misclassified samples: {misclassified_path.name} ({len(misclassified_df)} errors)")
 
 # Create summary comparison
 summary = {
@@ -727,7 +727,7 @@ for model_name, result in results.items():
 summary_path = SAVE_DIR / f"model1_{args.mode}_summary.json"
 with open(summary_path, 'w') as f:
     json.dump(summary, f, indent=2)
-print(f"  ✓ Summary: {summary_path.name}")
+print(f"  Summary: {summary_path.name}")
 
 # ============================================================================
 # 6. Save Best Model
@@ -757,7 +757,7 @@ model_path = SAVE_DIR / 'model1_binary_classifier.pkl'
 with open(model_path, 'wb') as f:
     pickle.dump(best_model, f)
 
-print(f"\n✓ Model saved to: {model_path}")
+print(f"\nModel saved to: {model_path}")
 
 # Save metadata
 metadata = {
@@ -785,13 +785,13 @@ if args.mode == 'features':
     with open(scaler_path, 'wb') as f:
         pickle.dump(scaler, f)
     metadata['scaler_path'] = str(scaler_path)
-    print(f"✓ Scaler saved to: {scaler_path}")
+    print(f"Scaler saved to: {scaler_path}")
 
 metadata_path = SAVE_DIR / 'model1_metadata.pkl'
 with open(metadata_path, 'wb') as f:
     pickle.dump(metadata, f)
 
-print(f"✓ Metadata saved to: {metadata_path}")
+print(f"Metadata saved to: {metadata_path}")
 
 # ============================================================================
 # Summary

@@ -11,7 +11,6 @@ This directory contains scripts to generate synthetic time series datasets using
 |------|---------|--------|
 | `config.py` | Configuration for all dataset scales | - |
 | `generate.py` | Generate datasets at any scale | `../data/raw/unified-{scale}/` |
-| `verify_ids.py` | Verify data integrity | - |
 
 ## Available Dataset Scales
 
@@ -99,8 +98,6 @@ python generate.py --scale 200k
 # Generate with output logging
 python -u generate.py --scale 20k 2>&1 | tee generation-20k.out
 ```
-```
-
 
 
 <!-- Runtime/size estimates removed to keep usage-focused. -->
@@ -126,7 +123,7 @@ data/raw/
 │
 ├── unified-5k/                # 5K samples (same structure)
 ├── unified-10k/               # 10K samples
-├── unified-90k/               # 90K samples (baseline)
+├── unified-90k/               # 90K samples
 └── unified-200k/              # 200K samples
     └── ...
 ```
@@ -166,7 +163,7 @@ python config.py 90k
 python config.py 200k
 ```
 
-All configurations are defined in `config.py` using the `create_scaled_config()` function with a scale factor based on the 90K baseline.
+All configurations are defined in `config.py` using the `create_scaled_config()` function with a scale factor.
 
 ### Category Mapping
 
@@ -179,27 +176,19 @@ All configurations are defined in `config.py` using the `create_scaled_config()`
 
 ## Verification
 
-After generation, verify the dataset:
+After generation, you can manually verify the dataset by checking:
+
+- **Data structure**: Ensure all expected directories are created
+- **File existence**: Check that parquet files exist for each category
+- **Data loading**: Test loading a few parquet files with pandas
 
 ```bash
-# Verify unique series IDs
-python verify_ids.py --data-path ../data/raw/unified-test
+# Quick verification - check directory structure
+ls -lh ../data/raw/unified-20k/
 
-# Expected output:
-# All series_ids are globally unique
-# Total unique IDs: 1530
-
-# For other scales
-python verify_ids.py --data-path ../data/raw/unified-5k
-python verify_ids.py --data-path ../data/raw/unified-90k
+# Load and inspect a sample file
+python -c "import pandas as pd; df = pd.read_parquet('../data/raw/unified-20k/stationary/ar/long.parquet'); print(df.head())"
 ```
-
-### What verify_ids.py checks:
-
-- **Global uniqueness**: Ensures no duplicate series_ids across all files
-- **ID conflicts**: Detects if same ID appears in multiple categories
-- **Data integrity**: Validates parquet files can be read
-- **Coverage**: Confirms all expected categories have data
 
 ## Tips
 
