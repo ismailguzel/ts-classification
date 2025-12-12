@@ -22,12 +22,12 @@ import numpy as np
 MODEL_CONFIGS = {
     'model1': {
         'name': 'Model 1 (Binary Classification)',
-        'saved_models_dir': Path('03-models/hierarchical/model1_binary/saved_models/model1_binary_features'),
+        'saved_models_dir': Path('03-models/hierarchical/model1_binary/output/model1_binary_features'),
         'class_names': {0: 'Stationary', 1: 'Non-Stationary'}
     },
     'model2': {
         'name': 'Model 2 (5-Class Classification)',
-        'saved_models_dir': Path('03-models/hierarchical/model2_nonstationary/saved_models/model2_nonstationary_features'),
+        'saved_models_dir': Path('03-models/hierarchical/model2_nonstationary/output/model2_nonstationary_features'),
         'class_names': {
             0: 'Trend',
             1: 'Volatility',
@@ -88,9 +88,18 @@ def plot_error_distribution(all_misclassified, class_names, model_name, save_fig
     
     confusion_data = all_errors.groupby(['true_label', 'predicted_label']).size().unstack(fill_value=0)
     
-    sns.heatmap(confusion_data, annot=True, fmt='d', cmap='YlOrRd', ax=ax2, cbar_kws={'label': 'Count'})
-    ax2.set_xlabel('Predicted Label', fontsize=12)
-    ax2.set_ylabel('True Label', fontsize=12)
+    # Map numeric labels to names
+    label_names = [class_names.get(i, str(i)) for i in sorted(class_names.keys())]
+    
+    # Reindex to ensure all labels are present
+    all_labels = sorted(class_names.keys())
+    confusion_data = confusion_data.reindex(index=all_labels, columns=all_labels, fill_value=0)
+    
+    sns.heatmap(confusion_data, annot=True, fmt='d', cmap='YlOrRd', ax=ax2, 
+                xticklabels=label_names, yticklabels=label_names,
+                cbar_kws={'label': 'Count'}, annot_kws={'fontsize': 11, 'fontweight': 'bold'})
+    ax2.set_xlabel('Predicted Label', fontsize=12, fontweight='bold')
+    ax2.set_ylabel('True Label', fontsize=12, fontweight='bold')
     ax2.set_title('Aggregated Confusion Matrix (Errors Only)', fontsize=13, fontweight='bold')
     
     # 3. Confidence distribution for errors

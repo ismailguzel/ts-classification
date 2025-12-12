@@ -4,7 +4,41 @@ Post-processing and analysis tools for trained models.
 
 ## Main Tools (Production Ready)
 
-### 1. `visualize_errors_simple.py` - Batch Error Analysis
+### 1. `visualize_confusion_matrices.py` - **NEW!** Confusion Matrix Generator
+
+Generate high-quality confusion matrices for all trained classifiers.
+
+**Features:**
+- Create individual confusion matrices for each classifier
+- Generate grid layouts showing all models together
+- Support for both raw counts and normalized (proportions) matrices
+- Large, clear annotations (fontsize=14, bold)
+- Multiple output formats (PNG, PDF, SVG)
+- Automatic class name labeling (no more 0, 1, 2...)
+
+**Usage:**
+
+```bash
+# Generate all confusion matrices (both models, grid + individual)
+python visualize_confusion_matrices.py --model both --save-fig
+
+# Model 1 only with normalized values
+python visualize_confusion_matrices.py --model model1 --normalize --save-fig
+
+# Model 2, grid layout only, save as PDF
+python visualize_confusion_matrices.py --model model2 --grid-only --save-fig --format pdf
+
+# Individual plots only (no grid)
+python visualize_confusion_matrices.py --model both --individual-only --save-fig
+```
+
+**Output:**
+- `cm_model_1_binary_classification_<classifier>.png` - Individual confusion matrices for Model 1
+- `cm_model_2_5-class_classification_<classifier>.png` - Individual confusion matrices for Model 2
+- `cm_grid_model_1_binary_classification.png` - Grid layout for Model 1
+- `cm_grid_model_2_5-class_classification.png` - Grid layout for Model 2
+
+### 2. `visualize_errors_simple.py` - Batch Error Analysis
 
 Analyze and visualize misclassification patterns across all classifiers.
 
