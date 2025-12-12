@@ -1,4 +1,4 @@
 Method,Accuracy,Precision,Recall,F1-Score,N_Samples,N_Correct
-ADF Test (p<0.05),60.80%,0.8283,0.6080,0.6081,13159,8001
-KPSS Test (constant),71.83%,0.8272,0.7183,0.7286,13159,9452
-Phillips-Perron Test,49.69%,0.8102,0.4969,0.4685,13159,6539
+ADF Test (p<0.05),73.03%,0.8214,0.7303,0.7053,19147,13984
+KPSS Test (constant),79.14%,0.8200,0.7914,0.7847,19147,15152
+Phillips-Perron Test,65.41%,0.7913,0.6541,0.5994,19147,12524

@@ -39,6 +39,12 @@ DATA_PATH="$BASE_DIR/data/raw/unified-20k"
 OUTPUT_DIR="$BASE_DIR/05-baseline-comparison/results"
 SCRIPT_DIR="$BASE_DIR/05-baseline-comparison"
 
+# Configuration
+# SAMPLE_SIZE: Number of series to sample per pattern
+#   - 1000: Fast (~47 min with 100 cores, 13K total samples)
+#   - 0: Full dataset (~2-3 hours with 100 cores, 20K samples)
+SAMPLE_SIZE=0
+
 # Validate Input
 if [ ! -d "$DATA_PATH" ]; then
     echo -e "${RED}✗ Error: Data directory not found: $DATA_PATH${NC}"
@@ -52,13 +58,21 @@ mkdir -p "$OUTPUT_DIR"
 echo -e "${YELLOW}Configuration:${NC}"
 echo "  Data path: $DATA_PATH"
 echo "  Output dir: $OUTPUT_DIR"
-echo "  Sample size: 1000 series per pattern"
+if [ "$SAMPLE_SIZE" -eq 0 ]; then
+    echo "  Sample size: ALL (full dataset)"
+    ESTIMATED_TIME="2-3 hours"
+    TOTAL_SAMPLES="~20K"
+else
+    echo "  Sample size: $SAMPLE_SIZE series per pattern"
+    ESTIMATED_TIME="~45 min"
+    TOTAL_SAMPLES="~13K"
+fi
 echo "  Alpha: 0.05"
 echo "  Parallel workers: 100"
 echo ""
 
 echo -e "${BLUE}Running baseline tests...${NC}"
-echo "This will take approximately 5-10 minutes (~10K sampled series, 100 cores)."
+echo "Estimated time: $ESTIMATED_TIME ($TOTAL_SAMPLES samples, 100 cores)."
 echo ""
 
 # Navigate to script directory to run python script
@@ -70,7 +84,7 @@ python -u compute_baselines.py \
     --output-dir "$OUTPUT_DIR" \
     --n-jobs 100 \
     --alpha 0.05 \
-    --sample-size 1000
+    --sample-size "$SAMPLE_SIZE"
 
 cd "$BASE_DIR"
 
