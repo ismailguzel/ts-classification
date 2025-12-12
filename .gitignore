@@ -22,8 +22,6 @@ ENV/
 .ipynb_checkpoints/
 
 # Logs
-logs/
-*.log
 
 # CatBoost info
 catboost_info/
