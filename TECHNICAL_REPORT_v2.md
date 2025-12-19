@@ -37,7 +37,7 @@ The hierarchical approach significantly outperforms traditional statistical test
 5. [Step 4: Post-Processing & Analysis](#5-step-4-post-processing--analysis)
 6. [Step 5: Baseline Comparison](#6-step-5-baseline-comparison)
 7. [Results & Discussion](#7-results--discussion)
-8. [Conclusions & Future Work](#8-conclusions--future-work)
+8. [Conclusions](#8-conclusions)
 
 ---
 
@@ -774,7 +774,7 @@ Model 1 (XGBoost):    ███████████████████�
 
 ---
 
-## 8. Conclusions & Future Work
+## 8. Conclusions
 
 ### 8.1 Conclusions
 
@@ -801,53 +801,9 @@ This technical report presented a comprehensive machine learning pipeline for hi
    - Focused learning improves accuracy and interpretability
    - Enables targeted model optimization per stage
 
-### 8.2 Future Work
 
-#### 8.2.1 Real-World Validation
 
-- **Application to Real Datasets**: Test on financial, climate, sensor, and biomedical time series
-- **Domain Adaptation**: Fine-tune models on domain-specific data
-- **Benchmark Comparison**: Evaluate against other ML-based stationarity classifiers
-
-#### 8.2.2 Model Enhancements
-
-1. **Deep Learning Approaches**:
-   - Recurrent Neural Networks (LSTM, GRU) for temporal modeling
-   - 1D Convolutional Neural Networks for pattern detection
-   - Transformer architectures for long-range dependencies
-
-2. **Ensemble Methods**:
-   - Stacking Model 1 and Model 2 predictions
-   - Weighted voting across multiple feature sets
-
-3. **Online Learning**:
-   - Incremental updates as new data arrives
-   - Adaptive thresholds for concept drift
-
-#### 8.2.3 Extended Pattern Recognition
-
-- **Additional Non-Stationary Types**:
-  - Seasonality (periodic patterns)
-  - Regime switching (Markov models)
-  - Long memory processes (fractional integration)
-
-- **Multi-Label Classification**:
-  - Series exhibiting multiple non-stationary patterns simultaneously
-  - Hierarchical multi-label taxonomy
-
-#### 8.2.4 Explainability & Interpretability
-
-- **SHAP Values**: Explain individual predictions with feature contributions
-- **Attention Mechanisms**: Highlight important time windows
-- **Counterfactual Analysis**: "What changes would make this series stationary?"
-
-#### 8.2.5 Automated Pipeline
-
-- **AutoML Integration**: Hyperparameter optimization (Optuna, Ray Tune)
-- **Feature Engineering Automation**: Automated feature construction (featuretools)
-- **Model Selection**: Automatic best model selection based on data characteristics
-
-### 8.3 Broader Impact
+### 8.2 Broader Impact
 
 This work demonstrates that **machine learning significantly outperforms traditional statistical tests** for stationarity detection, with implications for:
 
@@ -892,13 +848,9 @@ bash run-postprocessing.sh  # Step 4: Analysis & visualization
 bash run-baseline.sh        # Step 5: Baseline comparison
 ```
 
-### A.3 Hardware Requirements
 
-- **Minimum**: 8 CPU cores, 32GB RAM
-- **Recommended**: 64+ CPU cores, 64GB RAM (for large-scale datasets)
-- **GPU**: Not required (CPU-only training)
 
-### A.4 Dataset Access
+### A.3 Dataset Access
 
 Synthetic datasets (5K - 200K scales) can be regenerated using:
 
@@ -935,20 +887,4 @@ All figures are stored in `04-postprocessing/figures/`:
 
 ## References
 
-1. Christ, M., Braun, N., Neuffer, J., & Kempa-Liehr, A. W. (2018). Time Series FeatuRe Extraction on basis of Scalable Hypothesis tests (tsfresh–A Python package). *Neurocomputing*, 307, 72-77.
-
-2. Dickey, D. A., & Fuller, W. A. (1979). Distribution of the estimators for autoregressive time series with a unit root. *Journal of the American statistical association*, 74(366a), 427-431.
-
-3. Kwiatkowski, D., Phillips, P. C., Schmidt, P., & Shin, Y. (1992). Testing the null hypothesis of stationarity against the alternative of a unit root. *Journal of econometrics*, 54(1-3), 159-178.
-
-4. Phillips, P. C., & Perron, P. (1988). Testing for a unit root in time series regression. *Biometrika*, 75(2), 335-346.
-
-5. Chen, T., & Guestrin, C. (2016). Xgboost: A scalable tree boosting system. In *Proceedings of the 22nd acm sigkdd international conference on knowledge discovery and data mining* (pp. 785-794).
-
-6. Prokhorenkova, L., Gusev, G., Vorobev, A., Dorogush, A. V., & Gulin, A. (2018). CatBoost: unbiased boosting with categorical features. In *Advances in neural information processing systems* (pp. 6638-6648).
-
 ---
-
-**Report End**
-
-*For questions or collaboration opportunities, please contact the research team.*
