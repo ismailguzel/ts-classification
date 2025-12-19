@@ -1,6 +1,6 @@
 # Model 2: Non-Stationary 5-Class Classification
 
-##  Objective
+## Objective
 
 Classify **NON-STATIONARY** time series into 5 semantic categories:
 
@@ -15,27 +15,27 @@ Only operates on series classified as **non-stationary** by Model 1.
 
 ---
 
-##  Training Modes
+## Training Modes
 
 ### Mode 1: RAW (Default) - sktime classifiers
 Uses raw time series with specialized time series classifiers:
--  No feature engineering needed
--  Fast training
--  **TimeSeriesForest**: Fast ensemble method
--  **ROCKET**: State-of-the-art (2000 kernels for 5-class)
--  **Arsenal**: ROCKET-based ensemble (2000 kernels)
+- No feature engineering needed
+- Fast training
+- **TimeSeriesForest**: Fast ensemble method
+- **ROCKET**: State-of-the-art (2000 kernels for 5-class)
+- **Arsenal**: ROCKET-based ensemble (2000 kernels)
 
 ### Mode 2: FEATURES - sklearn classifiers
 Uses TSFresh extracted features with traditional ML:
--  More interpretable features
--  Faster inference
--  **Random Forest**: Robust ensemble
--  **XGBoost**: Gradient boosting
--  **SVM (RBF)**: Non-linear kernel for multi-class
+- More interpretable features
+- Faster inference
+- **Random Forest**: Robust ensemble
+- **XGBoost**: Gradient boosting
+- **SVM (RBF)**: Non-linear kernel for multi-class
 
 ---
 
-##  Models Available
+## Models Available
 
 ### RAW Mode (sktime)
 

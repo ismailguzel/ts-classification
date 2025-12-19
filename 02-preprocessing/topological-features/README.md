@@ -1,19 +1,19 @@
 # Topological Features Extraction
 
-##  Overview
+## Overview
 
 This directory contains experimental work for extracting topological features from time series using Topological Data Analysis (TDA) methods, specifically persistent homology.
 
 **Status**: Experimental / Research-in-progress
 
-##  Contents
+## Contents
 
 - `topological_features.py` - Main module for computing topological features
 - `test_topological.py` - Test script for validating topological feature extraction
 - `topological_demo.ipynb` - Jupyter notebook demonstrating TDA on time series
 - `ts-top-jupyter/` - Python virtual environment for Jupyter notebook
 
-##  Methods
+## Methods
 
 Topological features are extracted using:
 - **Persistent Homology**: Captures topological properties across multiple scales
@@ -21,7 +21,7 @@ Topological features are extracted using:
 - **Persistence Diagrams**: Summarizes birth-death times of topological features
 - **Statistical Summaries**: Mean, variance, entropy of persistence diagrams
 
-##  Usage
+## Usage
 
 ### Setup Environment
 
@@ -45,7 +45,7 @@ source ts-top-jupyter/bin/activate
 jupyter notebook topological_demo.ipynb
 ```
 
-##  Features Extracted
+## Features Extracted
 
 - **H0 (Connected Components)**: Connectivity information
 - **H1 (Loops/Cycles)**: Periodic and cyclic patterns

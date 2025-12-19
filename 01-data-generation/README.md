@@ -1,9 +1,6 @@
 # Data Generation
 
 This directory contains scripts to generate synthetic time series datasets using the `ts-stationary` library.
-# Data Generation
-
-This directory contains scripts to generate synthetic time series datasets using the `ts-stationary` library.
 
 ## Files
 

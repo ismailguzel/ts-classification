@@ -2,7 +2,7 @@
 
 A machine learning pipeline to classify time series stationarity using a hierarchical approach.
 - **Level 1:** Binary Classification (Stationary vs. Non-Stationary)
-- **Level 2:** Multi-class Classification (Trend, Seasonality, Unit Root, etc.)
+- **Level 2:** Multi-class Classification (Trend, Volatility, Stochastic, Anomaly, Structural Break)
 
 ## Quick Start
 
@@ -75,8 +75,8 @@ bash run.sh baseline
 
 | Model | Accuracy | Description |
 |:---|:---:|:---|
-| **Model 1** (Binary) | **97.5%** | Distinguishes Stationary vs. Non-Stationary |
-| **Model 2** (5-Class) | **99.1%** | Classifies Non-Stationary types (Trend, Volatility, etc.) |
+| **Model 1** (Binary) | **96.89%** | Distinguishes Stationary vs. Non-Stationary |
+| **Model 2** (5-Class) | **97.81%** | Classifies Non-Stationary types (Trend, Volatility, etc.) |
 
 ## Requirements
 

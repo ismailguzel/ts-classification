@@ -45,7 +45,7 @@ python feature_selection.py \
 | **`feature_extraction.py`** | **Primary Tool.** Extracts TSFresh features using chunked processing. Robust to memory issues and allows monitoring progress file-by-file. | Main feature extraction step. |
 | **`inspect_nans.py`** | **Diagnostics Tool.** Scans for NaNs/Infs and inspects specific series. | Debugging data quality issues. |
 | **`remove_leakage_features.py`** | Removes stationarity test features (ADF, KPSS, etc.) to prevent data leakage. | Post-extraction cleanup. |
-| **`feature_selection.py`** | Selects top-k features using Random Forest importance. | Reducing dimensionality. |
+| **`feature_selection.py`** | Selects top-k features using Mutual Information (default) or Random Forest importance. | Reducing dimensionality. |
 
 ---
 

@@ -1,6 +1,6 @@
 # Model 1: Binary Classification
 
-##  Objective
+## Objective
 
 Classify time series as **Stationary (0)** or **Non-Stationary (1)**.
 

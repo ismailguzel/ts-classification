@@ -1,8 +1,8 @@
 # Hierarchical Time Series Classification Models
 
-Bu klasör, hiyerarşik zaman serisi sınıflandırma sistemi için eğitim scriptlerini içerir.
+This directory contains training scripts for the hierarchical time series classification system.
 
-##  Klasör Yapısı
+## Directory Structure
 
 ```
 03-models/hierarchical/
@@ -20,7 +20,7 @@ Bu klasör, hiyerarşik zaman serisi sınıflandırma sistemi için eğitim scri
     └── constants.py           # Shared constants
 ```
 
-##  Hiyerarşik Sistem
+## Hierarchical System
 
 ```
                     ┌─────────────────┐
@@ -52,42 +52,39 @@ Bu klasör, hiyerarşik zaman serisi sınıflandırma sistemi için eğitim scri
                    └────────┘ └─────┘ └──────┘ └──────┘ └────────┘
 ```
 
-## Hızlı Başlangıç
+## Quick Start
 
-### Lokal Ortamda (Test/Development)
+### Local Environment (Test/Development)
 
 ```bash
-# Model 1 eğitimi
+# Train Model 1 (Binary)
 cd model1_binary
-python train_model1.py --mode raw --classifier minirocket
+python train_model1.py --mode features --classifier xgboost
 
-# Model 2 eğitimi
+# Train Model 2 (5-Class)
 cd model2_nonstationary
-python train_model2.py --mode raw --classifier minirocket
+python train_model2.py --mode features --classifier xgboost
 ```
 
-## Model Özellikleri
+## Model Specifications
 
 ### Model 1: Binary Classification
 
-| Metrik | Değer |
+| Metric | Value |
 |--------|-------|
 | **Task** | Stationary vs Non-Stationary |
 | **Classes** | 2 (Binary) |
-| **Task** | Stationary vs Non-Stationary |
 
-**Kullanılabilir Classifiers**:
-- TimeSeriesForest (baseline, fast)
-- ROCKET (balanced approach)
-- Arsenal (ensemble)
+**Available Classifiers**:
+- **FEATURES Mode (Recommended)**: XGBoost, Random Forest, CatBoost, SVM
+- **RAW Mode**: TimeSeriesForest, ROCKET, Arsenal
 
 ### Model 2: 5-Class Classification
 
-| Metrik | Değer |
+| Metric | Value |
 |--------|-------|
 | **Task** | Non-Stationary Type Classification |
 | **Classes** | 5 (Trend/Volatility/Stochastic/Anomaly/Structural) |
-| **Task** | Non-Stationary Type Classification |
 
 **5 Classes**:
 0. **Trend**: Deterministic trend patterns
@@ -96,80 +93,51 @@ python train_model2.py --mode raw --classifier minirocket
 3. **Anomaly**: Point and collective anomalies
 4. **Structural Break**: Sudden regime changes
 
-**Kullanılabilir Classifiers**:
-- TimeSeriesForest (baseline, fast)
+**Available Classifiers**:
+- **FEATURES Mode (Recommended)**: XGBoost, Random Forest, CatBoost, SVM
+- **RAW Mode**: TimeSeriesForest, ROCKET, Arsenal
 - ROCKET (2000 kernels for 5-class)
 - Arsenal (2000 kernels)
 
 ## Training Modes
 
-Her iki model de **dual-mode** desteği sunar:
+Both models support **dual-mode** training:
 
-### 1. RAW Mode (Default, Önerilen)
+### 1. FEATURES Mode (Recommended)
+Uses TSFresh extracted features with sklearn/boosting classifiers.
+- **Pros**: Fast inference, interpretable features, high accuracy (XGBoost ~97%)
+- **Workflow**:
+  1. Extract features (`02-preprocessing/feature_extraction.py`)
+  2. Select features (`02-preprocessing/feature_selection.py`)
+  3. Train model (`--mode features`)
 
-Raw time series ile çalışır. sktime classifiers kullanır.
+### 2. RAW Mode
+Uses raw time series with sktime classifiers.
+- **Pros**: No feature engineering required
+- **Cons**: Slower training/inference for complex models like HIVECOTE
+- **Workflow**:
+  1. Generate data
+  2. Train model (`--mode raw`)
 
+## Usage Recommendations
+
+### For Testing/Prototyping
 ```bash
-python train_model1.py --mode raw --classifier rocket
-```
-
-**Avantajlar**:
-- Feature engineering gerektirmez
-- Direkt zaman serisi üzerinde çalışır
-- sktime'ın güçlü classifiers'ı
-- Daha az preprocessing
-
-**Available Classifiers**: `tsf`, `rocket`, `arsenal`, `all`
-
-### 2. FEATURES Mode (Optional)
-
-TSFresh features ile çalışır. sklearn classifiers kullanır.
-
-```bash
-# Önce features extract edin
-cd ../../02-preprocessing
-python extract_dask.py --input ../data/raw/unified-20k --output ../data/features/unified-20k/minimal
-
-# Feature selection
-python feature_selection.py --input ../data/features/unified-20k/minimal --output ../data/features/unified-20k/selected
-
-# Sonra FEATURES mode ile eğitin
-cd ../03-models/hierarchical/model1_binary
-python train_model1.py --mode features --features-path ../../../data/features/unified-20k/selected
-```
-
-**Avantajlar**:
-- Traditional ML (RandomForest, XGBoost, SVM)
-- Feature importance analysis
-- Daha hızlı inference (features pre-computed)
-
-
-## Kullanım Önerileri
-
-### Test/Prototype İçin
-
-```bash
-# Hızlı test için TimeSeriesForest veya ROCKET kullanın
+# Use TimeSeriesForest or ROCKET in RAW mode
 python train_model1.py --mode raw --classifier tsf
-python train_model2.py --mode raw --classifier tsf
 ```
 
-### Production İçin
-
+### For Production
 ```bash
-# En iyi doğruluk için Arsenal kullanın
-python train_model1.py --mode raw --classifier arsenal
-python train_model2.py --mode raw --classifier arsenal
+# Use XGBoost in FEATURES mode
+python train_model1.py --mode features --classifier xgboost
 ```
 
-### Tüm Classifiers'ı Karşılaştırmak İçin
-
+### For Benchmarking
 ```bash
-# Hepsini eğitin ve en iyisini seçin
-python train_model1.py --mode raw --classifier all
-python train_model2.py --mode raw --classifier all
+# Train all and compare
+python train_model1.py --mode features --classifier all
 ```
-
 
 ## Model Evaluation
 
@@ -181,76 +149,76 @@ Training scripts automatically evaluate models on the test set and save:
 
 Results are saved in `saved_models/model*_<mode>/` directories.
 
-Test scriptleri şunları hesaplar:
+Test scripts calculate:
 - Evaluation metrics
 - Confusion matrix
 - Per-class metrics
 - Classification report
 
-##  Daha Fazla Bilgi
+## More Information
 
-- **Model 1 Detayları**: `model1_binary/README.md`
-- **Model 2 Detayları**: `model2_nonstationary/README.md`
+- **Model 1 Details**: `model1_binary/README.md`
+- **Model 2 Details**: `model2_nonstationary/README.md`
 
-##  Workflow
+## Workflow
 
 ```bash
-# 1. Veri generation (01-data-generation/)
+# 1. Data Generation (01-data-generation/)
 python generate.py
 
-# 2. Feature extraction (opsiyonel, 02-feature-engineering/)
-python extract_features.py
+# 2. Feature Extraction (02-preprocessing/)
+python feature_extraction.py
 
 # 3. Model training (03-models/hierarchical/)
-python train_model1.py --mode raw
-python train_model2.py --mode raw
+python train_model1.py --mode features
+python train_model2.py --mode features
 
 # 4. Testing (03-models/hierarchical/)
-python test_model1.py --model-path models/model1_arsenal_raw.pkl
-python test_model2.py --model-path models/model2_arsenal_raw.pkl
+python test_model1.py --model-path models/model1_xgboost_features.pkl
+python test_model2.py --model-path models/model2_xgboost_features.pkl
 ```
 
-##  Önemli Notlar
+## Important Notes
 
-1. **Veri seti gerekli**: Training yapmadan önce `01-data-generation/` ile veri oluşturun
-2. **HIVECOTEV2 çok yavaş**: Bu classifier sadece research/benchmark için kullanın
-3. **Memory kullanımı**: Model 2, 5-class olduğu için daha fazla RAM kullanır
-4. **Parallel training**: Model 1 ve Model 2'yi paralel çalıştırabilirsiniz (bağımsızlar)
+1. **Dataset Required**: Generate data using `01-data-generation/` before training.
+2. **HIVECOTEV2 is slow**: Use this classifier only for research/benchmarking.
+3. **Memory Usage**: Model 2 (5-class) requires more RAM.
+4. **Parallel Training**: Model 1 and Model 2 can be trained in parallel.
 
-## Sorun Giderme
+## Troubleshooting
 
-### "Dataset not found" hatası
+### "Dataset not found" error
 
 ```bash
-# Veri setini oluşturun
+# Generate dataset
 cd ../../01-data-generation
 python generate.py
 ```
 
-### Out of memory hatası
+### Out of memory error
 
 ```bash
-# Test-size'ı artırın (daha az training data)
-python train_model1.py --test-size 0.3  # varsayılan 0.2
+# Increase test-size (reduces training data)
+python train_model1.py --test-size 0.3  # default 0.2
 
-# Veya daha küçük veri seti kullanın
+# Or use a smaller dataset scale
 python train_model1.py --data-path ../../../data/raw/unified-test
 ```
 
-### sktime import hatası
+### sktime import error
 
 ```bash
-# sktime'ı güncelleyin
+# Update sktime
 pip install --upgrade sktime
 
-# Veya problemsiz classifier kullanın
+# Or use a classifier without issues
 python train_model1.py --classifier minirocket
 ```
 
 ---
 
-**Hazırlayan**: GitHub Copilot  
-**Son Güncelleme**: 31 Ekim 2025  
-**Python**: >= 3.9  
+**Prepared by**: GitHub Copilot  
+**Last Update**: December 12, 2025  
+**Python**: >= 3.10  
 **sktime**: >= 0.24.0  
 **scikit-learn**: >= 1.3.0

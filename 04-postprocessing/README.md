@@ -162,7 +162,7 @@ python visualize_feature_importance.py --model model1 --no-plot
 - RandomForest, XGBoost, CatBoost: `feature_importances_` attribute
 - All sources automatically detected and loaded
 
-## 📁 Directory Structure
+## Directory Structure
 
 ```
 04-postprocessing/
@@ -188,6 +188,7 @@ python visualize_errors_simple.py --model model1 --save-fig
 python visualize_errors_simple.py --model model2 --save-fig
 
 # 2. Visualize worst misclassifications
+# (Find IDs in the output of visualize_errors_simple.py)
 python visualize_misclassified.py --id 15255 --model model1 --save-fig
 
 # 3. Analyze feature importance
@@ -203,29 +204,3 @@ All figures will be saved to `figures/` directory.
 # Required packages
 pip install numpy pandas matplotlib seaborn pyarrow
 ```
-
-## Quick Start
-
-1. Train a model (if not already done):
-```bash
-cd ../03-models/hierarchical/model1_binary
-python train_model1.py --mode features --features-path ../../../data/features/unified-20k/selected
-```
-
-2. Find a misclassified sample:
-```bash
-cd ../../../../04-postprocessing
-head ../03-models/hierarchical/model1_binary/saved_models/model1_binary_features/misclassified_XGBoost.csv
-```
-
-3. Visualize it:
-```bash
-python visualize_misclassified.py --id 15255 --model model1 --save-fig
-```
-
-## Notes
-
-- The script automatically searches for the time series in raw parquet files
-- Works with both Model 1 (binary) and Model 2 (5-class) predictions
-- Figures are saved as high-resolution PNG (150 dpi)
-- Statistics include mean, std, trend slope, min/max, etc.
