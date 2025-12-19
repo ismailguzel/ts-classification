@@ -217,7 +217,7 @@ python test_model2.py --model-path models/model2_arsenal_raw.pkl
 3. **Memory kullanımı**: Model 2, 5-class olduğu için daha fazla RAM kullanır
 4. **Parallel training**: Model 1 ve Model 2'yi paralel çalıştırabilirsiniz (bağımsızlar)
 
-## 🆘 Sorun Giderme
+## Sorun Giderme
 
 ### "Dataset not found" hatası
 

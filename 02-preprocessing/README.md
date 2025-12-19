@@ -2,7 +2,7 @@
 
 This directory contains scripts for extracting statistical features from time series data and removing data leakage.
 
-## 🚀 Recommended Workflow
+## Recommended Workflow
 
 We recommend using **`feature_extraction.py`** which is optimized for high-core servers using a **chunked file-based approach**. It provides immediate feedback and robust error handling.
 
@@ -38,7 +38,7 @@ python feature_selection.py \
 
 ---
 
-## 🛠️ Script Overview
+## Script Overview
 
 | Script | Description | Usage |
 |:---|:---|:---|
@@ -49,7 +49,7 @@ python feature_selection.py \
 
 ---
 
-## 🔍 Debugging Data Quality
+## Debugging Data Quality
 
 If `feature_extraction.py` reports bad rows, use `inspect_nans.py` to investigate.
 
@@ -65,7 +65,7 @@ python inspect_nans.py inspect --file path/to/file.parquet --series-id 15519
 
 ---
 
-## ⚙️ Feature Set Options
+## Feature Set Options
 
 | Feature Set | Count | Description |
 |:---|:---:|:---|
@@ -75,7 +75,7 @@ python inspect_nans.py inspect --file path/to/file.parquet --series-id 15519
 
 ---
 
-## 📂 Output Structure
+## Output Structure
 
 - `features.parquet`: Extracted feature matrix (Series ID x Features).
 - `labels.parquet`: Corresponding labels.

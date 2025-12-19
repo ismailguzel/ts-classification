@@ -280,7 +280,7 @@ What type of non-stationary?
 
 ---
 
-## 🆘 Configuration
+## Configuration
 
 ### Parallelization Settings
 

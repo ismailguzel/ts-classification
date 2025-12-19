@@ -344,7 +344,7 @@ After successful Model 2 training:
 
 ---
 
-## 🆘 Configuration
+## Configuration
 
 ### Parallelization Settings
 
