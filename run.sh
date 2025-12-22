@@ -3,21 +3,37 @@
 # Master Pipeline Script
 # ============================================================================
 # Usage:
-#   bash run.sh [step]
+#   bash run.sh [step] [scale] [feature_type]
+#
+# Arguments:
+#   step         : Pipeline step (default: all)
+#   scale        : Dataset scale: 5k/20k (default: 20k)
+#   feature_type : Feature type: statistical/topological/combined (default: statistical)
 #
 # Steps:
-#   all           : Run full pipeline (Generation -> Preprocessing -> Training -> Baseline)
+#   all           : Run full pipeline (Generation -> Preprocessing -> Training -> Postprocessing)
 #   generation    : Generate synthetic dataset
 #   preprocessing : Run feature extraction & selection
 #   training      : Train hierarchical models
 #   postprocessing: Analyze results & generate figures
 #   baseline      : Run traditional baseline tests
+#
+# Examples:
+#   bash run.sh                              # Full 20k pipeline, statistical features
+#   bash run.sh all 5k                       # Full 5k pipeline, statistical features
+#   bash run.sh training 20k topological     # Train only, 20k, topological features
+#   bash run.sh all 5k combined              # Full 5k pipeline, combined features
 # ============================================================================
 
 set -e
 
+# Parse arguments
+STEP=${1:-all}
+SCALE=${2:-20k}
+FEATURE_TYPE=${3:-statistical}
+
 # Configuration
-LOG_DIR="logs"
+LOG_DIR="logs/${SCALE}"
 TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
 mkdir -p "$LOG_DIR"
 
@@ -67,9 +83,28 @@ function log_run() {
     fi
 }
 
+# Update scripts with current configuration
+echo "Configuring pipeline for scale=$SCALE, feature_type=$FEATURE_TYPE..."
+
+# Update all scripts
+sed -i "s/SCALE=\"[0-9]*k\"/SCALE=\"$SCALE\"/" run-generation.sh
+sed -i "s/SCALE=\"[0-9]*k\"/SCALE=\"$SCALE\"/" run-preprocessing.sh
+sed -i "s/SCALE=\"[0-9]*k\"/SCALE=\"$SCALE\"/" run-training.sh
+sed -i "s/FEATURE_TYPE=\".*\"/FEATURE_TYPE=\"$FEATURE_TYPE\"/" run-training.sh
+
+# Determine size suffix for postprocessing
+if [ "$SCALE" == "5k" ]; then
+    SIZE_SUFFIX="5k"
+else
+    SIZE_SUFFIX="20k"
+fi
+
 echo -e "${GREEN}============================================================================${NC}"
-echo -e "${GREEN}MASTER PIPELINE STARTED ($STEP)${NC}"
+echo -e "${GREEN}MASTER PIPELINE STARTED${NC}"
 echo -e "${GREEN}============================================================================${NC}"
+echo "Step: $STEP"
+echo "Scale: $SCALE"
+echo "Feature Type: $FEATURE_TYPE"
 echo "Start time: $(date)"
 echo "Logs directory: $LOG_DIR"
 echo ""
@@ -91,7 +126,16 @@ fi
 
 # 4. Post-Processing
 if [[ "$STEP" == "all" || "$STEP" == "postprocessing" ]]; then
-    log_run "run-postprocessing.sh"
+    # Pass feature type and scale to postprocessing
+    echo -e "${YELLOW}>>> Running run-postprocessing.sh...${NC}"
+    bash run-postprocessing.sh "$FEATURE_TYPE" "$SIZE_SUFFIX" 2>&1 | tee "$LOG_DIR/${TIMESTAMP}_run-postprocessing.log"
+    
+    if [ ${PIPESTATUS[0]} -eq 0 ]; then
+        echo -e "${GREEN}✓ run-postprocessing.sh completed successfully.${NC}\n"
+    else
+        echo -e "${RED}✗ run-postprocessing.sh failed. Check log for details.${NC}\n"
+        exit 1
+    fi
 fi
 
 # 5. Baseline Comparison

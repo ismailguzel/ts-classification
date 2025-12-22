@@ -7,9 +7,25 @@
 #   1. Visualize Feature Importance
 #   2. Analyze Errors (Misclassifications)
 #   3. Generate Report Figures
+#
+# Usage:
+#   bash run-postprocessing.sh [FEATURE_TYPE] [DATASET_SIZE]
+#
+# Arguments:
+#   FEATURE_TYPE  - Feature type: statistical/topological/combined (default: statistical)
+#   DATASET_SIZE  - Dataset size: 5k/20k (default: 20k)
+#
+# Examples:
+#   bash run-postprocessing.sh statistical 20k
+#   bash run-postprocessing.sh topological 5k
+#   bash run-postprocessing.sh combined 5k
 # ============================================================================
 
 set -e  # Exit on error
+
+# Parse arguments
+FEATURE_TYPE=${1:-statistical}
+DATASET_SIZE=${2:-20k}
 
 # Load required module (if on cluster)
 if command -v module &> /dev/null; then
@@ -23,6 +39,13 @@ conda activate ts-sktime
 BASE_DIR=$(pwd)
 POST_DIR="$BASE_DIR/04-postprocessing"
 FIGURES_DIR="$POST_DIR/figures"
+
+# Determine suffix for dataset size
+if [ "$DATASET_SIZE" == "5k" ]; then
+    SIZE_SUFFIX="_5k"
+else
+    SIZE_SUFFIX=""
+fi
 
 # Validate Environment
 if [ ! -d "$POST_DIR" ]; then
@@ -43,17 +66,20 @@ fi
 echo "============================================================"
 echo "Starting Post-Processing Pipeline"
 echo "============================================================"
+echo "Feature Type: $FEATURE_TYPE"
+echo "Dataset Size: $DATASET_SIZE"
 echo "Start time: $(date)"
 echo ""
 
-# Create figures directory
+# Create figures directory with feature type subdirectory
+FIGURES_DIR="$FIGURES_DIR/${FEATURE_TYPE}${SIZE_SUFFIX}"
 mkdir -p "$FIGURES_DIR"
 
 cd "$POST_DIR"
 
 # Model paths (matching run-training.sh)
-MODEL1_DIR="$BASE_DIR/03-models/hierarchical/model1_binary/output/model1_binary_features"
-MODEL2_DIR="$BASE_DIR/03-models/hierarchical/model2_nonstationary/output/model2_nonstationary_features"
+MODEL1_DIR="$BASE_DIR/03-models/hierarchical/model1_binary/output/model1_${FEATURE_TYPE}${SIZE_SUFFIX}"
+MODEL2_DIR="$BASE_DIR/03-models/hierarchical/model2_nonstationary/output/model2_${FEATURE_TYPE}${SIZE_SUFFIX}"
 
 # 1. Feature Importance Analysis
 echo "Step 1: Analyzing Feature Importance..."
@@ -95,9 +121,13 @@ python visualize_errors_simple.py \
 
 cd "$BASE_DIR"
 
+cd "$BASE_DIR"
+
 echo ""
 echo "============================================================"
 echo "Post-Processing Complete!"
 echo "============================================================"
+echo "Feature Type: $FEATURE_TYPE"
+echo "Dataset Size: $DATASET_SIZE"
 echo "Figures saved in: $FIGURES_DIR"
 echo "End time: $(date)"

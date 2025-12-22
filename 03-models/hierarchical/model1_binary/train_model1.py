@@ -18,7 +18,7 @@ Usage:
     python train_model1.py --mode raw
     
     # TSFresh features (sklearn)
-    python train_model1.py --mode features --features-path ../../../data/features/selected
+    python train_model1.py --mode features --features-path ../../../data/features/unified-20k/statistical_selected
     
     # Choose specific classifier
     python train_model1.py --mode raw --classifier rocket
@@ -826,6 +826,6 @@ print("  2. Test model: python test_model1.py")
 print("  3. If accuracy is good (>90%), proceed to Model 2 (primary categories)")
 if args.mode == 'raw':
     print("\nTip: Try features mode for potentially better performance:")
-    print("  python train_model1.py --mode features --features-path ../../../data/features/selected")
+    print("  python train_model1.py --mode features --features-path ../../../data/features/unified-20k/statistical_selected")
 print("=" * 80)
 

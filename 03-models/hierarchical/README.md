@@ -54,16 +54,58 @@ This directory contains training scripts for the hierarchical time series classi
 
 ## Quick Start
 
-### Local Environment (Test/Development)
+### Automated Training (via run-training.sh)
 
 ```bash
-# Train Model 1 (Binary)
-cd model1_binary
-python train_model1.py --mode features --classifier xgboost
+# From project root - trains with statistical features by default
+bash run-training.sh
 
-# Train Model 2 (5-Class)
-cd model2_nonstationary
-python train_model2.py --mode features --classifier xgboost
+# Or specify feature type and scale
+bash run.sh training 20k statistical   # Statistical features
+bash run.sh training 20k topological   # Topological features
+bash run.sh training 20k combined      # Combined features
+bash run.sh training 5k statistical    # 5k dataset for testing
+```
+
+### Manual Training
+
+#### Statistical Features (Default)
+```bash
+cd model1_binary
+python train_model1.py \
+    --mode features \
+    --features-path ../../../data/features/unified-20k/statistical_selected
+
+cd ../model2_nonstationary
+python train_model2.py \
+    --mode features \
+    --features-path ../../../data/features/unified-20k/statistical_selected
+```
+
+#### Topological Features
+```bash
+cd model1_binary
+python train_model1.py \
+    --mode features \
+    --features-path ../../../data/features/unified-20k/topological_selected
+
+cd ../model2_nonstationary
+python train_model2.py \
+    --mode features \
+    --features-path ../../../data/features/unified-20k/topological_selected
+```
+
+#### Combined Features
+```bash
+cd model1_binary
+python train_model1.py \
+    --mode features \
+    --features-path ../../../data/features/unified-20k/combined_selected
+
+cd ../model2_nonstationary
+python train_model2.py \
+    --mode features \
+    --features-path ../../../data/features/unified-20k/combined_selected
 ```
 
 ## Model Specifications
@@ -74,9 +116,10 @@ python train_model2.py --mode features --classifier xgboost
 |--------|-------|
 | **Task** | Stationary vs Non-Stationary |
 | **Classes** | 2 (Binary) |
+| **Best Accuracy** | 96.89% (Statistical + XGBoost) |
 
 **Available Classifiers**:
-- **FEATURES Mode (Recommended)**: XGBoost, Random Forest, CatBoost, SVM
+- **FEATURES Mode (Recommended)**: XGBoost, CatBoost, LightGBM, Random Forest, SVM
 - **RAW Mode**: TimeSeriesForest, ROCKET, Arsenal
 
 ### Model 2: 5-Class Classification
@@ -85,108 +128,144 @@ python train_model2.py --mode features --classifier xgboost
 |--------|-------|
 | **Task** | Non-Stationary Type Classification |
 | **Classes** | 5 (Trend/Volatility/Stochastic/Anomaly/Structural) |
+| **Best Accuracy** | 97.81% (Statistical + XGBoost) |
 
 **5 Classes**:
-0. **Trend**: Deterministic trend patterns
-1. **Volatility**: Changing variance
-2. **Stochastic**: Random walk behavior
+0. **Trend**: Deterministic trend patterns (linear, quadratic, exponential, etc.)
+1. **Volatility**: Changing variance (ARCH, GARCH, EGARCH, APARCH)
+2. **Stochastic**: Random walk behavior (RW, ARIMA, ARI, IMA)
 3. **Anomaly**: Point and collective anomalies
-4. **Structural Break**: Sudden regime changes
+4. **Structural Break**: Sudden regime changes (mean/variance/trend shifts)
 
 **Available Classifiers**:
-- **FEATURES Mode (Recommended)**: XGBoost, Random Forest, CatBoost, SVM
+- **FEATURES Mode (Recommended)**: XGBoost, CatBoost, LightGBM, Random Forest, SVM
 - **RAW Mode**: TimeSeriesForest, ROCKET, Arsenal
-- ROCKET (2000 kernels for 5-class)
-- Arsenal (2000 kernels)
 
 ## Training Modes
 
 Both models support **dual-mode** training:
 
 ### 1. FEATURES Mode (Recommended)
-Uses TSFresh extracted features with sklearn/boosting classifiers.
+Uses extracted features with sklearn/boosting classifiers.
 - **Pros**: Fast inference, interpretable features, high accuracy (XGBoost ~97%)
+- **Cons**: Requires preprocessing step
 - **Workflow**:
-  1. Extract features (`02-preprocessing/feature_extraction.py`)
-  2. Select features (`02-preprocessing/feature_selection.py`)
-  3. Train model (`--mode features`)
+  1. Extract features (`bash run-preprocessing.sh`)
+  2. Train model (`--mode features`)
+
+**Supported Feature Types**:
+- **Statistical** (TSFresh): ~800 raw → 100 selected
+- **Topological** (Persistent Homology): 200 raw → 50 selected
+- **Combined** (Statistical + Topological): ~1000 raw → 150 selected
 
 ### 2. RAW Mode
 Uses raw time series with sktime classifiers.
 - **Pros**: No feature engineering required
-- **Cons**: Slower training/inference for complex models like HIVECOTE
+- **Cons**: Slower training/inference, lower accuracy
 - **Workflow**:
-  1. Generate data
+  1. Generate data (`bash run-generation.sh`)
   2. Train model (`--mode raw`)
+
+## Feature Type Comparison
+
+| Feature Type | Features | Model 1 | Model 2 | Training Time | Notes |
+|:-------------|:--------:|:-------:|:-------:|:-------------:|:------|
+| **Statistical** | 100 | 96.89% | 97.81% | ~15 min | Baseline, proven |
+| **Topological** | 50 | TBD | TBD | ~10 min | Experimental, shape analysis |
+| **Combined** | 150 | TBD | TBD | ~20 min | Potential boost from both |
+
+*TBD: To Be Determined - under evaluation*
+
+## Workflow
+
+### Complete Pipeline
+```bash
+# 1. Generate data
+bash run-generation.sh
+
+# 2. Extract features (all 3 types)
+bash run-preprocessing.sh
+
+# 3. Train models (choose feature type)
+bash run.sh training 20k statistical
+bash run.sh training 20k topological
+bash run.sh training 20k combined
+
+# 4. Analyze results
+bash run.sh postprocessing 20k statistical
+```
+
+### Fast Testing (5k Dataset)
+```bash
+# Complete 5k pipeline with all feature types
+bash run-test-5k.sh
+```
+
+### Compare Feature Types
+```bash
+# Train on all 3 feature types
+for FEATURE_TYPE in statistical topological combined; do
+    bash run.sh training 20k $FEATURE_TYPE
+done
+
+# Compare results
+cat 03-models/hierarchical/model1_binary/output/model1_binary_features/results_summary.txt
+cat 03-models/hierarchical/model1_binary/output/model1_topological/results_summary.txt
+cat 03-models/hierarchical/model1_binary/output/model1_combined/results_summary.txt
+```
 
 ## Usage Recommendations
 
 ### For Testing/Prototyping
-```bash
-# Use TimeSeriesForest or ROCKET in RAW mode
-python train_model1.py --mode raw --classifier tsf
-```
+- Use **5k dataset**: `bash run-test-5k.sh`
+- Use **statistical features**: Proven baseline
+- Training time: ~30-60 minutes
 
 ### For Production
-```bash
-# Use XGBoost in FEATURES mode
-python train_model1.py --mode features --classifier xgboost
-```
+- Use **20k dataset**: `bash run.sh all 20k`
+- Use **XGBoost** with **statistical or combined features**
+- Expected accuracy: 96-98%
 
-### For Benchmarking
-```bash
-# Train all and compare
-python train_model1.py --mode features --classifier all
-```
+### For Research
+- Compare all 3 feature types
+- Analyze feature importance
+- Evaluate topological contribution
+Important Notes
 
-## Model Evaluation
-
-Training scripts automatically evaluate models on the test set and save:
-- Predictions (CSV)
-- Metrics (JSON)
-- Misclassified samples (CSV)
-- Feature importance (for FEATURES mode)
-
-Results are saved in `saved_models/model*_<mode>/` directories.
-
-Test scripts calculate:
-- Evaluation metrics
-- Confusion matrix
-- Per-class metrics
-- Classification report
-
-## More Information
-
-- **Model 1 Details**: `model1_binary/README.md`
-- **Model 2 Details**: `model2_nonstationary/README.md`
-
-## Workflow
-
-```bash
-# 1. Data Generation (01-data-generation/)
-python generate.py
-
-# 2. Feature Extraction (02-preprocessing/)
-python feature_extraction.py
-
-# 3. Model training (03-models/hierarchical/)
-python train_model1.py --mode features
-python train_model2.py --mode features
-
-# 4. Testing (03-models/hierarchical/)
-python test_model1.py --model-path models/model1_xgboost_features.pkl
-python test_model2.py --model-path models/model2_xgboost_features.pkl
-```
-
-## Important Notes
-
-1. **Dataset Required**: Generate data using `01-data-generation/` before training.
-2. **HIVECOTEV2 is slow**: Use this classifier only for research/benchmarking.
-3. **Memory Usage**: Model 2 (5-class) requires more RAM.
-4. **Parallel Training**: Model 1 and Model 2 can be trained in parallel.
+1. **Preprocessing Required**: Run `bash run-preprocessing.sh` before training in FEATURES mode
+2. **Feature Types**: Three types available (statistical, topological, combined)
+3. **Conda Environments**: 
+   - `ts-sktime` for training (automatically activated)
+   - `ts-top` for topological extraction (automatically switched during preprocessing)
+4. **Memory Usage**: Model 2 (5-class) requires more RAM than Model 1
+5. **Parallel Training**: Model 1 and Model 2 can be trained independently
+6. **Output Naming**: Automatically named based on feature type and dataset size
 
 ## Troubleshooting
 
+### "Dataset not found" or "Features not found"
+```bash
+# Generate dataset and extract features
+bash run-generation.sh
+bash run-preprocessing.sh
+```
+
+### "No such file: statistical_selected/"
+```bash
+# Run full preprocessing (creates all 3 feature types)
+bash run-preprocessing.sh
+```
+
+### Out of memory error
+- Use 5k dataset for testing: `bash run-test-5k.sh`
+- Reduce number of classifiers: edit training scripts
+- Increase system RAM or use chunking
+
+### Different accuracy than expected
+- **Statistical**: Should match ~97% (baseline)
+- **Topological**: Expected 85-90% (experimental)
+- **Combined**: Target >97% (potential boost)
+- Check preprocessing completed correctly
 ### "Dataset not found" error
 
 ```bash
