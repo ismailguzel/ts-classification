@@ -1,0 +1,26 @@
+{
+  "mode": "features",
+  "timestamp_utc": "2025-12-22T20:56:31",
+  "models": {
+    "RandomForest": {
+      "test_accuracy": 0.9652173913043478,
+      "train_accuracy": 1.0,
+      "train_time_sec": 0.23742890357971191
+    },
+    "XGBoost": {
+      "test_accuracy": 0.9543478260869566,
+      "train_accuracy": 1.0,
+      "train_time_sec": 1.035736322402954
+    },
+    "CatBoost": {
+      "test_accuracy": 0.95,
+      "train_accuracy": 0.9896514161220044,
+      "train_time_sec": 0.7944979667663574
+    },
+    "SVM_RBF": {
+      "test_accuracy": 0.8913043478260869,
+      "train_accuracy": 0.9030501089324618,
+      "train_time_sec": 0.2469649314880371
+    }
+  }
+}

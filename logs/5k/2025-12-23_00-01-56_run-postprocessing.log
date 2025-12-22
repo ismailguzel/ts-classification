@@ -1,0 +1,343 @@
+============================================================
+Starting Post-Processing Pipeline
+============================================================
+Log file: logs/5k/postprocessing_statistical_20251223_000156.log
+Feature Type: statistical
+Dataset Size: 5k
+Start time: Tue Dec 23 12:01:57 AM +03 2025
+
+Step 1: Analyzing Feature Importance...
+  - Model 1 (Binary)...
+
+================================================================================
+FEATURE IMPORTANCE ANALYSIS
+================================================================================
+Model: Model 1 (Binary Classification)
+Saved Models: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model1_binary/output/model1_statistical_5k
+Normalization: sum
+================================================================================
+
+[1/3] Loading feature importance files...
+  RandomForest: 50 features
+  CatBoost: 50 features
+  XGBoost: 50 features
+
+[2/3] Analyzing feature categories...
+
+================================================================================
+FEATURE IMPORTANCE SUMMARY BY CATEGORY
+================================================================================
+
+RandomForest:
+--------------------------------------------------------------------------------
+Category                Count    Total Imp     Mean Imp      Max Imp
+--------------------------------------------------------------------------------
+Quantile                   15       0.3123       0.0208       0.0514
+Statistical                14       0.2376       0.0170       0.0546
+Autocorrelation             5       0.1963       0.0393       0.0822
+Complexity                  6       0.0935       0.0156       0.0238
+Frequency                   2       0.0662       0.0331       0.0429
+Ratio                       2       0.0382       0.0191       0.0309
+Linear                      3       0.0351       0.0117       0.0171
+Other                       3       0.0207       0.0069       0.0082
+
+Total features: 50
+Total importance: 1.0000
+
+CatBoost:
+--------------------------------------------------------------------------------
+Category                Count    Total Imp     Mean Imp      Max Imp
+--------------------------------------------------------------------------------
+Autocorrelation             5       0.2997       0.0599       0.2460
+Statistical                11       0.2254       0.0205       0.0812
+Quantile                   18       0.2167       0.0120       0.0316
+Other                       5       0.0860       0.0172       0.0282
+Complexity                  2       0.0706       0.0353       0.0556
+Linear                      5       0.0508       0.0102       0.0145
+Frequency                   3       0.0407       0.0136       0.0177
+Ratio                       1       0.0102       0.0102       0.0102
+
+Total features: 50
+Total importance: 1.0000
+
+XGBoost:
+--------------------------------------------------------------------------------
+Category                Count    Total Imp     Mean Imp      Max Imp
+--------------------------------------------------------------------------------
+Quantile                   16       0.5969       0.0373       0.4979
+Statistical                10       0.1640       0.0164       0.0857
+Autocorrelation             3       0.1201       0.0400       0.1104
+Linear                      7       0.0330       0.0047       0.0075
+Other                       6       0.0314       0.0052       0.0086
+Complexity                  4       0.0262       0.0066       0.0100
+Ratio                       2       0.0125       0.0063       0.0090
+Frequency                   1       0.0116       0.0116       0.0116
+Stationarity                1       0.0043       0.0043       0.0043
+
+Total features: 50
+Total importance: 1.0000
+
+
+[3/3] Generating visualizations...
+Figure saved to: figures/feature_importance_top30_comparison_model1.png
+Figure saved to: figures/feature_importance_categories_model1.png
+
+================================================================================
+Analysis complete!
+================================================================================
+
+  - Model 2 (5-Class)...
+
+================================================================================
+FEATURE IMPORTANCE ANALYSIS
+================================================================================
+Model: Model 2 (5-Class Classification)
+Saved Models: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model2_nonstationary/output/model2_statistical_5k
+Normalization: sum
+================================================================================
+
+[1/3] Loading feature importance files...
+  RandomForest: 50 features
+  CatBoost: 50 features
+  XGBoost: 50 features
+
+[2/3] Analyzing feature categories...
+
+================================================================================
+FEATURE IMPORTANCE SUMMARY BY CATEGORY
+================================================================================
+
+RandomForest:
+--------------------------------------------------------------------------------
+Category                Count    Total Imp     Mean Imp      Max Imp
+--------------------------------------------------------------------------------
+Autocorrelation            12       0.3306       0.0275       0.0427
+Quantile                   12       0.2121       0.0177       0.0262
+Other                       8       0.1579       0.0197       0.0334
+Statistical                 8       0.1247       0.0156       0.0205
+Linear                      5       0.0700       0.0140       0.0165
+Ratio                       2       0.0440       0.0220       0.0241
+Frequency                   1       0.0269       0.0269       0.0269
+Complexity                  1       0.0184       0.0184       0.0184
+Stationarity                1       0.0155       0.0155       0.0155
+
+Total features: 50
+Total importance: 1.0000
+
+CatBoost:
+--------------------------------------------------------------------------------
+Category                Count    Total Imp     Mean Imp      Max Imp
+--------------------------------------------------------------------------------
+Other                       8       0.2577       0.0322       0.0567
+Quantile                   15       0.2431       0.0162       0.0386
+Autocorrelation             9       0.1470       0.0163       0.0293
+Statistical                 7       0.1001       0.0143       0.0227
+Linear                      6       0.0936       0.0156       0.0232
+Ratio                       2       0.0731       0.0365       0.0432
+Frequency                   2       0.0673       0.0337       0.0572
+Complexity                  1       0.0182       0.0182       0.0182
+
+Total features: 50
+Total importance: 1.0000
+
+XGBoost:
+--------------------------------------------------------------------------------
+Category                Count    Total Imp     Mean Imp      Max Imp
+--------------------------------------------------------------------------------
+Quantile                   16       0.3746       0.0234       0.1323
+Other                       8       0.1898       0.0237       0.0580
+Autocorrelation             5       0.1381       0.0276       0.0569
+Statistical                 9       0.1187       0.0132       0.0365
+Linear                      9       0.1123       0.0125       0.0579
+Ratio                       2       0.0441       0.0221       0.0244
+Frequency                   1       0.0224       0.0224       0.0224
+
+Total features: 50
+Total importance: 1.0000
+
+
+[3/3] Generating visualizations...
+Figure saved to: figures/feature_importance_top30_comparison_model2.png
+Figure saved to: figures/feature_importance_categories_model2.png
+
+================================================================================
+Analysis complete!
+================================================================================
+
+Step 2: Analyzing Errors...
+  - Model 1 Errors...
+
+================================================================================
+MISCLASSIFICATION ANALYSIS
+================================================================================
+Model: Model 1 (Binary Classification)
+Saved Models: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model1_binary/output/model1_statistical_5k
+================================================================================
+
+[1/3] Loading misclassified samples...
+  RandomForest: 40 misclassified samples
+  SVM_Linear: 48 misclassified samples
+  XGBoost: 28 misclassified samples
+  CatBoost: 34 misclassified samples
+
+Total misclassified samples: 150
+
+[2/3] Analyzing worst cases...
+
+================================================================================
+TOP 10 WORST MISCLASSIFICATIONS (Highest Confidence Errors)
+================================================================================
+
+
+RandomForest:
+--------------------------------------------------------------------------------
+  ID:   4044 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.9750
+  ID:   1491 | True: Stationary           → Predicted: Non-Stationary       | Confidence: 0.9550
+  ID:   4040 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.9300
+  ID:   4203 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.9200
+  ID:   4038 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.8850
+  ID:   3897 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.8650
+  ID:   3915 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.8550
+  ID:   3987 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.8350
+  ID:   4285 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.8150
+  ID:   4165 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.7900
+
+SVM_Linear:
+--------------------------------------------------------------------------------
+  ID:   1481 | True: Stationary           → Predicted: Non-Stationary       | Confidence: 1.0000
+  ID:   4040 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 1.0000
+  ID:   4044 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.9793
+  ID:   1491 | True: Stationary           → Predicted: Non-Stationary       | Confidence: 0.9747
+  ID:   4271 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.9722
+  ID:   2660 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.9605
+  ID:   3897 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.9459
+  ID:   3987 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.9297
+  ID:   2704 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.9248
+  ID:   4118 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.9020
+
+XGBoost:
+--------------------------------------------------------------------------------
+  ID:   4044 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.9999
+  ID:   4040 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.9998
+  ID:   4203 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.9995
+  ID:   4038 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.9988
+  ID:   3897 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.9976
+  ID:   3986 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.9894
+  ID:   4085 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.9856
+  ID:     29 | True: Stationary           → Predicted: Non-Stationary       | Confidence: 0.9854
+  ID:   4210 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.9831
+  ID:    380 | True: Stationary           → Predicted: Non-Stationary       | Confidence: 0.9772
+
+CatBoost:
+--------------------------------------------------------------------------------
+  ID:   4044 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.9962
+  ID:   4040 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.9960
+  ID:   4038 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.9859
+  ID:   3897 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.9748
+  ID:   4203 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.9724
+  ID:   1491 | True: Stationary           → Predicted: Non-Stationary       | Confidence: 0.9498
+  ID:   1481 | True: Stationary           → Predicted: Non-Stationary       | Confidence: 0.9407
+  ID:    380 | True: Stationary           → Predicted: Non-Stationary       | Confidence: 0.9402
+  ID:   3987 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.8866
+  ID:   4118 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.8767
+
+[3/3] Generating visualizations...
+
+Figure saved to: figures/error_analysis_model_1_(binary_classification).png
+
+================================================================================
+Analysis complete!
+================================================================================
+
+  - Model 2 Errors...
+
+================================================================================
+MISCLASSIFICATION ANALYSIS
+================================================================================
+Model: Model 2 (5-Class Classification)
+Saved Models: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model2_nonstationary/output/model2_statistical_5k
+================================================================================
+
+[1/3] Loading misclassified samples...
+  RandomForest: 16 misclassified samples
+  SVM_RBF: 50 misclassified samples
+  XGBoost: 21 misclassified samples
+  CatBoost: 23 misclassified samples
+
+Total misclassified samples: 110
+
+[2/3] Analyzing worst cases...
+
+================================================================================
+TOP 10 WORST MISCLASSIFICATIONS (Highest Confidence Errors)
+================================================================================
+
+
+RandomForest:
+--------------------------------------------------------------------------------
+  ID:   4512 | True: Structural Break     → Predicted: Anomaly              | Confidence: 0.8400
+  ID:   3943 | True: Volatility           → Predicted: Anomaly              | Confidence: 0.8200
+  ID:   5010 | True: Structural Break     → Predicted: Trend                | Confidence: 0.7800
+  ID:   4967 | True: Structural Break     → Predicted: Stochastic           | Confidence: 0.7100
+  ID:   3262 | True: Stochastic           → Predicted: Trend                | Confidence: 0.6750
+  ID:   4583 | True: Structural Break     → Predicted: Anomaly              | Confidence: 0.6550
+  ID:   3914 | True: Volatility           → Predicted: Structural Break     | Confidence: 0.6250
+  ID:   4732 | True: Structural Break     → Predicted: Volatility           | Confidence: 0.6150
+  ID:   4272 | True: Anomaly              → Predicted: Structural Break     | Confidence: 0.6050
+  ID:   4798 | True: Structural Break     → Predicted: Anomaly              | Confidence: 0.6000
+
+SVM_RBF:
+--------------------------------------------------------------------------------
+  ID:   3337 | True: Stochastic           → Predicted: Trend                | Confidence: 0.9507
+  ID:   4512 | True: Structural Break     → Predicted: Anomaly              | Confidence: 0.9503
+  ID:   4874 | True: Structural Break     → Predicted: Stochastic           | Confidence: 0.9415
+  ID:   4925 | True: Structural Break     → Predicted: Stochastic           | Confidence: 0.9388
+  ID:   4272 | True: Anomaly              → Predicted: Structural Break     | Confidence: 0.9358
+  ID:   4928 | True: Structural Break     → Predicted: Stochastic           | Confidence: 0.9155
+  ID:   5000 | True: Structural Break     → Predicted: Trend                | Confidence: 0.9034
+  ID:   3943 | True: Volatility           → Predicted: Anomaly              | Confidence: 0.8877
+  ID:   5010 | True: Structural Break     → Predicted: Trend                | Confidence: 0.8656
+  ID:   3465 | True: Stochastic           → Predicted: Trend                | Confidence: 0.8623
+
+XGBoost:
+--------------------------------------------------------------------------------
+  ID:   4512 | True: Structural Break     → Predicted: Anomaly              | Confidence: 0.9968
+  ID:   3943 | True: Volatility           → Predicted: Anomaly              | Confidence: 0.9873
+  ID:   5010 | True: Structural Break     → Predicted: Trend                | Confidence: 0.9814
+  ID:   4369 | True: Anomaly              → Predicted: Structural Break     | Confidence: 0.8943
+  ID:   3465 | True: Stochastic           → Predicted: Trend                | Confidence: 0.8841
+  ID:   4528 | True: Structural Break     → Predicted: Anomaly              | Confidence: 0.8354
+  ID:   4732 | True: Structural Break     → Predicted: Volatility           | Confidence: 0.7530
+  ID:   4405 | True: Anomaly              → Predicted: Structural Break     | Confidence: 0.6909
+  ID:   4967 | True: Structural Break     → Predicted: Stochastic           | Confidence: 0.6777
+  ID:   4356 | True: Anomaly              → Predicted: Stochastic           | Confidence: 0.6764
+
+CatBoost:
+--------------------------------------------------------------------------------
+  ID:   4512 | True: Structural Break     → Predicted: Anomaly              | Confidence: 0.9558
+  ID:   3943 | True: Volatility           → Predicted: Anomaly              | Confidence: 0.9029
+  ID:   5010 | True: Structural Break     → Predicted: Trend                | Confidence: 0.8904
+  ID:   4343 | True: Anomaly              → Predicted: Structural Break     | Confidence: 0.7994
+  ID:   3914 | True: Volatility           → Predicted: Structural Break     | Confidence: 0.7642
+  ID:   4356 | True: Anomaly              → Predicted: Stochastic           | Confidence: 0.6925
+  ID:   4737 | True: Structural Break     → Predicted: Volatility           | Confidence: 0.6905
+  ID:   4743 | True: Structural Break     → Predicted: Volatility           | Confidence: 0.6896
+  ID:   4967 | True: Structural Break     → Predicted: Stochastic           | Confidence: 0.6746
+  ID:   4798 | True: Structural Break     → Predicted: Anomaly              | Confidence: 0.6616
+
+[3/3] Generating visualizations...
+
+Figure saved to: figures/error_analysis_model_2_(5-class_classification).png
+
+================================================================================
+Analysis complete!
+================================================================================
+
+
+============================================================
+Post-Processing Complete!
+============================================================
+Feature Type: statistical
+Dataset Size: 5k
+Figures saved in: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/04-postprocessing/figures/statistical_5k
+End time: Tue Dec 23 12:02:07 AM +03 2025

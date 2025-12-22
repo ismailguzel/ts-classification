@@ -27,6 +27,17 @@ set -e  # Exit on error
 FEATURE_TYPE=${1:-statistical}
 DATASET_SIZE=${2:-20k}
 
+# Logging setup (skip if called from run.sh)
+if [ -z "$CALLED_FROM_MASTER" ]; then
+    LOG_DIR="logs/$DATASET_SIZE"
+    TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+    LOG_FILE="$LOG_DIR/postprocessing_${FEATURE_TYPE}_${TIMESTAMP}.log"
+    mkdir -p "$LOG_DIR"
+    
+    # Redirect all output to log file and console
+    exec > >(tee -a "$LOG_FILE") 2>&1
+fi
+
 # Load required module (if on cluster)
 if command -v module &> /dev/null; then
     module load apps/truba-ai/gpu-2024.0
@@ -66,6 +77,9 @@ fi
 echo "============================================================"
 echo "Starting Post-Processing Pipeline"
 echo "============================================================"
+if [ -n "$LOG_FILE" ]; then
+    echo "Log file: $LOG_FILE"
+fi
 echo "Feature Type: $FEATURE_TYPE"
 echo "Dataset Size: $DATASET_SIZE"
 echo "Start time: $(date)"

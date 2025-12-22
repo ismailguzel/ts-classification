@@ -1,0 +1,97 @@
+{
+  "model_name": "SVM_Linear",
+  "train_time": 1.3141205310821533,
+  "metrics": {
+    "train": {
+      "accuracy": 0.9595015576323987,
+      "precision": 0.9603402189281237,
+      "recall": 0.9595015576323987,
+      "f1": 0.9594388209165751
+    },
+    "test": {
+      "accuracy": 0.9595435684647303,
+      "precision": 0.9608960914445054,
+      "recall": 0.9595435684647303,
+      "f1": 0.9594596576617018
+    }
+  },
+  "classification_reports": {
+    "train": {
+      "Stationary": {
+        "precision": 0.9424357754519506,
+        "recall": 0.9826388888888888,
+        "f1-score": 0.9621175327829043,
+        "support": 2016.0
+      },
+      "Non-Stationary": {
+        "precision": 0.98,
+        "recall": 0.9340958605664488,
+        "f1-score": 0.9564974902398216,
+        "support": 1836.0
+      },
+      "accuracy": 0.9595015576323987,
+      "macro avg": {
+        "precision": 0.9612178877259753,
+        "recall": 0.9583673747276689,
+        "f1-score": 0.959307511511363,
+        "support": 3852.0
+      },
+      "weighted avg": {
+        "precision": 0.9603402189281237,
+        "recall": 0.9595015576323987,
+        "f1-score": 0.9594388209165751,
+        "support": 3852.0
+      }
+    },
+    "test": {
+      "Stationary": {
+        "precision": 0.9378531073446328,
+        "recall": 0.9880952380952381,
+        "f1-score": 0.9623188405797102,
+        "support": 504.0
+      },
+      "Non-Stationary": {
+        "precision": 0.9861431870669746,
+        "recall": 0.9282608695652174,
+        "f1-score": 0.9563269876819709,
+        "support": 460.0
+      },
+      "accuracy": 0.9595435684647303,
+      "macro avg": {
+        "precision": 0.9619981472058037,
+        "recall": 0.9581780538302278,
+        "f1-score": 0.9593229141308406,
+        "support": 964.0
+      },
+      "weighted avg": {
+        "precision": 0.9608960914445054,
+        "recall": 0.9595435684647303,
+        "f1-score": 0.9594596576617018,
+        "support": 964.0
+      }
+    }
+  },
+  "confusion_matrices": {
+    "train": [
+      [
+        1981,
+        35
+      ],
+      [
+        121,
+        1715
+      ]
+    ],
+    "test": [
+      [
+        498,
+        6
+      ],
+      [
+        33,
+        427
+      ]
+    ]
+  },
+  "timestamp_utc": "2025-12-22T21:02:37"
+}

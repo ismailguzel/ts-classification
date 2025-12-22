@@ -4,6 +4,23 @@
 
 set -e  # Exit on error
 
+# --- Configuration ---
+SCALE="5k"
+N_JOBS=100
+FEATURE_SET="efficient"
+TOP_K_FEATURES=100
+
+# Logging setup (skip if called from run.sh)
+if [ -z "$CALLED_FROM_MASTER" ]; then
+    LOG_DIR="logs/$SCALE"
+    TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+    LOG_FILE="$LOG_DIR/preprocessing_${TIMESTAMP}.log"
+    mkdir -p "$LOG_DIR"
+    
+    # Redirect all output to log file and console
+    exec > >(tee -a "$LOG_FILE") 2>&1
+fi
+
 # Load required module (if on cluster)
 if command -v module &> /dev/null; then
     module load apps/truba-ai/gpu-2024.0
@@ -11,12 +28,6 @@ fi
 
 # Activate environment
 conda activate ts-sktime
-
-# --- Configuration ---
-SCALE="20k"
-N_JOBS=100
-FEATURE_SET="efficient"
-TOP_K_FEATURES=100
 
 # Paths
 BASE_DIR=$(pwd)
@@ -46,6 +57,9 @@ mkdir -p "$DATA_SELECTED_COMBINED"
 echo "============================================================"
 echo "Starting Preprocessing Pipeline ($SCALE)"
 echo "============================================================"
+if [ -n "$LOG_FILE" ]; then
+    echo "Log file: $LOG_FILE"
+fi
 echo "Input:  $DATA_RAW"
 echo "Output: "
 echo "  - Statistical: $DATA_SELECTED_STAT"

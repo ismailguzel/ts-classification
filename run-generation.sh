@@ -8,6 +8,20 @@
 
 set -e  # Exit on error
 
+# Configuration
+SCALE="5k"  # Default scale
+
+# Logging setup (skip if called from run.sh)
+if [ -z "$CALLED_FROM_MASTER" ]; then
+    LOG_DIR="logs/$SCALE"
+    TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+    LOG_FILE="$LOG_DIR/generation_${TIMESTAMP}.log"
+    mkdir -p "$LOG_DIR"
+    
+    # Redirect all output to log file and console
+    exec > >(tee -a "$LOG_FILE") 2>&1
+fi
+
 # Load required module (if on cluster)
 if command -v module &> /dev/null; then
     module load apps/truba-ai/gpu-2024.0
@@ -16,12 +30,12 @@ fi
 # Activate environment
 conda activate ts-generation
 
-# Configuration
-SCALE="20k"  # Default scale
-
 echo "============================================================"
 echo "Starting Data Generation Pipeline ($SCALE)"
 echo "============================================================"
+if [ -n "$LOG_FILE" ]; then
+    echo "Log file: $LOG_FILE"
+fi
 echo "Start time: $(date)"
 echo ""
 

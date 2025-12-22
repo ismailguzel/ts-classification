@@ -1,0 +1,300 @@
+============================================================
+Starting Post-Processing Pipeline
+============================================================
+Log file: logs/5k/postprocessing_topological_20251223_000221.log
+Feature Type: topological
+Dataset Size: 5k
+Start time: Tue Dec 23 12:02:22 AM +03 2025
+
+Step 1: Analyzing Feature Importance...
+  - Model 1 (Binary)...
+
+================================================================================
+FEATURE IMPORTANCE ANALYSIS
+================================================================================
+Model: Model 1 (Binary Classification)
+Saved Models: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model1_binary/output/model1_topological_5k
+Normalization: sum
+================================================================================
+
+[1/3] Loading feature importance files...
+  RandomForest: 50 features
+  CatBoost: 50 features
+  XGBoost: 50 features
+
+[2/3] Analyzing feature categories...
+
+================================================================================
+FEATURE IMPORTANCE SUMMARY BY CATEGORY
+================================================================================
+
+RandomForest:
+--------------------------------------------------------------------------------
+Category                Count    Total Imp     Mean Imp      Max Imp
+--------------------------------------------------------------------------------
+Statistical                50       1.0000       0.0200       0.0604
+
+Total features: 50
+Total importance: 1.0000
+
+CatBoost:
+--------------------------------------------------------------------------------
+Category                Count    Total Imp     Mean Imp      Max Imp
+--------------------------------------------------------------------------------
+Statistical                50       1.0000       0.0200       0.0695
+
+Total features: 50
+Total importance: 1.0000
+
+XGBoost:
+--------------------------------------------------------------------------------
+Category                Count    Total Imp     Mean Imp      Max Imp
+--------------------------------------------------------------------------------
+Statistical                50       1.0000       0.0200       0.1166
+
+Total features: 50
+Total importance: 1.0000
+
+
+[3/3] Generating visualizations...
+Figure saved to: figures/feature_importance_top30_comparison_model1.png
+Figure saved to: figures/feature_importance_categories_model1.png
+
+================================================================================
+Analysis complete!
+================================================================================
+
+  - Model 2 (5-Class)...
+
+================================================================================
+FEATURE IMPORTANCE ANALYSIS
+================================================================================
+Model: Model 2 (5-Class Classification)
+Saved Models: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model2_nonstationary/output/model2_topological_5k
+Normalization: sum
+================================================================================
+
+[1/3] Loading feature importance files...
+  RandomForest: 50 features
+  CatBoost: 50 features
+  XGBoost: 50 features
+
+[2/3] Analyzing feature categories...
+
+================================================================================
+FEATURE IMPORTANCE SUMMARY BY CATEGORY
+================================================================================
+
+RandomForest:
+--------------------------------------------------------------------------------
+Category                Count    Total Imp     Mean Imp      Max Imp
+--------------------------------------------------------------------------------
+Statistical                50       1.0000       0.0200       0.0312
+
+Total features: 50
+Total importance: 1.0000
+
+CatBoost:
+--------------------------------------------------------------------------------
+Category                Count    Total Imp     Mean Imp      Max Imp
+--------------------------------------------------------------------------------
+Statistical                50       1.0000       0.0200       0.0804
+
+Total features: 50
+Total importance: 1.0000
+
+XGBoost:
+--------------------------------------------------------------------------------
+Category                Count    Total Imp     Mean Imp      Max Imp
+--------------------------------------------------------------------------------
+Statistical                50       1.0000       0.0200       0.0528
+
+Total features: 50
+Total importance: 1.0000
+
+
+[3/3] Generating visualizations...
+Figure saved to: figures/feature_importance_top30_comparison_model2.png
+Figure saved to: figures/feature_importance_categories_model2.png
+
+================================================================================
+Analysis complete!
+================================================================================
+
+Step 2: Analyzing Errors...
+  - Model 1 Errors...
+
+================================================================================
+MISCLASSIFICATION ANALYSIS
+================================================================================
+Model: Model 1 (Binary Classification)
+Saved Models: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model1_binary/output/model1_topological_5k
+================================================================================
+
+[1/3] Loading misclassified samples...
+  RandomForest: 254 misclassified samples
+  SVM_Linear: 260 misclassified samples
+  XGBoost: 284 misclassified samples
+  CatBoost: 247 misclassified samples
+
+Total misclassified samples: 1045
+
+[2/3] Analyzing worst cases...
+
+================================================================================
+TOP 10 WORST MISCLASSIFICATIONS (Highest Confidence Errors)
+================================================================================
+
+
+RandomForest:
+--------------------------------------------------------------------------------
+  ID:    357 | True: Stationary           → Predicted: Non-Stationary       | Confidence: 0.9400
+  ID:    242 | True: Stationary           → Predicted: Non-Stationary       | Confidence: 0.9200
+  ID:   3898 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.9100
+  ID:   2753 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.9100
+  ID:    269 | True: Stationary           → Predicted: Non-Stationary       | Confidence: 0.9050
+  ID:   4493 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.8800
+  ID:   3392 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.8800
+  ID:    162 | True: Stationary           → Predicted: Non-Stationary       | Confidence: 0.8750
+  ID:   4334 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.8700
+  ID:   3481 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.8550
+
+SVM_Linear:
+--------------------------------------------------------------------------------
+  ID:   4561 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.9610
+  ID:   2534 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.9425
+  ID:   4497 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.8981
+  ID:   2692 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.8867
+  ID:   2611 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.8811
+  ID:   3324 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.8810
+  ID:   3008 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.8781
+  ID:   3452 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.8708
+  ID:   1811 | True: Stationary           → Predicted: Non-Stationary       | Confidence: 0.8699
+  ID:   2708 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.8691
+
+XGBoost:
+--------------------------------------------------------------------------------
+  ID:   1046 | True: Stationary           → Predicted: Non-Stationary       | Confidence: 0.9999
+  ID:    302 | True: Stationary           → Predicted: Non-Stationary       | Confidence: 0.9995
+  ID:   2268 | True: Stationary           → Predicted: Non-Stationary       | Confidence: 0.9993
+  ID:   4501 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.9992
+  ID:     36 | True: Stationary           → Predicted: Non-Stationary       | Confidence: 0.9987
+  ID:    269 | True: Stationary           → Predicted: Non-Stationary       | Confidence: 0.9977
+  ID:    357 | True: Stationary           → Predicted: Non-Stationary       | Confidence: 0.9973
+  ID:   4448 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.9966
+  ID:   4431 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.9964
+  ID:   4345 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.9954
+
+CatBoost:
+--------------------------------------------------------------------------------
+  ID:   1679 | True: Stationary           → Predicted: Non-Stationary       | Confidence: 0.9681
+  ID:    380 | True: Stationary           → Predicted: Non-Stationary       | Confidence: 0.9666
+  ID:    203 | True: Stationary           → Predicted: Non-Stationary       | Confidence: 0.9610
+  ID:    302 | True: Stationary           → Predicted: Non-Stationary       | Confidence: 0.9609
+  ID:    269 | True: Stationary           → Predicted: Non-Stationary       | Confidence: 0.9473
+  ID:   3898 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.9422
+  ID:   4431 | True: Non-Stationary       → Predicted: Stationary           | Confidence: 0.9353
+  ID:   2268 | True: Stationary           → Predicted: Non-Stationary       | Confidence: 0.9306
+  ID:   1046 | True: Stationary           → Predicted: Non-Stationary       | Confidence: 0.9190
+  ID:    357 | True: Stationary           → Predicted: Non-Stationary       | Confidence: 0.9186
+
+[3/3] Generating visualizations...
+
+Figure saved to: figures/error_analysis_model_1_(binary_classification).png
+
+================================================================================
+Analysis complete!
+================================================================================
+
+  - Model 2 Errors...
+
+================================================================================
+MISCLASSIFICATION ANALYSIS
+================================================================================
+Model: Model 2 (5-Class Classification)
+Saved Models: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model2_nonstationary/output/model2_topological_5k
+================================================================================
+
+[1/3] Loading misclassified samples...
+  RandomForest: 205 misclassified samples
+  SVM_RBF: 188 misclassified samples
+  XGBoost: 220 misclassified samples
+  CatBoost: 212 misclassified samples
+
+Total misclassified samples: 825
+
+[2/3] Analyzing worst cases...
+
+================================================================================
+TOP 10 WORST MISCLASSIFICATIONS (Highest Confidence Errors)
+================================================================================
+
+
+RandomForest:
+--------------------------------------------------------------------------------
+  ID:   2812 | True: Trend                → Predicted: Volatility           | Confidence: 1.0000
+  ID:   4264 | True: Anomaly              → Predicted: Volatility           | Confidence: 0.9800
+  ID:   3413 | True: Stochastic           → Predicted: Volatility           | Confidence: 0.9150
+  ID:   4677 | True: Structural Break     → Predicted: Volatility           | Confidence: 0.8750
+  ID:   4344 | True: Anomaly              → Predicted: Trend                | Confidence: 0.8150
+  ID:   4818 | True: Structural Break     → Predicted: Volatility           | Confidence: 0.8100
+  ID:   3953 | True: Volatility           → Predicted: Anomaly              | Confidence: 0.7150
+  ID:   4992 | True: Structural Break     → Predicted: Stochastic           | Confidence: 0.6950
+  ID:   4798 | True: Structural Break     → Predicted: Volatility           | Confidence: 0.6850
+  ID:   4273 | True: Anomaly              → Predicted: Volatility           | Confidence: 0.6850
+
+SVM_RBF:
+--------------------------------------------------------------------------------
+  ID:   4264 | True: Anomaly              → Predicted: Volatility           | Confidence: 0.8877
+  ID:   4273 | True: Anomaly              → Predicted: Volatility           | Confidence: 0.8644
+  ID:   2812 | True: Trend                → Predicted: Volatility           | Confidence: 0.8602
+  ID:   4677 | True: Structural Break     → Predicted: Volatility           | Confidence: 0.8492
+  ID:   4818 | True: Structural Break     → Predicted: Volatility           | Confidence: 0.8420
+  ID:   4798 | True: Structural Break     → Predicted: Volatility           | Confidence: 0.7864
+  ID:   4728 | True: Structural Break     → Predicted: Volatility           | Confidence: 0.7580
+  ID:   2842 | True: Trend                → Predicted: Volatility           | Confidence: 0.7540
+  ID:   4734 | True: Structural Break     → Predicted: Volatility           | Confidence: 0.7508
+  ID:   4773 | True: Structural Break     → Predicted: Volatility           | Confidence: 0.7259
+
+XGBoost:
+--------------------------------------------------------------------------------
+  ID:   2812 | True: Trend                → Predicted: Volatility           | Confidence: 0.9995
+  ID:   4264 | True: Anomaly              → Predicted: Volatility           | Confidence: 0.9991
+  ID:   4818 | True: Structural Break     → Predicted: Volatility           | Confidence: 0.9976
+  ID:   3413 | True: Stochastic           → Predicted: Volatility           | Confidence: 0.9966
+  ID:   4697 | True: Structural Break     → Predicted: Volatility           | Confidence: 0.9960
+  ID:   4405 | True: Anomaly              → Predicted: Trend                | Confidence: 0.9941
+  ID:   4273 | True: Anomaly              → Predicted: Volatility           | Confidence: 0.9940
+  ID:   4817 | True: Structural Break     → Predicted: Anomaly              | Confidence: 0.9927
+  ID:   4344 | True: Anomaly              → Predicted: Trend                | Confidence: 0.9927
+  ID:   4734 | True: Structural Break     → Predicted: Volatility           | Confidence: 0.9908
+
+CatBoost:
+--------------------------------------------------------------------------------
+  ID:   4264 | True: Anomaly              → Predicted: Volatility           | Confidence: 0.9339
+  ID:   2812 | True: Trend                → Predicted: Volatility           | Confidence: 0.9089
+  ID:   4677 | True: Structural Break     → Predicted: Volatility           | Confidence: 0.9064
+  ID:   4818 | True: Structural Break     → Predicted: Volatility           | Confidence: 0.8646
+  ID:   4344 | True: Anomaly              → Predicted: Trend                | Confidence: 0.8193
+  ID:   4270 | True: Anomaly              → Predicted: Volatility           | Confidence: 0.7773
+  ID:   2842 | True: Trend                → Predicted: Volatility           | Confidence: 0.7567
+  ID:   4273 | True: Anomaly              → Predicted: Volatility           | Confidence: 0.7386
+  ID:   2539 | True: Trend                → Predicted: Stochastic           | Confidence: 0.7302
+  ID:   4181 | True: Anomaly              → Predicted: Volatility           | Confidence: 0.7189
+
+[3/3] Generating visualizations...
+
+Figure saved to: figures/error_analysis_model_2_(5-class_classification).png
+
+================================================================================
+Analysis complete!
+================================================================================
+
+
+============================================================
+Post-Processing Complete!
+============================================================
+Feature Type: topological
+Dataset Size: 5k
+Figures saved in: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/04-postprocessing/figures/topological_5k
+End time: Tue Dec 23 12:02:31 AM +03 2025

@@ -1,0 +1,776 @@
+============================================================
+Starting Preprocessing Pipeline (5k)
+============================================================
+Input:  /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k
+Output: 
+  - Statistical: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/statistical_selected
+  - Topological: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/topological_selected
+  - Combined: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/combined_selected
+
+============================================================
+Step 1: Statistical Feature Extraction (TSFresh)
+============================================================
+Found 77 files to process.
+Initialized with 100 cores.
+Feature Set: efficient
+
+[1/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/deterministic_trend_cubic/down/ar/long.parquet
+   Done in 1.2s. Shape: (12, 777)
+
+[2/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/deterministic_trend_cubic/down/arma/long.parquet
+   Done in 1.1s. Shape: (12, 777)
+
+[3/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/deterministic_trend_cubic/down/ma/long.parquet
+   Done in 1.1s. Shape: (12, 777)
+
+[4/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/deterministic_trend_cubic/down/white_noise/long.parquet
+   Done in 1.1s. Shape: (12, 777)
+
+[5/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/deterministic_trend_cubic/up/ar/long.parquet
+   Done in 1.1s. Shape: (12, 777)
+
+[6/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/deterministic_trend_cubic/up/arma/long.parquet
+   Done in 1.1s. Shape: (12, 777)
+
+[7/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/deterministic_trend_cubic/up/ma/long.parquet
+   Done in 1.1s. Shape: (12, 777)
+
+[8/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/deterministic_trend_cubic/up/white_noise/long.parquet
+   Done in 1.2s. Shape: (12, 777)
+
+[9/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/deterministic_trend_damped/down/ar/long.parquet
+   Done in 1.1s. Shape: (12, 777)
+
+[10/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/deterministic_trend_damped/down/arma/long.parquet
+   Done in 1.1s. Shape: (12, 777)
+
+[11/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/deterministic_trend_damped/down/ma/long.parquet
+   Done in 1.0s. Shape: (12, 777)
+
+[12/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/deterministic_trend_damped/down/white_noise/long.parquet
+   Done in 1.1s. Shape: (12, 777)
+
+[13/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/deterministic_trend_damped/up/ar/long.parquet
+   Done in 1.1s. Shape: (12, 777)
+
+[14/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/deterministic_trend_damped/up/arma/long.parquet
+   Done in 1.1s. Shape: (12, 777)
+
+[15/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/deterministic_trend_damped/up/ma/long.parquet
+   Done in 1.1s. Shape: (12, 777)
+
+[16/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/deterministic_trend_damped/up/white_noise/long.parquet
+   Done in 1.1s. Shape: (12, 777)
+
+[17/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/deterministic_trend_exponential/down/ar/long.parquet
+   Done in 1.2s. Shape: (12, 777)
+
+[18/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/deterministic_trend_exponential/down/arma/long.parquet
+   Done in 1.1s. Shape: (12, 777)
+
+[19/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/deterministic_trend_exponential/down/ma/long.parquet
+   Done in 1.2s. Shape: (12, 777)
+
+[20/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/deterministic_trend_exponential/down/white_noise/long.parquet
+   Done in 1.2s. Shape: (12, 777)
+
+[21/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/deterministic_trend_exponential/up/ar/long.parquet
+   Done in 1.1s. Shape: (12, 777)
+
+[22/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/deterministic_trend_exponential/up/arma/long.parquet
+   Done in 1.2s. Shape: (12, 777)
+
+[23/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/deterministic_trend_exponential/up/ma/long.parquet
+   Done in 1.1s. Shape: (12, 777)
+
+[24/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/deterministic_trend_exponential/up/white_noise/long.parquet
+   Done in 1.1s. Shape: (12, 777)
+
+[25/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/deterministic_trend_linear/down/ar/long.parquet
+   Done in 1.1s. Shape: (12, 777)
+
+[26/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/deterministic_trend_linear/down/arma/long.parquet
+   Done in 1.2s. Shape: (12, 777)
+
+[27/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/deterministic_trend_linear/down/ma/long.parquet
+   Done in 1.2s. Shape: (12, 777)
+
+[28/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/deterministic_trend_linear/down/white_noise/long.parquet
+   Done in 1.1s. Shape: (12, 777)
+
+[29/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/deterministic_trend_linear/up/ar/long.parquet
+   Done in 1.1s. Shape: (12, 777)
+
+[30/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/deterministic_trend_linear/up/arma/long.parquet
+   Done in 1.1s. Shape: (12, 777)
+
+[31/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/deterministic_trend_linear/up/ma/long.parquet
+   Done in 1.1s. Shape: (12, 777)
+
+[32/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/deterministic_trend_linear/up/white_noise/long.parquet
+   Done in 1.2s. Shape: (12, 777)
+
+[33/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/deterministic_trend_quadratic/down/ar/long.parquet
+   Done in 1.2s. Shape: (12, 777)
+
+[34/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/deterministic_trend_quadratic/down/arma/long.parquet
+   Done in 1.1s. Shape: (12, 777)
+
+[35/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/deterministic_trend_quadratic/down/ma/long.parquet
+   Done in 1.2s. Shape: (12, 777)
+
+[36/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/deterministic_trend_quadratic/down/white_noise/long.parquet
+   Done in 1.2s. Shape: (12, 777)
+
+[37/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/deterministic_trend_quadratic/up/ar/long.parquet
+   Done in 1.1s. Shape: (12, 777)
+
+[38/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/deterministic_trend_quadratic/up/arma/long.parquet
+   Done in 1.2s. Shape: (12, 777)
+
+[39/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/deterministic_trend_quadratic/up/ma/long.parquet
+   Done in 1.2s. Shape: (12, 777)
+
+[40/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/deterministic_trend_quadratic/up/white_noise/long.parquet
+   Done in 1.2s. Shape: (12, 777)
+
+[41/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/multi_collective_anomaly/ar/long.parquet
+   Done in 2.2s. Shape: (42, 777)
+
+[42/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/multi_collective_anomaly/arma/long.parquet
+   Done in 2.1s. Shape: (42, 777)
+
+[43/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/multi_collective_anomaly/ma/long.parquet
+   Done in 2.2s. Shape: (42, 777)
+
+[44/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/multi_collective_anomaly/white_noise/long.parquet
+   Done in 2.1s. Shape: (42, 777)
+
+[45/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/multi_mean_shift/ar/long.parquet
+   Done in 2.2s. Shape: (42, 777)
+
+[46/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/multi_mean_shift/arma/long.parquet
+   Done in 2.2s. Shape: (42, 777)
+
+[47/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/multi_mean_shift/ma/long.parquet
+   Done in 2.0s. Shape: (42, 777)
+
+[48/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/multi_mean_shift/white_noise/long.parquet
+   Done in 2.3s. Shape: (42, 777)
+
+[49/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/multi_trend_shift/ar/long.parquet
+   Done in 1.3s. Shape: (21, 777)
+
+[50/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/multi_trend_shift/arma/long.parquet
+   Done in 1.4s. Shape: (21, 777)
+
+[51/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/multi_trend_shift/ma/long.parquet
+   Done in 1.4s. Shape: (21, 777)
+
+[52/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/multi_trend_shift/white_noise/long.parquet
+   Done in 1.3s. Shape: (21, 777)
+
+[53/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/multi_variance_shift/ar/long.parquet
+   Done in 2.2s. Shape: (42, 777)
+
+[54/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/multi_variance_shift/arma/long.parquet
+   Done in 2.3s. Shape: (42, 777)
+
+[55/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/multi_variance_shift/ma/long.parquet
+   Done in 2.2s. Shape: (42, 777)
+
+[56/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/multi_variance_shift/white_noise/long.parquet
+   Done in 2.0s. Shape: (42, 777)
+
+[57/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/point_anomaly_multiple/ar/long.parquet
+   Done in 2.2s. Shape: (42, 777)
+
+[58/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/point_anomaly_multiple/arma/long.parquet
+   Done in 2.0s. Shape: (42, 777)
+
+[59/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/point_anomaly_multiple/ma/long.parquet
+   Done in 1.9s. Shape: (42, 777)
+
+[60/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/point_anomaly_multiple/white_noise/long.parquet
+   Done in 2.1s. Shape: (42, 777)
+
+[61/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/point_anomaly_single/ar/long.parquet
+   Done in 1.3s. Shape: (14, 777)
+
+[62/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/point_anomaly_single/arma/long.parquet
+   Done in 1.3s. Shape: (14, 777)
+
+[63/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/point_anomaly_single/ma/long.parquet
+   Done in 1.2s. Shape: (14, 777)
+
+[64/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/point_anomaly_single/white_noise/long.parquet
+   Done in 1.3s. Shape: (14, 777)
+
+[65/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/stationary/ar/long.parquet
+   Done in 50.5s. Shape: (630, 777)
+
+[66/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/stationary/arma/long.parquet
+   Done in 52.4s. Shape: (630, 777)
+
+[67/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/stationary/ma/long.parquet
+   Done in 55.3s. Shape: (630, 777)
+
+[68/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/stationary/white_noise/long.parquet
+   Done in 54.7s. Shape: (630, 777)
+
+[69/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/stochastic/ari/long.parquet
+   Done in 9.0s. Shape: (100, 777)
+
+[70/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/stochastic/arima/long.parquet
+   Done in 7.7s. Shape: (100, 777)
+
+[71/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/stochastic/ima/long.parquet
+   Done in 9.2s. Shape: (100, 777)
+
+[72/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/stochastic/random_walk/long.parquet
+   Done in 6.4s. Shape: (100, 777)
+
+[73/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/stochastic/random_walk_drift/long.parquet
+   Done in 8.5s. Shape: (100, 777)
+
+[74/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/volatility/aparch/long.parquet
+   Done in 9.2s. Shape: (126, 777)
+
+[75/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/volatility/arch/long.parquet
+   Done in 9.8s. Shape: (126, 777)
+
+[76/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/volatility/egarch/long.parquet
+   Done in 10.8s. Shape: (126, 777)
+
+[77/77] Processing: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k/volatility/garch/long.parquet
+   Done in 10.7s. Shape: (126, 777)
+
+Merging all chunks...
+   Combining 77 parts...
+   Saved features.parquet (4816, 778)
+   Saved labels.parquet (4816, 4)
+
+Process Complete! Output: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/statistical
+Cleaning up temp files...
+
+============================================================
+Step 2: Removing Data Leakage Features (Statistical)
+============================================================
+================================================================================
+REMOVE DATA LEAKAGE FEATURES
+================================================================================
+Input: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/statistical
+Mode: LIVE
+Backup: No
+
+Checking for 23 leakage patterns:
+  • ADF (Augmented Dickey-Fuller)
+  • KPSS (Kwiatkowski-Phillips-Schmidt-Shin)
+  • Phillips-Perron (PP)
+  • Unit Root tests
+  • Stationarity tests
+  • Variance Ratio tests
+================================================================================
+
+Found 1 feature files
+
+📁 features.parquet
+   Total features: 777
+   Leakage features: 3
+      - data__augmented_dickey_fuller__attr_"teststat"__autolag_"AIC"
+      - data__augmented_dickey_fuller__attr_"pvalue"__autolag_"AIC"
+      - data__augmented_dickey_fuller__attr_"usedlag"__autolag_"AIC"
+   Cleaned: 777 -> 771 features
+   Updated: feature_names.txt
+     777 -> 774 features
+
+================================================================================
+SUMMARY
+================================================================================
+Files processed: 1
+Files cleaned: 1
+Total leakage features removed: 3
+
+Cleanup completed!
+================================================================================
+
+============================================================
+Step 3: Selecting Top 100 Statistical Features
+============================================================
+================================================================================
+Feature Selection
+================================================================================
+Input: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/statistical
+Output: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/statistical_selected
+Method: mutual_info
+N features: 100
+Target: all
+================================================================================
+Loading features from: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/statistical/features.parquet
+Loading labels from: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/statistical/labels.parquet
+
+================================================================================
+Processing target: binary
+================================================================================
+================================================================================
+Feature Selection - Method: mutual_info
+Target: binary
+================================================================================
+
+Removing low variance features (threshold=0.001)...
+Original features: 774
+Selected features: 679
+Removed: 95
+
+Selecting top 100 features using mutual information...
+Original features: 679
+Selected features: 100
+
+Saving selected features to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/statistical_selected/features_binary_mutual_info.parquet
+Saving labels to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/statistical_selected/labels_binary.parquet
+Saving feature names to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/statistical_selected/feature_names_binary_mutual_info.txt
+Saving standardized features to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/statistical_selected/binary/features.parquet
+Saving standardized labels to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/statistical_selected/binary/labels.parquet
+
+Selected features and standardized files saved successfully!
+
+================================================================================
+Processing target: primary
+================================================================================
+================================================================================
+Feature Selection - Method: mutual_info
+Target: primary
+================================================================================
+
+Removing low variance features (threshold=0.001)...
+Original features: 774
+Selected features: 679
+Removed: 95
+
+Selecting top 100 features using mutual information...
+Original features: 679
+Selected features: 100
+
+Saving selected features to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/statistical_selected/features_primary_mutual_info.parquet
+Saving labels to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/statistical_selected/labels_primary.parquet
+Saving feature names to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/statistical_selected/feature_names_primary_mutual_info.txt
+Saving standardized features to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/statistical_selected/primary/features.parquet
+Saving standardized labels to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/statistical_selected/primary/labels.parquet
+
+Selected features and standardized files saved successfully!
+
+================================================================================
+Processing target: sub
+================================================================================
+================================================================================
+Feature Selection - Method: mutual_info
+Target: sub
+================================================================================
+
+Removing low variance features (threshold=0.001)...
+Original features: 774
+Selected features: 679
+Removed: 95
+
+Selecting top 100 features using mutual information...
+Original features: 679
+Selected features: 100
+
+Saving selected features to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/statistical_selected/features_sub_mutual_info.parquet
+Saving labels to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/statistical_selected/labels_sub.parquet
+Saving feature names to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/statistical_selected/feature_names_sub_mutual_info.txt
+Saving standardized features to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/statistical_selected/sub/features.parquet
+Saving standardized labels to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/statistical_selected/sub/labels.parquet
+
+Selected features and standardized files saved successfully!
+
+Feature selection completed successfully!
+
+============================================================
+Step 4: Topological Feature Extraction (Persistent Homology)
+============================================================
+⚠️  Switching to ts-top conda environment for topological features...
+================================================================================
+TOPOLOGICAL FEATURE EXTRACTION
+================================================================================
+
+📂 Input:  /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/raw/unified-5k
+📂 Output: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/topological
+
+⚙️  Configuration:
+   Embedding dimension: 3
+   Embedding delay: 1
+   N landscapes: 5
+   Landscape resolution: 100
+   Use mean landscape: True
+   Chunk size: 10 files
+   Parallel jobs: 100
+
+📊 Feature count per homology dimension: 100
+   Total features (H0 + H1): 200
+
+================================================================================
+Found 77 parquet files
+
+================================================================================
+Processing 77 files in 8 chunks
+Chunk size: 10 files, Parallel jobs: 100
+================================================================================
+
+
+────────────────────────────────────────────────────────────────────────────────
+Chunk 1/8: Files 1-10
+────────────────────────────────────────────────────────────────────────────────
+[1/3] Loading 10 files...
+      ✓ 181141 rows, 120 series
+[2/3] Extracting topological features (Ripser + parallel)...
+  Processing 120 series with 100 jobs...
+  Extracting features:   0%|          | 0/120 [00:00<?, ?it/s]  Extracting features: 100%|██████████| 120/120 [00:00<00:00, 1303.49it/s]
+      ✓ 200 features for 120 series
+[3/3] Saving chunk_0000.parquet
+      ✓ Saved (0.3 MB)
+
+────────────────────────────────────────────────────────────────────────────────
+Chunk 2/8: Files 11-20
+────────────────────────────────────────────────────────────────────────────────
+[1/3] Loading 10 files...
+      ✓ 177995 rows, 120 series
+[2/3] Extracting topological features (Ripser + parallel)...
+  Processing 120 series with 100 jobs...
+  Extracting features:   0%|          | 0/120 [00:00<?, ?it/s]  Extracting features: 100%|██████████| 120/120 [00:00<00:00, 64577.43it/s]
+      ✓ 200 features for 120 series
+[3/3] Saving chunk_0001.parquet
+      ✓ Saved (0.3 MB)
+
+────────────────────────────────────────────────────────────────────────────────
+Chunk 3/8: Files 21-30
+────────────────────────────────────────────────────────────────────────────────
+[1/3] Loading 10 files...
+      ✓ 178150 rows, 120 series
+[2/3] Extracting topological features (Ripser + parallel)...
+  Processing 120 series with 100 jobs...
+  Extracting features:   0%|          | 0/120 [00:00<?, ?it/s]  Extracting features: 100%|██████████| 120/120 [00:00<00:00, 71881.82it/s]
+      ✓ 200 features for 120 series
+[3/3] Saving chunk_0002.parquet
+      ✓ Saved (0.3 MB)
+
+────────────────────────────────────────────────────────────────────────────────
+Chunk 4/8: Files 31-40
+────────────────────────────────────────────────────────────────────────────────
+[1/3] Loading 10 files...
+      ✓ 175009 rows, 120 series
+[2/3] Extracting topological features (Ripser + parallel)...
+  Processing 120 series with 100 jobs...
+  Extracting features:   0%|          | 0/120 [00:00<?, ?it/s]  Extracting features: 100%|██████████| 120/120 [00:00<00:00, 48554.55it/s]
+      ✓ 200 features for 120 series
+[3/3] Saving chunk_0003.parquet
+      ✓ Saved (0.3 MB)
+
+────────────────────────────────────────────────────────────────────────────────
+Chunk 5/8: Files 41-50
+────────────────────────────────────────────────────────────────────────────────
+[1/3] Loading 10 files...
+      ✓ 572795 rows, 378 series
+[2/3] Extracting topological features (Ripser + parallel)...
+  Processing 378 series with 100 jobs...
+  Extracting features:   0%|          | 0/378 [00:00<?, ?it/s]  Extracting features:  53%|█████▎    | 200/378 [00:00<00:00, 821.46it/s]  Extracting features:  79%|███████▉  | 300/378 [00:00<00:00, 592.38it/s]  Extracting features: 100%|██████████| 378/378 [00:00<00:00, 789.85it/s]
+      ✓ 200 features for 378 series
+[3/3] Saving chunk_0004.parquet
+      ✓ Saved (0.7 MB)
+
+────────────────────────────────────────────────────────────────────────────────
+Chunk 6/8: Files 51-60
+────────────────────────────────────────────────────────────────────────────────
+[1/3] Loading 10 files...
+      ✓ 567522 rows, 378 series
+[2/3] Extracting topological features (Ripser + parallel)...
+  Processing 378 series with 100 jobs...
+  Extracting features:   0%|          | 0/378 [00:00<?, ?it/s]  Extracting features:  53%|█████▎    | 200/378 [00:00<00:00, 841.34it/s]  Extracting features:  79%|███████▉  | 300/378 [00:00<00:00, 596.74it/s]  Extracting features: 100%|██████████| 378/378 [00:00<00:00, 797.70it/s]
+      ✓ 200 features for 378 series
+[3/3] Saving chunk_0005.parquet
+      ✓ Saved (0.7 MB)
+
+────────────────────────────────────────────────────────────────────────────────
+Chunk 7/8: Files 61-70
+────────────────────────────────────────────────────────────────────────────────
+[1/3] Loading 10 files...
+      ✓ 4179974 rows, 2776 series
+[2/3] Extracting topological features (Ripser + parallel)...
+  Processing 2776 series with 100 jobs...
+  Extracting features:   0%|          | 0/2776 [00:00<?, ?it/s]  Extracting features:   7%|▋         | 200/2776 [00:00<00:03, 810.33it/s]  Extracting features:  11%|█         | 300/2776 [00:00<00:04, 580.09it/s]  Extracting features:  14%|█▍        | 400/2776 [00:00<00:04, 516.60it/s]  Extracting features:  18%|█▊        | 500/2776 [00:00<00:04, 461.44it/s]  Extracting features:  22%|██▏       | 600/2776 [00:01<00:04, 436.51it/s]  Extracting features:  25%|██▌       | 700/2776 [00:01<00:04, 423.16it/s]  Extracting features:  29%|██▉       | 800/2776 [00:01<00:04, 411.61it/s]  Extracting features:  32%|███▏      | 900/2776 [00:01<00:04, 410.00it/s]  Extracting features:  36%|███▌      | 1000/2776 [00:02<00:04, 401.21it/s]  Extracting features:  40%|███▉      | 1100/2776 [00:02<00:04, 399.97it/s]  Extracting features:  43%|████▎     | 1200/2776 [00:02<00:03, 398.21it/s]  Extracting features:  47%|████▋     | 1300/2776 [00:03<00:03, 397.96it/s]  Extracting features:  50%|█████     | 1400/2776 [00:03<00:03, 395.56it/s]  Extracting features:  54%|█████▍    | 1500/2776 [00:03<00:03, 397.80it/s]  Extracting features:  58%|█████▊    | 1600/2776 [00:03<00:02, 398.30it/s]  Extracting features:  61%|██████    | 1700/2776 [00:04<00:02, 398.12it/s]  Extracting features:  65%|██████▍   | 1800/2776 [00:04<00:02, 402.33it/s]  Extracting features:  68%|██████▊   | 1900/2776 [00:04<00:02, 397.30it/s]  Extracting features:  72%|███████▏  | 2000/2776 [00:04<00:01, 399.66it/s]  Extracting features:  76%|███████▌  | 2100/2776 [00:05<00:01, 401.16it/s]  Extracting features:  79%|███████▉  | 2200/2776 [00:05<00:01, 390.58it/s]  Extracting features:  83%|████████▎ | 2300/2776 [00:05<00:01, 397.09it/s]  Extracting features:  86%|████████▋ | 2400/2776 [00:05<00:00, 391.87it/s]  Extracting features:  90%|█████████ | 2500/2776 [00:06<00:00, 392.33it/s]  Extracting features:  94%|█████████▎| 2600/2776 [00:06<00:00, 392.17it/s]  Extracting features:  97%|█████████▋| 2700/2776 [00:06<00:00, 391.93it/s]  Extracting features: 100%|██████████| 2776/2776 [00:06<00:00, 423.91it/s]
+      ✓ 200 features for 2776 series
+[3/3] Saving chunk_0006.parquet
+      ✓ Saved (4.8 MB)
+
+────────────────────────────────────────────────────────────────────────────────
+Chunk 8/8: Files 71-77
+────────────────────────────────────────────────────────────────────────────────
+[1/3] Loading 7 files...
+      ✓ 1197031 rows, 804 series
+[2/3] Extracting topological features (Ripser + parallel)...
+  Processing 804 series with 100 jobs...
+  Extracting features:   0%|          | 0/804 [00:00<?, ?it/s]  Extracting features:  25%|██▍       | 200/804 [00:00<00:00, 1084.18it/s]  Extracting features:  50%|████▉     | 400/804 [00:00<00:00, 1035.22it/s]  Extracting features:  75%|███████▍  | 600/804 [00:00<00:00, 674.26it/s]   Extracting features: 100%|█████████▉| 800/804 [00:01<00:00, 538.22it/s]  Extracting features: 100%|██████████| 804/804 [00:01<00:00, 623.00it/s]
+      ✓ 200 features for 804 series
+[3/3] Saving chunk_0007.parquet
+      ✓ Saved (1.4 MB)
+
+================================================================================
+Combining 8 chunks...
+================================================================================
+
+Loading 8 chunk files...
+Loading:   0%|          | 0/8 [00:00<?, ?it/s]Loading: 100%|██████████| 8/8 [00:00<00:00, 88.06it/s]
+✓ Combined features: (4816, 200)
+✓ Combined labels: (4816, 4)
+
+Saving: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/topological/features.parquet
+Saving: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/topological/labels.parquet
+Saving: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/topological/feature_names.txt
+
+ Saved successfully!
+   Features: (4816, 200)
+   Labels: (4816, 4)
+
+Cleaning up...
+✓ Temp files removed
+
+================================================================================
+✅ TOPOLOGICAL FEATURE EXTRACTION COMPLETE
+================================================================================
+
+📂 Output: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/topological
+   - topo_features.parquet
+   - feature_names.txt
+✓ Switching back to ts-sktime environment...
+
+============================================================
+Step 5: Selecting Top 50 Topological Features
+============================================================
+================================================================================
+Feature Selection
+================================================================================
+Input: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/topological
+Output: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/topological_selected
+Method: mutual_info
+N features: 50
+Target: all
+================================================================================
+Loading features from: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/topological/features.parquet
+Loading labels from: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/topological/labels.parquet
+
+================================================================================
+Processing target: binary
+================================================================================
+================================================================================
+Feature Selection - Method: mutual_info
+Target: binary
+================================================================================
+
+Removing low variance features (threshold=0.001)...
+Original features: 200
+Selected features: 161
+Removed: 39
+
+Selecting top 50 features using mutual information...
+Original features: 161
+Selected features: 50
+
+Saving selected features to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/topological_selected/features_binary_mutual_info.parquet
+Saving labels to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/topological_selected/labels_binary.parquet
+Saving feature names to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/topological_selected/feature_names_binary_mutual_info.txt
+Saving standardized features to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/topological_selected/binary/features.parquet
+Saving standardized labels to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/topological_selected/binary/labels.parquet
+
+Selected features and standardized files saved successfully!
+
+================================================================================
+Processing target: primary
+================================================================================
+================================================================================
+Feature Selection - Method: mutual_info
+Target: primary
+================================================================================
+
+Removing low variance features (threshold=0.001)...
+Original features: 200
+Selected features: 161
+Removed: 39
+
+Selecting top 50 features using mutual information...
+Original features: 161
+Selected features: 50
+
+Saving selected features to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/topological_selected/features_primary_mutual_info.parquet
+Saving labels to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/topological_selected/labels_primary.parquet
+Saving feature names to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/topological_selected/feature_names_primary_mutual_info.txt
+Saving standardized features to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/topological_selected/primary/features.parquet
+Saving standardized labels to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/topological_selected/primary/labels.parquet
+
+Selected features and standardized files saved successfully!
+
+================================================================================
+Processing target: sub
+================================================================================
+================================================================================
+Feature Selection - Method: mutual_info
+Target: sub
+================================================================================
+
+Removing low variance features (threshold=0.001)...
+Original features: 200
+Selected features: 161
+Removed: 39
+
+Selecting top 50 features using mutual information...
+Original features: 161
+Selected features: 50
+
+Saving selected features to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/topological_selected/features_sub_mutual_info.parquet
+Saving labels to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/topological_selected/labels_sub.parquet
+Saving feature names to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/topological_selected/feature_names_sub_mutual_info.txt
+Saving standardized features to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/topological_selected/sub/features.parquet
+Saving standardized labels to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/topological_selected/sub/labels.parquet
+
+Selected features and standardized files saved successfully!
+
+Feature selection completed successfully!
+
+============================================================
+Step 6: Combining Statistical + Topological Features
+============================================================
+================================================================================
+COMBINING STATISTICAL AND TOPOLOGICAL FEATURES
+================================================================================
+
+📂 Statistical: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/statistical
+📂 Topological: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/topological
+📂 Output: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/combined
+
+📥 Loading features...
+   Statistical: (4816, 775)
+   Topological: (4816, 201)
+
+🔗 Merging features...
+   Combined: (4816, 975)
+   Series matched: 4816
+
+📊 Feature counts:
+   Statistical: 774
+   Topological: 200
+   Combined: 974 (expected: 974)
+
+📥 Loading labels...
+   Labels: (4816, 4)
+
+💾 Saving combined features...
+   /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/combined/features.parquet
+   /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/combined/feature_names.txt
+
+✅ COMBINATION COMPLETE
+================================================================================
+
+📊 Summary:
+   Total series: 4816
+   Total features: 974
+   Statistical contribution: 774 (79.5%)
+   Topological contribution: 200 (20.5%)
+
+============================================================
+Step 7: Selecting Top 150 Combined Features
+============================================================
+================================================================================
+Feature Selection
+================================================================================
+Input: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/combined
+Output: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/combined_selected
+Method: mutual_info
+N features: 150
+Target: all
+================================================================================
+Loading features from: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/combined/features.parquet
+Loading labels from: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/combined/labels.parquet
+
+================================================================================
+Processing target: binary
+================================================================================
+================================================================================
+Feature Selection - Method: mutual_info
+Target: binary
+================================================================================
+
+Removing low variance features (threshold=0.001)...
+Original features: 974
+Selected features: 840
+Removed: 134
+
+Selecting top 150 features using mutual information...
+Original features: 840
+Selected features: 150
+
+Saving selected features to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/combined_selected/features_binary_mutual_info.parquet
+Saving labels to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/combined_selected/labels_binary.parquet
+Saving feature names to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/combined_selected/feature_names_binary_mutual_info.txt
+Saving standardized features to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/combined_selected/binary/features.parquet
+Saving standardized labels to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/combined_selected/binary/labels.parquet
+
+Selected features and standardized files saved successfully!
+
+================================================================================
+Processing target: primary
+================================================================================
+================================================================================
+Feature Selection - Method: mutual_info
+Target: primary
+================================================================================
+
+Removing low variance features (threshold=0.001)...
+Original features: 974
+Selected features: 840
+Removed: 134
+
+Selecting top 150 features using mutual information...
+Original features: 840
+Selected features: 150
+
+Saving selected features to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/combined_selected/features_primary_mutual_info.parquet
+Saving labels to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/combined_selected/labels_primary.parquet
+Saving feature names to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/combined_selected/feature_names_primary_mutual_info.txt
+Saving standardized features to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/combined_selected/primary/features.parquet
+Saving standardized labels to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/combined_selected/primary/labels.parquet
+
+Selected features and standardized files saved successfully!
+
+================================================================================
+Processing target: sub
+================================================================================
+================================================================================
+Feature Selection - Method: mutual_info
+Target: sub
+================================================================================
+
+Removing low variance features (threshold=0.001)...
+Original features: 974
+Selected features: 840
+Removed: 134
+
+Selecting top 150 features using mutual information...
+Original features: 840
+Selected features: 150
+
+Saving selected features to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/combined_selected/features_sub_mutual_info.parquet
+Saving labels to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/combined_selected/labels_sub.parquet
+Saving feature names to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/combined_selected/feature_names_sub_mutual_info.txt
+Saving standardized features to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/combined_selected/sub/features.parquet
+Saving standardized labels to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/combined_selected/sub/labels.parquet
+
+Selected features and standardized files saved successfully!
+
+Feature selection completed successfully!
+
+============================================================
+Preprocessing Complete!
+============================================================
+Statistical Features: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/statistical_selected (100 features)
+Topological Features: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/topological_selected (50 features)
+Combined Features: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/combined_selected (150 features)
+============================================================

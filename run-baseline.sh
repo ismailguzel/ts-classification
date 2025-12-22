@@ -12,6 +12,21 @@
 
 set -e  # Exit on error
 
+# Configuration
+SCALE="20k"  # Default scale for baseline comparison
+SAMPLE_SIZE=0  # 0 = full dataset
+
+# Logging setup (skip if called from run.sh)
+if [ -z "$CALLED_FROM_MASTER" ]; then
+    LOG_DIR="logs/$SCALE"
+    TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+    LOG_FILE="$LOG_DIR/baseline_${TIMESTAMP}.log"
+    mkdir -p "$LOG_DIR"
+    
+    # Redirect all output to log file and console
+    exec > >(tee -a "$LOG_FILE") 2>&1
+fi
+
 # Load required module (if on cluster)
 if command -v module &> /dev/null; then
     module load apps/truba-ai/gpu-2024.0
@@ -30,20 +45,17 @@ NC='\033[0m' # No Color
 echo -e "${GREEN}============================================================================${NC}"
 echo -e "${GREEN}BASELINE COMPARISON: Traditional Tests vs ML Model${NC}"
 echo -e "${GREEN}============================================================================${NC}"
+if [ -n "$LOG_FILE" ]; then
+    echo "Log file: $LOG_FILE"
+fi
 echo "Start time: $(date)"
 echo ""
 
 # Paths
 BASE_DIR=$(pwd)
-DATA_PATH="$BASE_DIR/data/raw/unified-20k"
+DATA_PATH="$BASE_DIR/data/raw/unified-$SCALE"
 OUTPUT_DIR="$BASE_DIR/05-baseline-comparison/results"
 SCRIPT_DIR="$BASE_DIR/05-baseline-comparison"
-
-# Configuration
-# SAMPLE_SIZE: Number of series to sample per pattern
-#   - 1000: Fast (~47 min with 100 cores, 13K total samples)
-#   - 0: Full dataset (~2-3 hours with 100 cores, 20K samples)
-SAMPLE_SIZE=0
 
 # Validate Input
 if [ ! -d "$DATA_PATH" ]; then

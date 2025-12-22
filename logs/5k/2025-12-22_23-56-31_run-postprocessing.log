@@ -1,0 +1,16 @@
+============================================================
+Starting Post-Processing Pipeline
+============================================================
+Log file: logs/5k/postprocessing_statistical_20251222_235631.log
+Feature Type: statistical
+Dataset Size: 5k
+Start time: Mon Dec 22 11:56:32 PM +03 2025
+
+Step 1: Analyzing Feature Importance...
+  - Model 1 (Binary)...
+usage: visualize_feature_importance.py [-h] [--model {model1,model2}]
+                                       [--classifier CLASSIFIER] [--top TOP]
+                                       [--saved-models-dir SAVED_MODELS_DIR]
+                                       [--save-fig] [--no-plot]
+                                       [--normalize {sum,minmax,none}]
+visualize_feature_importance.py: error: unrecognized arguments: --figures-dir /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/04-postprocessing/figures/statistical_5k

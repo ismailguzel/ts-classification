@@ -1,0 +1,22 @@
+{
+  "mode": "features",
+  "timestamp_utc": "2025-12-22T21:02:37",
+  "models": {
+    "RandomForest": {
+      "test_accuracy": 0.9626556016597511,
+      "train_accuracy": 1.0
+    },
+    "XGBoost": {
+      "test_accuracy": 0.9688796680497925,
+      "train_accuracy": 1.0
+    },
+    "CatBoost": {
+      "test_accuracy": 0.9730290456431535,
+      "train_accuracy": 1.0
+    },
+    "SVM_Linear": {
+      "test_accuracy": 0.9595435684647303,
+      "train_accuracy": 0.9595015576323987
+    }
+  }
+}

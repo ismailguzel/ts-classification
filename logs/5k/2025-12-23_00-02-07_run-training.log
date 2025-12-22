@@ -1,0 +1,352 @@
+============================================================
+Starting Training Pipeline (5k - topological features)
+============================================================
+Input: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/topological_selected
+Output suffix: _5k
+
+Training Model 1 (Binary)...
+================================================================================
+MODEL 1: BINARY CLASSIFICATION (Stationary vs Non-Stationary)
+================================================================================
+Mode: FEATURES
+Data path: ../../../data/raw/unified-5k
+Features path: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/topological_selected
+n_jobs: 110
+================================================================================
+================================================================================
+
+[1/6] Loading TSFresh features...
+Loading from target subdirectory 'binary'
+  Features: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/topological_selected/binary/features.parquet
+  Labels:   /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/topological_selected/binary/labels.parquet
+  Features shape: (4816, 51)
+  Labels shape:   (4816, 2)
+  Aligned samples: 4,816
+
+  Class distribution:
+    0:  2,520 ( 52.3%)
+    1:  2,296 ( 47.7%)
+Loaded features: (4816, 50)
+Number of features: 50
+Number of samples: 4816
+
+Label distribution:
+  0: Stationary       2,520 (52.3%)
+  1: Non-Stationary   2,296 (47.7%)
+
+[3/6] Preparing feature matrix...
+X shape: (4816, 50)
+y shape: (4816,)
+Feature names: 50
+
+[4/6] Splitting data...
+
+[4.5/6] Scaling features (fit on train only)...
+Features scaled with StandardScaler (no data leakage)
+Train set: 3,852 samples
+Test set:  964 samples
+
+[5/6] Training models...
+--------------------------------------------------------------------------------
+
+ Training Random Forest...
+
+================================================================================
+EVALUATING MODEL: RandomForest
+================================================================================
+
+ ACCURACY:
+  Train: 1.0000
+  Test:  0.7365
+
+ WEIGHTED METRICS:
+  Test Precision: 0.7419
+  Test Recall:    0.7365
+  Test F1:        0.7334
+Predictions saved to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model1_binary/output/model1_binary_features/predictions_RandomForest.csv
+Misclassified samples saved to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model1_binary/output/model1_binary_features/misclassified_RandomForest.csv (254 errors)
+Feature importance saved to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model1_binary/output/model1_binary_features/feature_importance_RandomForest.csv
+================================================================================
+
+
+ Training XGBoost...
+
+================================================================================
+EVALUATING MODEL: XGBoost
+================================================================================
+
+ ACCURACY:
+  Train: 1.0000
+  Test:  0.7054
+
+ WEIGHTED METRICS:
+  Test Precision: 0.7073
+  Test Recall:    0.7054
+  Test F1:        0.7032
+Predictions saved to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model1_binary/output/model1_binary_features/predictions_XGBoost.csv
+Misclassified samples saved to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model1_binary/output/model1_binary_features/misclassified_XGBoost.csv (284 errors)
+Feature importance saved to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model1_binary/output/model1_binary_features/feature_importance_XGBoost.csv
+================================================================================
+
+
+ Training CatBoost...
+
+================================================================================
+EVALUATING MODEL: CatBoost
+================================================================================
+
+ ACCURACY:
+  Train: 0.9078
+  Test:  0.7438
+
+ WEIGHTED METRICS:
+  Test Precision: 0.7489
+  Test Recall:    0.7438
+  Test F1:        0.7409
+Predictions saved to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model1_binary/output/model1_binary_features/predictions_CatBoost.csv
+Misclassified samples saved to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model1_binary/output/model1_binary_features/misclassified_CatBoost.csv (247 errors)
+Feature importance saved to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model1_binary/output/model1_binary_features/feature_importance_CatBoost.csv
+================================================================================
+
+
+ Training SVM (Linear)...
+
+================================================================================
+EVALUATING MODEL: SVM_Linear
+================================================================================
+
+ ACCURACY:
+  Train: 0.7391
+  Test:  0.7303
+
+ WEIGHTED METRICS:
+  Test Precision: 0.7441
+  Test Recall:    0.7303
+  Test F1:        0.7239
+Predictions saved to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model1_binary/output/model1_binary_features/predictions_SVM_Linear.csv
+Misclassified samples saved to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model1_binary/output/model1_binary_features/misclassified_SVM_Linear.csv (260 errors)
+================================================================================
+
+
+[6/6] Saving Results
+================================================================================
+
+Saving results to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model1_binary/output/model1_binary_features
+  RandomForest metrics: model1_features_RandomForest_metrics.json
+  XGBoost metrics: model1_features_XGBoost_metrics.json
+  CatBoost metrics: model1_features_CatBoost_metrics.json
+  SVM_Linear metrics: model1_features_SVM_Linear_metrics.json
+  Summary: model1_features_summary.json
+
+================================================================================
+SAVING BEST MODEL
+================================================================================
+
+ Best Model: CatBoost
+   Test Accuracy: 0.7438 (74.38%)
+
+Model saved to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model1_binary/output/model1_binary_features/model1_binary_classifier.pkl
+Scaler saved to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model1_binary/output/model1_binary_features/scaler.pkl
+Metadata saved to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model1_binary/output/model1_binary_features/model1_metadata.pkl
+
+================================================================================
+ MODEL 1 TRAINING COMPLETE!
+================================================================================
+
+Mode: FEATURES
+Best Model: CatBoost
+Accuracy: 74.38%
+
+ Output Structure:
+   /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model1_binary/output/model1_binary_features/
+   ├── model1_binary_classifier.pkl
+   ├── model1_metadata.pkl
+   ├── predictions_RandomForest.csv
+   ├── predictions_XGBoost.csv
+   ├── predictions_CatBoost.csv
+   ├── predictions_SVM_Linear.csv
+   ├── model1_features_RandomForest_metrics.json
+   ├── model1_features_XGBoost_metrics.json
+   ├── model1_features_CatBoost_metrics.json
+   ├── model1_features_SVM_Linear_metrics.json
+   ├── model1_features_summary.json
+   └── catboost_info/
+
+Next steps:
+  1. Review classification report above
+  2. Test model: python test_model1.py
+  3. If accuracy is good (>90%), proceed to Model 2 (primary categories)
+================================================================================
+Training Model 2 (Non-Stationary)...
+================================================================================
+MODEL 2: NON-STATIONARY 5-CLASS CLASSIFICATION
+================================================================================
+Mode: FEATURES
+Data path: ../../../data/raw/unified-5k
+Features path: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/topological_selected
+n_jobs: 110
+================================================================================
+
+[1/6] Loading TSFresh features...
+Loading from target subdirectory 'primary'
+  Features: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/topological_selected/primary/features.parquet
+  Labels:   /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/data/features/unified-5k/topological_selected/primary/labels.parquet
+  Features shape: (4816, 51)
+  Labels shape:   (4816, 2)
+  Aligned samples: 4,816
+  Filtering out 2,520 stationary samples for primary classification
+  Remaining samples: 2,296
+
+  Class distribution:
+    0:    480 ( 20.9%)
+    1:    504 ( 22.0%)
+    2:    500 ( 21.8%)
+    3:    392 ( 17.1%)
+    4:    420 ( 18.3%)
+Loaded features: (2296, 50)
+Number of features: 50
+Number of samples: 2296
+
+Label distribution:
+  0: Trend                   480 (20.9%)
+  1: Volatility              504 (22.0%)
+  2: Stochastic              500 (21.8%)
+  3: Anomaly                 392 (17.1%)
+  4: Structural Break        420 (18.3%)
+
+[3/6] Preparing feature matrix...
+X shape: (2296, 50)
+y shape: (2296,)
+Feature names: 50
+
+[4/6] Splitting data...
+
+[4.5/6] Scaling features (fit on train only)...
+Features scaled with StandardScaler (no data leakage)
+Train set: 1,836 samples
+Test set:  460 samples
+
+[5/6] Training models...
+--------------------------------------------------------------------------------
+
+ Training Random Forest...
+
+================================================================================
+EVALUATING MODEL: RandomForest
+================================================================================
+
+ ACCURACY:
+  Train: 0.9989
+  Test:  0.5543
+
+ WEIGHTED METRICS:
+  Test Precision: 0.5561
+  Test Recall:    0.5543
+  Test F1:        0.5449
+Predictions saved to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model2_nonstationary/output/model2_nonstationary_features/predictions_RandomForest.csv
+Misclassified samples saved to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model2_nonstationary/output/model2_nonstationary_features/misclassified_RandomForest.csv (205 errors)
+Feature importance saved to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model2_nonstationary/output/model2_nonstationary_features/feature_importance_RandomForest.csv
+================================================================================
+
+
+ Training XGBoost...
+
+================================================================================
+EVALUATING MODEL: XGBoost
+================================================================================
+
+ ACCURACY:
+  Train: 0.9989
+  Test:  0.5217
+
+ WEIGHTED METRICS:
+  Test Precision: 0.5139
+  Test Recall:    0.5217
+  Test F1:        0.5167
+Predictions saved to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model2_nonstationary/output/model2_nonstationary_features/predictions_XGBoost.csv
+Misclassified samples saved to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model2_nonstationary/output/model2_nonstationary_features/misclassified_XGBoost.csv (220 errors)
+Feature importance saved to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model2_nonstationary/output/model2_nonstationary_features/feature_importance_XGBoost.csv
+================================================================================
+
+
+ Training CatBoost...
+
+================================================================================
+EVALUATING MODEL: CatBoost
+================================================================================
+
+ ACCURACY:
+  Train: 0.7859
+  Test:  0.5391
+
+ WEIGHTED METRICS:
+  Test Precision: 0.5342
+  Test Recall:    0.5391
+  Test F1:        0.5313
+Predictions saved to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model2_nonstationary/output/model2_nonstationary_features/predictions_CatBoost.csv
+Misclassified samples saved to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model2_nonstationary/output/model2_nonstationary_features/misclassified_CatBoost.csv (212 errors)
+Feature importance saved to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model2_nonstationary/output/model2_nonstationary_features/feature_importance_CatBoost.csv
+================================================================================
+
+
+ Training SVM (RBF)...
+
+================================================================================
+EVALUATING MODEL: SVM_RBF
+================================================================================
+
+ ACCURACY:
+  Train: 0.5768
+  Test:  0.5913
+
+ WEIGHTED METRICS:
+  Test Precision: 0.6082
+  Test Recall:    0.5913
+  Test F1:        0.5774
+Predictions saved to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model2_nonstationary/output/model2_nonstationary_features/predictions_SVM_RBF.csv
+Misclassified samples saved to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model2_nonstationary/output/model2_nonstationary_features/misclassified_SVM_RBF.csv (188 errors)
+================================================================================
+
+
+[6/6] Saving Results
+================================================================================
+
+Saving results to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model2_nonstationary/output/model2_nonstationary_features
+  RandomForest metrics: model2_features_RandomForest_metrics.json
+  XGBoost metrics: model2_features_XGBoost_metrics.json
+  CatBoost metrics: model2_features_CatBoost_metrics.json
+  SVM_RBF metrics: model2_features_SVM_RBF_metrics.json
+  Summary comparison: model2_features_summary.json
+
+================================================================================
+SAVING BEST MODEL
+================================================================================
+
+ Best Model: SVM_RBF
+   Accuracy: 0.5913 (59.13%)
+
+Model saved to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model2_nonstationary/output/model2_nonstationary_features/model2_nonstationary_classifier.pkl
+Scaler saved to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model2_nonstationary/output/model2_nonstationary_features/scaler.pkl
+Metadata saved to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model2_nonstationary/output/model2_nonstationary_features/model2_metadata.pkl
+
+================================================================================
+ MODEL 2 TRAINING COMPLETE!
+================================================================================
+
+Mode: FEATURES
+Best Model: SVM_RBF
+Accuracy: 59.13%
+Saved to: /arf/home/iguzel/ts-stationary/hierarchical-ts-classification/03-models/hierarchical/model2_nonstationary/output/model2_nonstationary_features/model2_nonstationary_classifier.pkl
+
+Next steps:
+  1. Review classification report and confusion matrix above
+  2. Test model: python test_model2.py
+  3. If accuracy is good (>80%), proceed to Model 3 (sub-categories)
+  4. Or build hierarchical pipeline combining Model 1 + Model 2
+================================================================================
+============================================================
+Training Completed Successfully!
+============================================================
+Model 1 Output: 03-models/hierarchical/model1_binary/output/model1_topological_5k
+Model 2 Output: 03-models/hierarchical/model2_nonstationary/output/model2_topological_5k
+============================================================

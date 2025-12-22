@@ -71,6 +71,9 @@ function log_run() {
     echo -e "${YELLOW}>>> Running $script_name...${NC}"
     echo "    Log: $log_file"
     
+    # Set environment variable to prevent duplicate logging
+    export CALLED_FROM_MASTER=1
+    
     # Run script and pipe output to both stdout and log file
     # 2>&1 redirects stderr to stdout so both are captured
     bash "$script_name" 2>&1 | tee "$log_file"
@@ -81,6 +84,8 @@ function log_run() {
         echo -e "${RED}✗ $script_name failed. Check log for details.${NC}\n"
         exit 1
     fi
+    
+    unset CALLED_FROM_MASTER
 }
 
 # Update scripts with current configuration

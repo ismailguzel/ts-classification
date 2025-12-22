@@ -1,0 +1,203 @@
+{
+  "model_name": "RandomForest",
+  "train_time": 0.3012428283691406,
+  "metrics": {
+    "train": {
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "test": {
+      "accuracy": 0.7365145228215768,
+      "precision": 0.7418604724488894,
+      "recall": 0.7365145228215768,
+      "f1": 0.7334112709740577
+    }
+  },
+  "classification_reports": {
+    "train": {
+      "Stationary": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 2016.0
+      },
+      "Non-Stationary": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 1836.0
+      },
+      "accuracy": 1.0,
+      "macro avg": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 3852.0
+      },
+      "weighted avg": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 3852.0
+      }
+    },
+    "test": {
+      "Stationary": {
+        "precision": 0.7125850340136054,
+        "recall": 0.8313492063492064,
+        "f1-score": 0.7673992673992674,
+        "support": 504.0
+      },
+      "Non-Stationary": {
+        "precision": 0.773936170212766,
+        "recall": 0.6326086956521739,
+        "f1-score": 0.6961722488038278,
+        "support": 460.0
+      },
+      "accuracy": 0.7365145228215768,
+      "macro avg": {
+        "precision": 0.7432606021131857,
+        "recall": 0.7319789510006902,
+        "f1-score": 0.7317857581015477,
+        "support": 964.0
+      },
+      "weighted avg": {
+        "precision": 0.7418604724488894,
+        "recall": 0.7365145228215768,
+        "f1-score": 0.7334112709740577,
+        "support": 964.0
+      }
+    }
+  },
+  "confusion_matrices": {
+    "train": [
+      [
+        2016,
+        0
+      ],
+      [
+        0,
+        1836
+      ]
+    ],
+    "test": [
+      [
+        419,
+        85
+      ],
+      [
+        169,
+        291
+      ]
+    ]
+  },
+  "timestamp_utc": "2025-12-22T21:02:10",
+  "feature_importance": {
+    "features": [
+      "topo_H1_mean_bin16",
+      "topo_H1_mean_bin15",
+      "topo_H1_mean_bin17",
+      "topo_H1_mean_bin14",
+      "topo_H1_mean_bin18",
+      "topo_H1_mean_bin19",
+      "topo_H1_mean_bin20",
+      "topo_H1_mean_bin13",
+      "topo_H1_mean_bin22",
+      "topo_H1_mean_bin23",
+      "topo_H1_mean_bin21",
+      "topo_H1_mean_bin25",
+      "topo_H1_mean_bin26",
+      "topo_H1_mean_bin33",
+      "topo_H1_mean_bin27",
+      "topo_H1_mean_bin12",
+      "topo_H1_mean_bin24",
+      "topo_H1_mean_bin58",
+      "topo_H1_mean_bin35",
+      "topo_H1_mean_bin11",
+      "topo_H1_mean_bin28",
+      "topo_H1_mean_bin38",
+      "topo_H1_mean_bin29",
+      "topo_H1_mean_bin7",
+      "topo_H1_mean_bin8",
+      "topo_H1_mean_bin10",
+      "topo_H1_mean_bin32",
+      "topo_H1_mean_bin55",
+      "topo_H1_mean_bin31",
+      "topo_H1_mean_bin30",
+      "topo_H1_mean_bin39",
+      "topo_H1_mean_bin40",
+      "topo_H1_mean_bin45",
+      "topo_H1_mean_bin47",
+      "topo_H1_mean_bin34",
+      "topo_H1_mean_bin54",
+      "topo_H1_mean_bin9",
+      "topo_H1_mean_bin36",
+      "topo_H1_mean_bin46",
+      "topo_H1_mean_bin37",
+      "topo_H1_mean_bin53",
+      "topo_H1_mean_bin48",
+      "topo_H1_mean_bin41",
+      "topo_H1_mean_bin43",
+      "topo_H1_mean_bin52",
+      "topo_H1_mean_bin42",
+      "topo_H1_mean_bin51",
+      "topo_H1_mean_bin44",
+      "topo_H1_mean_bin49",
+      "topo_H1_mean_bin50"
+    ],
+    "importances": [
+      0.060431251952871703,
+      0.05706640591770533,
+      0.04675201557543669,
+      0.044605591530770455,
+      0.037847018189781687,
+      0.03506898677541028,
+      0.028574902562774177,
+      0.026623775062714215,
+      0.026156020465736778,
+      0.024039183478994253,
+      0.021930400544842407,
+      0.018586507394189485,
+      0.018231301054239937,
+      0.01781075579011575,
+      0.017282386641125,
+      0.017160034532834007,
+      0.01711978688123402,
+      0.017080894288688437,
+      0.016676065674731382,
+      0.016446215988107117,
+      0.01610199172461718,
+      0.016070470548636317,
+      0.016046246947010828,
+      0.01588301119655248,
+      0.015779094845377182,
+      0.015640924272993333,
+      0.015580353146112868,
+      0.015500354976942304,
+      0.015455816798732327,
+      0.015345680534788853,
+      0.015298262170972092,
+      0.015171776884505737,
+      0.015049640998662487,
+      0.014885284811143078,
+      0.014877128170120357,
+      0.014695293867811243,
+      0.014616798508883628,
+      0.014421797781460357,
+      0.0143610901488562,
+      0.014065584626090935,
+      0.01393869803168196,
+      0.013612438663351626,
+      0.013454979489050674,
+      0.01326491364553656,
+      0.013174834308002736,
+      0.012895034499327544,
+      0.012842850861528053,
+      0.012473440940563938,
+      0.01231492086037593,
+      0.01169178543800805
+    ]
+  }
+}
