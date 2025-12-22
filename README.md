@@ -71,6 +71,24 @@ bash run.sh baseline
 - **Data Leakage Prevention:** Automatically removes stationarity-related features (like ADF statistics) to ensure fair model evaluation.
 - **Feature Selection:** Selects the top 100 most relevant features to improve model speed and accuracy.
 
+## Dataset Categories
+
+The synthetic dataset includes **6 primary categories** covering diverse time series patterns:
+
+| Category | Count | Percentage | Description |
+|:---------|------:|:----------:|:------------|
+| **stationary** | 9,988 | 52.2% | AR, MA, ARMA, White Noise processes |
+| **trend** | 1,960 | 10.2% | Linear, Quadratic, Cubic, Exponential, Damped trends |
+| **volatility** | 1,996 | 10.4% | ARCH, GARCH, EGARCH, APARCH models |
+| **stochastic** | 1,995 | 10.4% | Random Walk, RW with Drift, ARI, IMA, ARIMA |
+| **anomaly** | 1,548 | 8.1% | Point Anomalies (Single/Multiple), Collective Anomalies |
+| **structural_break** | 1,660 | 8.7% | Mean Shift, Variance Shift, Trend Shift |
+| **Total** | **19,147** | **100%** | 20K dataset (unified-20k) |
+
+**Hierarchical Mapping:**
+- **Level 1 (Binary):** Stationary (1 category) vs Non-Stationary (5 categories)
+- **Level 2 (5-Class):** Trend, Volatility, Stochastic, Anomaly, Structural Break
+
 ## Performance
 
 | Model | Accuracy | Description |

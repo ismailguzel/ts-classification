@@ -200,19 +200,6 @@ python -c "import pandas as pd; df = pd.read_parquet('../data/raw/unified-20k/st
 
 **Error: ts-stationary not found**
 ```bash
-pip install ts-stationary
+pip install -e ./
 ```
 
-**Out of disk space**
-- Delete old datasets first
-- Use test dataset for development
-- Generate on machine with sufficient storage
-
-**Generation too slow**
-- Close other applications
-- Use SSD if available
-- Consider using test dataset only
-
----
-
-**Last Updated:** 2025-11-06

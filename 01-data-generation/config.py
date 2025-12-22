@@ -94,7 +94,7 @@ COUNTS_TEST = SCALE_CONFIGS['test']
 # Global Settings
 # ============================================================================
 LENGTH_CONFIG = {
-    'long': (1000, 10000)    # All datasets use this
+    'long': (1000, 2000)    # All datasets use this
 }
 
 RANDOM_SEED = 42
