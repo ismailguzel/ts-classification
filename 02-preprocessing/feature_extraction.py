@@ -7,8 +7,8 @@ Final step: Merges all chunks into the final dataset.
 
 Usage:
     python feature_extraction.py \
-        --input ../data/raw/unified-20k \
-        --output ../data/features/unified-20k/allfeatures \
+        --input ../data/raw/dataset \
+        --output ../data/features/dataset/allfeatures \
         --feature-set efficient \
         --n-jobs 100
 """

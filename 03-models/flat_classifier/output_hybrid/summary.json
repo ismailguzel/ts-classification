@@ -1,0 +1,26 @@
+{
+  "timestamp_utc": "2026-05-11T14:23:18",
+  "feature_type": "hybrid",
+  "n_features": 118,
+  "n_classes": 10,
+  "n_train": 800,
+  "n_test": 200,
+  "models": {
+    "RandomForest": {
+      "test_accuracy": 0.925,
+      "train_accuracy": 1.0
+    },
+    "XGBoost": {
+      "test_accuracy": 0.945,
+      "train_accuracy": 1.0
+    },
+    "CatBoost": {
+      "test_accuracy": 0.945,
+      "train_accuracy": 0.99875
+    },
+    "SVM_RBF": {
+      "test_accuracy": 0.91,
+      "train_accuracy": 0.95875
+    }
+  }
+}

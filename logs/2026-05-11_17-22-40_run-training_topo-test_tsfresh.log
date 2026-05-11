@@ -1,0 +1,142 @@
+============================================================
+Training — topo-test  |  features: tsfresh
+============================================================
+Input : /Users/iguzel/Desktop/hierarchical-ts-classification/data/features/topo-test/selected
+Output: /Users/iguzel/Desktop/hierarchical-ts-classification/03-models/flat_classifier/output
+Start : Mon May 11 17:22:40 +03 2026
+================================================================================
+FLAT CLASSIFICATION
+================================================================================
+Feature type  : tsfresh
+Features path : /Users/iguzel/Desktop/hierarchical-ts-classification/data/features/topo-test/selected
+Classifier    : all
+n_jobs        : -1
+Save dir      : /Users/iguzel/Desktop/hierarchical-ts-classification/03-models/flat_classifier/output
+================================================================================
+
+[1/5] Loading features (tsfresh)...
+Loading from target subdirectory 'primary'
+  Features: /Users/iguzel/Desktop/hierarchical-ts-classification/data/features/topo-test/selected/primary/features.parquet
+  Labels:   /Users/iguzel/Desktop/hierarchical-ts-classification/data/features/topo-test/selected/primary/labels.parquet
+  Features shape: (1000, 101)
+  Labels shape:   (1000, 2)
+  Aligned samples: 1,000
+
+  Class distribution:
+    0:    100 ( 10.0%)
+    1:    100 ( 10.0%)
+    2:    100 ( 10.0%)
+    3:    100 ( 10.0%)
+    4:    100 ( 10.0%)
+    5:    100 ( 10.0%)
+    6:    100 ( 10.0%)
+    7:    100 ( 10.0%)
+    8:    100 ( 10.0%)
+    9:    100 ( 10.0%)
+
+Feature matrix : (1000, 100)
+Classes        : 10
+
+[2/5] Splitting data (stratified)...
+Train : 800   Test : 200
+
+[3/5] Training models...
+
+  ▸ RandomForest
+
+================================================================================
+EVALUATING MODEL: RandomForest
+================================================================================
+
+ ACCURACY:
+  Train: 1.0000
+  Test:  0.9300
+
+ WEIGHTED METRICS:
+  Test Precision: 0.9382
+  Test Recall:    0.9300
+  Test F1:        0.9309
+Predictions saved to: /Users/iguzel/Desktop/hierarchical-ts-classification/03-models/flat_classifier/output/predictions_RandomForest.csv
+Misclassified samples saved to: /Users/iguzel/Desktop/hierarchical-ts-classification/03-models/flat_classifier/output/misclassified_RandomForest.csv (14 errors)
+Feature importance saved to: /Users/iguzel/Desktop/hierarchical-ts-classification/03-models/flat_classifier/output/feature_importance_RandomForest.csv
+================================================================================
+
+    accuracy=0.9300  time=0.2s
+
+  ▸ XGBoost
+
+================================================================================
+EVALUATING MODEL: XGBoost
+================================================================================
+
+ ACCURACY:
+  Train: 1.0000
+  Test:  0.9450
+
+ WEIGHTED METRICS:
+  Test Precision: 0.9504
+  Test Recall:    0.9450
+  Test F1:        0.9454
+Predictions saved to: /Users/iguzel/Desktop/hierarchical-ts-classification/03-models/flat_classifier/output/predictions_XGBoost.csv
+Misclassified samples saved to: /Users/iguzel/Desktop/hierarchical-ts-classification/03-models/flat_classifier/output/misclassified_XGBoost.csv (11 errors)
+Feature importance saved to: /Users/iguzel/Desktop/hierarchical-ts-classification/03-models/flat_classifier/output/feature_importance_XGBoost.csv
+================================================================================
+
+    accuracy=0.9450  time=0.7s
+
+  ▸ CatBoost
+
+================================================================================
+EVALUATING MODEL: CatBoost
+================================================================================
+
+ ACCURACY:
+  Train: 0.9988
+  Test:  0.9500
+
+ WEIGHTED METRICS:
+  Test Precision: 0.9553
+  Test Recall:    0.9500
+  Test F1:        0.9501
+Predictions saved to: /Users/iguzel/Desktop/hierarchical-ts-classification/03-models/flat_classifier/output/predictions_CatBoost.csv
+Misclassified samples saved to: /Users/iguzel/Desktop/hierarchical-ts-classification/03-models/flat_classifier/output/misclassified_CatBoost.csv (10 errors)
+Feature importance saved to: /Users/iguzel/Desktop/hierarchical-ts-classification/03-models/flat_classifier/output/feature_importance_CatBoost.csv
+================================================================================
+
+    accuracy=0.9500  time=4.0s
+
+  ▸ SVM_RBF
+
+================================================================================
+EVALUATING MODEL: SVM_RBF
+================================================================================
+
+ ACCURACY:
+  Train: 0.9475
+  Test:  0.8900
+
+ WEIGHTED METRICS:
+  Test Precision: 0.9070
+  Test Recall:    0.8900
+  Test F1:        0.8917
+Predictions saved to: /Users/iguzel/Desktop/hierarchical-ts-classification/03-models/flat_classifier/output/predictions_SVM_RBF.csv
+Misclassified samples saved to: /Users/iguzel/Desktop/hierarchical-ts-classification/03-models/flat_classifier/output/misclassified_SVM_RBF.csv (22 errors)
+================================================================================
+
+    accuracy=0.8900  time=0.1s
+
+[4/5] Saving metrics...
+
+[5/5] Saving best model...
+
+================================================================================
+TRAINING COMPLETE
+================================================================================
+Best model : CatBoost  (95.00%)
+Output dir : /Users/iguzel/Desktop/hierarchical-ts-classification/03-models/flat_classifier/output
+================================================================================
+============================================================
+Training Complete!  features=tsfresh
+Output: /Users/iguzel/Desktop/hierarchical-ts-classification/03-models/flat_classifier/output
+End   : Mon May 11 17:22:47 +03 2026
+============================================================

@@ -1,70 +1,93 @@
 #!/bin/bash
-# Training Pipeline for 20K Dataset
-# Steps: Model 1 Training -> Model 2 Training
+# Training Pipeline — Flat classifier
+#
+# Usage:
+#   bash run-training.sh                       # full dataset, TSFresh features
+#   bash run-training.sh test                  # test dataset (39 classes), TSFresh
+#   bash run-training.sh topo-test             # topo-test dataset (10 classes), TSFresh
+#   bash run-training.sh test topo             # test, topology features only
+#   bash run-training.sh topo-test topo        # topo-test, topology features only
+#   bash run-training.sh test hybrid           # test, TSFresh + topology merged
+#   bash run-training.sh topo-test hybrid      # topo-test, TSFresh + topology merged
 
-set -e  # Exit on error
+set -e
 
-# Load required module (if on cluster)
-if command -v module &> /dev/null; then
-    module load apps/truba-ai/gpu-2024.0
-fi
+PYTHON="${PYTHON:-python}"
 
-# Activate environment
-conda activate ts-sktime
+MODE=${1:-full}         # full | test | topo-test
+FEATURES=${2:-tsfresh}  # tsfresh | topo | hybrid
 
-# --- Configuration ---
-SCALE="20k"
-
-# Paths
 BASE_DIR=$(pwd)
-DATA_SELECTED="$BASE_DIR/data/features/unified-$SCALE/selected"
 
-# Validate Input
-if [ ! -d "$DATA_SELECTED" ]; then
-    echo "✗ Error: Preprocessed data not found at $DATA_SELECTED"
-    echo "  Please run 'run-preprocessing.sh' first."
+if [ "$MODE" == "test" ]; then
+    DATA_TSFRESH="$BASE_DIR/data/features/test/selected"
+    DATA_TOPO="$BASE_DIR/data/features/test/topological_selected"
+elif [ "$MODE" == "topo-test" ]; then
+    DATA_TSFRESH="$BASE_DIR/data/features/topo-test/selected"
+    DATA_TOPO="$BASE_DIR/data/features/topo-test/topological_selected"
+else
+    DATA_TSFRESH="$BASE_DIR/data/features/dataset/selected"
+    DATA_TOPO="$BASE_DIR/data/features/dataset/topological_selected"
+fi
+
+case "$FEATURES" in
+    topo)
+        DATA_SELECTED="$DATA_TOPO"
+        OUTPUT_DIR="$BASE_DIR/03-models/flat_classifier/output_topo"
+        EXTRA_PATH=""
+        PREREQ="bash run-preprocessing.sh $MODE topo"
+        ;;
+    hybrid)
+        DATA_SELECTED="$DATA_TSFRESH"
+        OUTPUT_DIR="$BASE_DIR/03-models/flat_classifier/output_hybrid"
+        EXTRA_PATH="$DATA_TOPO"
+        PREREQ="bash run-preprocessing.sh $MODE topo"
+        ;;
+    *)  # tsfresh (default)
+        DATA_SELECTED="$DATA_TSFRESH"
+        OUTPUT_DIR="$BASE_DIR/03-models/flat_classifier/output"
+        EXTRA_PATH=""
+        PREREQ="bash run-preprocessing.sh $MODE"
+        ;;
+esac
+
+[ -d "$DATA_SELECTED" ] || {
+    echo "Error: $DATA_SELECTED not found."
+    echo "  Run: $PREREQ"
     exit 1
+}
+
+if [ -n "$EXTRA_PATH" ]; then
+    [ -d "$EXTRA_PATH" ] || {
+        echo "Error: $EXTRA_PATH not found."
+        echo "  Run: $PREREQ"
+        exit 1
+    }
 fi
 
 echo "============================================================"
-echo "Starting Training Pipeline ($SCALE)"
+echo "Training — $MODE  |  features: $FEATURES"
 echo "============================================================"
-echo "Input: $DATA_SELECTED"
-echo ""
+echo "Input : $DATA_SELECTED"
+[ -n "$EXTRA_PATH" ] && echo "Extra : $EXTRA_PATH"
+echo "Output: $OUTPUT_DIR"
+echo "Start : $(date)"
 
-# Model 1: Binary Classification
-echo "Training Model 1 (Binary)..."
-cd 03-models/hierarchical/model1_binary
-mkdir -p ./output
-python train_model1.py \
-    --features-path "$DATA_SELECTED" \
-    --save-dir ./output \
-    --mode features
+mkdir -p "$OUTPUT_DIR"
 
-MODEL1_PATH="./output/model1_binary_features/model1_binary_classifier.pkl"
-if [ ! -f "$MODEL1_PATH" ]; then
-    echo "✗ Error: Model 1 training failed. Model file not found: $MODEL1_PATH"
-    exit 1
-fi
+TRAIN_CMD="$PYTHON 03-models/flat_classifier/train.py \
+    --features-path $DATA_SELECTED \
+    --save-dir      $OUTPUT_DIR \
+    --n-jobs        -1"
 
-# Model 2: Non-Stationary Classification
-echo "Training Model 2 (Non-Stationary)..."
-cd ../model2_nonstationary
-mkdir -p ./output
-python train_model2.py \
-    --features-path "$DATA_SELECTED" \
-    --save-dir ./output \
-    --mode features
+[ -n "$EXTRA_PATH" ] && TRAIN_CMD="$TRAIN_CMD --extra-features-path $EXTRA_PATH"
 
-MODEL2_PATH="./output/model2_nonstationary_features/model2_nonstationary_classifier.pkl"
-if [ ! -f "$MODEL2_PATH" ]; then
-    echo "✗ Error: Model 2 training failed. Model file not found: $MODEL2_PATH"
-    exit 1
-fi
+$TRAIN_CMD
+
+[ -f "$OUTPUT_DIR/classifier.pkl" ] || { echo "Error: Training failed."; exit 1; }
 
 echo "============================================================"
-echo "Training Completed Successfully!"
-echo "============================================================"
-echo "Model 1 Output: 03-models/hierarchical/model1_binary/output/model1_binary_features"
-echo "Model 2 Output: 03-models/hierarchical/model2_nonstationary/output/model2_nonstationary_features"
+echo "Training Complete!  features=$FEATURES"
+echo "Output: $OUTPUT_DIR"
+echo "End   : $(date)"
 echo "============================================================"

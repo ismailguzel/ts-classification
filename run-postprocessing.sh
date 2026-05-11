@@ -1,103 +1,71 @@
 #!/bin/bash
-# ============================================================================
 # Post-Processing Pipeline
-# ============================================================================
-# Analysis and visualization of training results.
-# Steps:
-#   1. Visualize Feature Importance
-#   2. Analyze Errors (Misclassifications)
-#   3. Generate Report Figures
-# ============================================================================
+#
+# Usage:
+#   bash run-postprocessing.sh                       # TSFresh output (default)
+#   bash run-postprocessing.sh test                  # test, TSFresh
+#   bash run-postprocessing.sh topo-test             # topo-test (10 classes), TSFresh
+#   bash run-postprocessing.sh test topo             # test, topology
+#   bash run-postprocessing.sh topo-test topo        # topo-test, topology
+#   bash run-postprocessing.sh test hybrid           # test, hybrid
 
-set -e  # Exit on error
+set -e
 
-# Load required module (if on cluster)
-if command -v module &> /dev/null; then
-    module load apps/truba-ai/gpu-2024.0
-fi
+PYTHON="${PYTHON:-python}"
 
-# Activate environment
-conda activate ts-sktime
+MODE=${1:-full}         # full | test | topo-test
+FEATURES=${2:-tsfresh}  # tsfresh | topo | hybrid
 
-# --- Configuration ---
 BASE_DIR=$(pwd)
 POST_DIR="$BASE_DIR/04-postprocessing"
-FIGURES_DIR="$POST_DIR/figures"
+FIGURES_DIR="$POST_DIR/figures/${MODE}_${FEATURES}"
 
-# Validate Environment
-if [ ! -d "$POST_DIR" ]; then
-    echo "✗ Error: Post-processing directory not found: $POST_DIR"
-    exit 1
-fi
+case "$FEATURES" in
+    topo)    MODEL_DIR="$BASE_DIR/03-models/flat_classifier/output_topo" ;;
+    hybrid)  MODEL_DIR="$BASE_DIR/03-models/flat_classifier/output_hybrid" ;;
+    *)       MODEL_DIR="$BASE_DIR/03-models/flat_classifier/output" ;;
+esac
 
-# Check if models exist (basic check)
-MODEL1_DIR="$BASE_DIR/03-models/hierarchical/model1_binary/output"
-MODEL2_DIR="$BASE_DIR/03-models/hierarchical/model2_nonstationary/output"
-
-if [ ! -d "$MODEL1_DIR" ] && [ ! -d "$MODEL2_DIR" ]; then
-    echo "⚠ Warning: Model output directories not found. Scripts might fail if models aren't trained."
-    echo "  Model 1: $MODEL1_DIR"
-    echo "  Model 2: $MODEL2_DIR"
-fi
+[ -d "$MODEL_DIR" ] || {
+    echo "Warning: $MODEL_DIR not found. Run run-training.sh $MODE $FEATURES first."
+}
 
 echo "============================================================"
-echo "Starting Post-Processing Pipeline"
+echo "Post-Processing — $MODE  |  features: $FEATURES"
 echo "============================================================"
-echo "Start time: $(date)"
-echo ""
+echo "Model dir: $MODEL_DIR"
+echo "Start    : $(date)"
 
-# Create figures directory
 mkdir -p "$FIGURES_DIR"
-
 cd "$POST_DIR"
 
-# Model paths (matching run-training.sh)
-MODEL1_DIR="$BASE_DIR/03-models/hierarchical/model1_binary/output/model1_binary_features"
-MODEL2_DIR="$BASE_DIR/03-models/hierarchical/model2_nonstationary/output/model2_nonstationary_features"
-
-# 1. Feature Importance Analysis
-echo "Step 1: Analyzing Feature Importance..."
-
-# Model 1 (Binary)
-echo "  - Model 1 (Binary)..."
-python visualize_feature_importance.py \
+echo "Step 1: Feature Importance"
+$PYTHON visualize_feature_importance.py \
     --model model1 \
-    --saved-models-dir "$MODEL1_DIR" \
+    --saved-models-dir "$MODEL_DIR" \
+    --figures-dir "$FIGURES_DIR" \
     --top 30 \
     --save-fig \
     --normalize sum
 
-# Model 2 (5-Class)
-echo "  - Model 2 (5-Class)..."
-python visualize_feature_importance.py \
-    --model model2 \
-    --saved-models-dir "$MODEL2_DIR" \
-    --top 30 \
-    --save-fig \
-    --normalize sum
-
-# 2. Error Analysis
-echo "Step 2: Analyzing Errors..."
-
-# Model 1 Errors
-echo "  - Model 1 Errors..."
-python visualize_errors_simple.py \
+echo "Step 2: Error Analysis"
+$PYTHON visualize_errors_simple.py \
     --model model1 \
-    --saved-models-dir "$MODEL1_DIR" \
+    --saved-models-dir "$MODEL_DIR" \
+    --figures-dir "$FIGURES_DIR" \
     --save-fig
 
-# Model 2 Errors
-echo "  - Model 2 Errors..."
-python visualize_errors_simple.py \
-    --model model2 \
-    --saved-models-dir "$MODEL2_DIR" \
+echo "Step 3: Confusion Matrices"
+$PYTHON visualize_confusion_matrices.py \
+    --model model1 \
+    --saved-models-dir "$MODEL_DIR" \
+    --figures-dir "$FIGURES_DIR" \
     --save-fig
 
 cd "$BASE_DIR"
 
-echo ""
 echo "============================================================"
-echo "Post-Processing Complete!"
+echo "Post-Processing Complete!  features=$FEATURES"
+echo "Figures: $FIGURES_DIR"
+echo "End: $(date)"
 echo "============================================================"
-echo "Figures saved in: $FIGURES_DIR"
-echo "End time: $(date)"

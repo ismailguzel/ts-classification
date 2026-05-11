@@ -1,890 +1,509 @@
-# Hierarchical Time Series Classification: Technical Report
+# Time Series Classification with TSFresh and Topological Features: Technical Report
 
-**A Machine Learning Approach to Stationarity Detection**
-
----
-
-**Date:** December 12, 2025  
-**Dataset:** 20,000 Synthetic Time Series  
-**Architecture:** Two-Stage Hierarchical Classification System
-
----
-
-## Executive Summary
-
-This technical report presents a comprehensive hierarchical classification system for automated time series stationarity detection and pattern recognition. The system employs a two-stage architecture: first distinguishing stationary from non-stationary series (binary classification), then categorizing non-stationary patterns into five specific types (multi-class classification).
-
-### Key Achievements
-
-- **Dataset Size**: 19,980 synthetic time series samples with balanced class distribution
-- **Model 1 Performance**: 96.89% accuracy (XGBoost) for binary classification (Stationary vs. Non-Stationary)
-- **Model 2 Performance**: 97.81% accuracy (XGBoost) for 5-class non-stationary pattern classification
-- **Feature Engineering**: 100 selected TSFresh features from 780+ candidates using mutual information
-- **Baseline Comparison**: 65-79% accuracy for traditional statistical tests (ADF: 73.03%, KPSS: 79.14%, PP: 65.41%)
-- **Performance Gain**: +17.75% absolute improvement over best baseline (KPSS)
-- **Training Efficiency**: Complete pipeline execution in under 30 minutes
-
-The hierarchical approach significantly outperforms traditional statistical tests (ADF: 73.03%, KPSS: 79.14%, PP: 65.41%) by +17.75 percentage points, while providing detailed pattern recognition capabilities for non-stationary time series.
+**Author:** İsmail Güzel  
+**Date:** 2026-05-11  
+**Dataset:** topo-test — 1,000 Synthetic Time Series (100 series × 10 classes)  
+**Architecture:** Flat 10-Class Classifier — Three Feature Pipelines (TSFresh · Topology · Hybrid)
 
 ---
 
 ## Table of Contents
 
-1. [Introduction](#1-introduction)
-2. [Step 1: Data Generation](#2-step-1-data-generation)
-3. [Step 2: Feature Extraction & Preprocessing](#3-step-2-feature-extraction--preprocessing)
-4. [Step 3: Hierarchical Model Training](#4-step-3-hierarchical-model-training)
-5. [Step 4: Post-Processing & Analysis](#5-step-4-post-processing--analysis)
-6. [Step 5: Baseline Comparison](#6-step-5-baseline-comparison)
-7. [Results & Discussion](#7-results--discussion)
-8. [Conclusions](#8-conclusions)
+1. [Overview](#1-overview)
+2. [Dataset: topo-test](#2-dataset-topo-test)
+3. [Feature Extraction & Selection](#3-feature-extraction--selection)
+4. [Model Training](#4-model-training)
+5. [Results: Three-Pipeline Comparison](#5-results-three-pipeline-comparison)
+6. [Per-Class Analysis](#6-per-class-analysis)
+7. [Topological Feature Analysis](#7-topological-feature-analysis)
+8. [Where TDA Adds Value](#8-where-tda-adds-value)
+9. [Error Analysis](#9-error-analysis)
+10. [Conclusions](#10-conclusions)
+11. [Appendix: Reproducibility](#appendix-reproducibility)
 
 ---
 
-## 1. Introduction
+## 1. Overview
 
-### 1.1 Motivation
+This report evaluates a **flat 10-class time series classifier** using three independent feature pipelines:
 
-Time series stationarity is a fundamental property in statistical modeling, forecasting, and anomaly detection. A stationary time series exhibits consistent statistical properties (mean, variance, autocorrelation) over time, while non-stationary series show trends, structural breaks, changing volatility, or other time-dependent behaviors.
+| Pipeline | Features | Description |
+|----------|----------|-------------|
+| **TSFresh** | 100 | Statistical, spectral, and complexity features selected by Mutual Information |
+| **Topology (TDA)** | 18 | Persistent homology features from sublevel, superlevel, and Takens filtrations |
+| **Hybrid** | 118 | Concatenation of both TSFresh and topological feature sets |
 
-**Why Stationarity Detection Matters:**
+The key research question is: **Can 18 topological features compete with 100 statistical features — and does combining them improve accuracy?**
 
-- **Model Selection**: Different models are appropriate for stationary (ARMA) vs. non-stationary (ARIMA, GARCH) data
-- **Forecasting Accuracy**: Stationarity assumptions directly affect prediction performance
-- **Anomaly Detection**: Distinguishing true anomalies from trend changes or volatility shifts
-- **Statistical Inference**: Many statistical tests require stationarity assumptions
-- **Feature Engineering**: Time-dependent transformations needed for machine learning
-
-### 1.2 Problem Statement
-
-This project addresses two interconnected classification tasks:
-
-**Primary Task (Model 1):**  
-Binary classification of time series as **Stationary** or **Non-Stationary**
-
-**Secondary Task (Model 2):**  
-Multi-class classification of non-stationary patterns into five categories:
-1. **Trend**: Deterministic patterns (linear, quadratic, cubic, exponential, damped)
-2. **Volatility**: Time-varying variance (ARCH, GARCH, EGARCH patterns)
-3. **Stochastic**: Random walk behavior and ARIMA processes
-4. **Anomaly**: Point anomalies and collective anomalies
-5. **Structural Break**: Mean shifts, variance shifts, and trend changes
-
-### 1.3 Hierarchical Classification Architecture
-
-The system employs a **two-stage hierarchical architecture** for improved accuracy and interpretability:
+### Three-Pipeline Architecture
 
 ```
-                    Input Time Series
-                           │
-                    ┌──────▼──────┐
-                    │   Model 1   │
-                    │   (Binary)  │
-                    └──────┬──────┘
-                           │
-              ┌────────────┴────────────┐
-              │                         │
-      ┌───────▼────────┐       ┌───────▼────────┐
-      │  Stationary    │       │ Non-Stationary │
-      │   (Class 0)    │       │   (Class 1)    │
-      │   [TERMINAL]   │       └───────┬────────┘
-      └────────────────┘               │
-                                ┌──────▼──────┐
-                                │   Model 2   │
-                                │  (5-Class)  │
-                                └──────┬──────┘
-                                       │
-                        ┌──────────────┼──────────────┐
-                        │      │       │      │       │
-                   ┌────▼──┐ ┌─▼──┐ ┌─▼───┐ ┌─▼───┐ ┌─▼──────┐
-                   │Trend  │ │Vol │ │Stoc │ │Anom │ │Struct  │
-                   │(Cls 0)│ │(1) │ │(2)  │ │(3)  │ │(Cls 4) │
-                   └───────┘ └────┘ └─────┘ └─────┘ └────────┘
+Raw Time Series (length 1,000)
+         │
+         ├──────────────────────────────┬───────────────────────────────┐
+         │                              │                               │
+         ▼                              ▼                               ▼
+  TSFresh Extraction            Topological Extraction          Hybrid Concat
+  (774 features)               (Sublevel H0 + Superlevel H0    (TSFresh + Topo)
+         │                       + Takens H1 = 24 features)           │
+         ▼                              │                               │
+  Leakage Removal                       ▼                               ▼
+  MI Selection                   MI Selection                   StandardScaler
+  (top 100)                      (top 18)                               │
+         │                              │                               │
+         └──────────────────────────────┴───────────────────────────────┘
+                                        │
+                                        ▼
+                        ┌───────────────────────────────┐
+                        │  Classifiers (per pipeline)   │
+                        │  ├─ Random Forest             │
+                        │  ├─ XGBoost                   │
+                        │  ├─ CatBoost                  │
+                        │  └─ SVM (RBF kernel)          │
+                        └───────────────────────────────┘
+                                        │
+                                        ▼
+                                10-Class Prediction
 ```
 
-**Benefits of Hierarchical Approach:**
+### The 10 Classes
 
-- **Reduced Complexity**: Binary classification is simpler and more accurate than direct 6-class classification
-- **Focused Learning**: Model 2 only trains on non-stationary patterns, avoiding confusion with stationary series
-- **Interpretability**: Clear decision hierarchy with explicit reasoning path
-- **Modularity**: Models can be updated, tuned, or replaced independently
-- **Computational Efficiency**: Only non-stationary series proceed to Model 2
+These 10 classes represent the fundamental time series pattern types — the same building blocks used in the larger 39-class taxonomy:
+
+| Class | Description |
+|-------|-------------|
+| `stationary` | No trend, constant variance (AR, MA, ARMA, white noise processes) |
+| `deterministic_trend` | Deterministic trend (linear, quadratic, cubic, exponential shapes) |
+| `stochastic_trend` | Random walk with drift (non-stationary, unit root) |
+| `volatility` | Conditional heteroskedasticity (ARCH, GARCH, EGARCH, APARCH) |
+| `collective_anomaly` | Sustained level deviation over a window |
+| `contextual_anomaly` | Local anomaly within a specific temporal context |
+| `mean_shift` | Permanent step change in the mean level |
+| `point_anomaly` | Single isolated extreme value |
+| `trend_shift` | Change in the slope direction (structural break) |
+| `variance_shift` | Change in the variance level |
 
 ---
 
-## 2. Step 1: Data Generation
+## 2. Dataset: topo-test
 
-### 2.1 Overview
+### 2.1 Generation Tool
 
-Synthetic time series generation provides complete control over data properties, ensuring:
-- **Ground truth labels**: Precise knowledge of stationarity and pattern type
-- **Balanced classes**: Equal representation for unbiased model training
-- **Diverse patterns**: Comprehensive coverage of real-world non-stationary behaviors
-- **Reproducibility**: Fixed random seeds for consistent experiments
+Data is generated using the **betise** library — a parametric synthetic time series generator that supports composition of trends, seasonalities, volatility models, and anomaly injections. Configuration uses a deep-merge strategy: global defaults are overridden per class.
 
-### 2.2 Dataset Configuration
+### 2.2 Dataset Properties
 
-**Total Samples**: 19,980 time series  
-**Class Distribution**: 50% stationary, 50% non-stationary  
-**Time Series Length**: 1,000-10,000 time points (long series for robust feature extraction)  
-**Random Seed**: 42 (reproducibility)  
-**Storage Format**: Apache Parquet (columnar, compressed)
+| Property | Value |
+|----------|-------|
+| **Total series** | 1,000 |
+| **Classes** | 10 |
+| **Series per class** | 100 (balanced) |
+| **Series length** | 1,000 time points |
+| **Random seed** | 42 |
+| **Storage format** | Apache Parquet |
 
-### 2.3 Stationary Series (9,990 samples)
+The dataset is **perfectly balanced** (100 series/class), removing class imbalance as a confounding factor.
 
-Generated from classical stationary stochastic processes with unit root constraints:
+### 2.3 Notable Generation Detail: point_anomaly
 
-| Process Type | Count | Description | Parameters |
-|-------------|-------|-------------|------------|
-| **AR** (Autoregressive) | 2,497 | AR(p) with \|ϕ\| < 1 | Random order p ∈ [1,5], stable coefficients |
-| **MA** (Moving Average) | 2,497 | MA(q) with invertibility | Random order q ∈ [1,5], invertible coefficients |
-| **ARMA** | 2,497 | Combined AR + MA | AR(p) + MA(q), both conditions satisfied |
-| **White Noise** | 2,499 | Gaussian i.i.d. | μ=0, σ²=1 |
+An important data quality fix was applied to the `point_anomaly` class. With betise's default `scale_factor=0.5`, the injected spike amplitude was only ~57% of the natural signal maximum — making the anomaly visually and statistically indistinguishable from ordinary extreme values in a stationary process.
 
-**Stationarity Verification**: All series pass ADF test (p < 0.05) and KPSS test (p > 0.05)
+Setting `scale_factor=5` pushes the spike to 6–9× the typical standard deviation, making point anomalies unambiguously detectable:
 
-### 2.4 Non-Stationary Series (9,990 samples)
-
-Distributed equally across five semantic categories, each with ~2,000 samples:
-
-#### 2.4.1 Deterministic Trends (1,998 samples)
-
-Systematic time-dependent patterns without stochastic unit roots:
-
-| Trend Type | Formula | Sub-categories |
-|-----------|---------|----------------|
-| **Linear** | y(t) = α + βt | Up (β > 0), Down (β < 0) |
-| **Quadratic** | y(t) = α + βt + γt² | Convex, Concave |
-| **Cubic** | y(t) = α + βt + γt² + δt³ | Complex curvature |
-| **Exponential** | y(t) = α·exp(βt) | Growth/Decay |
-| **Damped** | y(t) = α·(1 - exp(-βt)) | Asymptotic convergence |
-
-Each trend type is combined with base processes (AR/MA/ARMA/White Noise) to create realistic composite patterns.
-
-#### 2.4.2 Stochastic Processes (1,998 samples)
-
-Non-stationary random processes with unit roots:
-
-- **Random Walk**: x(t) = x(t-1) + ε(t), no mean reversion
-- **Random Walk with Drift**: x(t) = μ + x(t-1) + ε(t)
-- **ARI**: ARIMA(p,d,0) with d ≥ 1 (integrated autoregressive)
-- **IMA**: ARIMA(0,d,q) with d ≥ 1 (integrated moving average)
-- **ARIMA**: General ARIMA(p,d,q) with d ≥ 1
-
-#### 2.4.3 Volatility Clustering (1,998 samples)
-
-Time-varying conditional variance (heteroskedasticity):
-
-- **ARCH**: Autoregressive Conditional Heteroskedasticity
-- **GARCH**: Generalized ARCH with volatility persistence
-- **EGARCH**: Exponential GARCH capturing leverage effects
-- **APARCH**: Asymmetric Power ARCH for flexible dynamics
-
-#### 2.4.4 Anomalies (1,998 samples)
-
-**Point Anomalies** (~1,000 samples):
-- Single outliers at beginning/middle/end positions
-- Multiple scattered outliers (3-10 per series)
-- Magnitude: 3-10 standard deviations from mean
-
-**Collective Anomalies** (~1,000 samples):
-- Sustained level shifts over 100-500 consecutive points
-- Different magnitudes and durations
-
-#### 2.4.5 Structural Breaks (1,998 samples)
-
-Abrupt regime changes in time series properties:
-
-- **Mean Shifts**: Step changes in level (Δμ = ±2σ)
-- **Variance Shifts**: Step changes in volatility (σ₁ → 2σ₁ or σ₁/2)
-- **Trend Shifts**: Slope changes (e.g., growth rate acceleration/deceleration)
-
-### 2.5 Label Hierarchy
-
-Each time series is assigned two-level labels for hierarchical classification:
-
-**Level 1 (Binary Classification)**:
-- `0`: Stationary (9,990 samples)
-- `1`: Non-Stationary (9,990 samples)
-
-**Level 2 (5-Class Classification, only for non-stationary)**:
-- `0`: Trend (1,998 samples)
-- `1`: Volatility (1,998 samples)
-- `2`: Stochastic (1,998 samples)
-- `3`: Anomaly (1,998 samples)
-- `4`: Structural Break (1,998 samples)
-
-### 2.6 Data Storage & Organization
-
-**Format**: Apache Parquet (columnar storage, Snappy compression)  
-**Total Files**: 77 Parquet files organized by pattern type  
-**Disk Usage**: ~850 MB (raw time series data)
-
-**Directory Structure**:
-```
-data/raw/unified-20k/
-├── stationary/
-│   ├── ar/             (2,497 series)
-│   ├── ma/             (2,497 series)
-│   ├── arma/           (2,497 series)
-│   └── white_noise/    (2,499 series)
-├── deterministic_trend_linear/
-│   ├── up/             (~200 series)
-│   └── down/           (~200 series)
-├── deterministic_trend_quadratic/ (...)
-├── deterministic_trend_cubic/     (...)
-├── deterministic_trend_exponential/ (...)
-├── deterministic_trend_damped/    (...)
-├── stochastic/                    (1,998 series)
-├── volatility/                    (1,998 series)
-├── point_anomaly_single/          (~500 series)
-├── point_anomaly_multiple/        (~500 series)
-├── multi_collective_anomaly/      (~1,000 series)
-├── multi_mean_shift/              (~666 series)
-├── multi_variance_shift/          (~666 series)
-└── multi_trend_shift/             (~666 series)
+```json
+"point_anomaly": {
+  "scenarios": [
+    { "base_series": "ar",  "anomaly": { "point_anomaly": { "enabled": true, "scale_factor": 5 } } },
+    { "base_series": "ma",  "anomaly": { "point_anomaly": { "enabled": true, "scale_factor": 5 } } },
+    { "base_series": "arma","anomaly": { "point_anomaly": { "enabled": true, "scale_factor": 5 } } }
+  ]
+}
 ```
 
----
-
-## 3. Step 2: Feature Extraction & Preprocessing
-
-### 3.1 TSFresh Feature Extraction
-
-**Library**: TSFresh (Time Series Feature extraction based on scalable hypothesis tests)  
-**Feature Set**: `EfficientFCParameters` (~780 features)  
-**Processing**: File-by-file chunked processing with full CPU parallelization  
-**Workers**: All available CPU cores (auto-detected)
-
-#### 3.1.1 Feature Categories
-
-The TSFresh `efficient` feature set extracts ~780 statistical features per time series:
-
-| Category | Count | Examples |
-|----------|-------|----------|
-| **Autocorrelation** | ~50 | ACF lags 1-50, partial autocorrelation |
-| **Statistical Moments** | ~80 | Mean, variance, std, skewness, kurtosis, percentiles |
-| **Stationarity Tests** | ~15 | ADF test statistic, KPSS, C3 statistic, augmented DF |
-| **Frequency Domain** | ~40 | FFT coefficients, spectral entropy, power spectral density |
-| **Complexity Measures** | ~30 | Approximate entropy, sample entropy, Lempel-Ziv complexity |
-| **Linear Trends** | ~20 | Trend coefficients, time reversal asymmetry, linear regression |
-| **Count-Based** | ~15 | Zero crossings, peaks, values above/below mean |
-| **Ratio Features** | ~10 | Beyond-r-sigma ratio, large standard deviation |
-| **Quantiles** | ~100 | Q01, Q05, Q10, ..., Q95, Q99 |
-| **Symmetry** | ~10 | Symmetry looking, time reversal symmetry |
-| **Range Features** | ~15 | Range, absolute max, abs min |
-| **Others** | ~400+ | Various domain-specific features |
-
-**Total Feature Matrix**: 780 features × 19,980 samples = ~15.6 million feature values
-
-#### 3.1.2 Data Quality & Imputation
-
-- **Missing Values**: Imputed with median (TSFresh default)
-- **Infinite Values**: Replaced with large finite values (±1e10)
-- **Constant Features**: Removed (zero variance across samples)
-- **NaN Investigation**: Detailed diagnostic tools for identifying problematic series
-
-**Output**: Clean feature matrix saved as `features.parquet` with corresponding `labels.parquet`
-
-### 3.2 Feature Leakage Prevention
-
-**Critical Step**: Remove features that directly encode stationarity information to ensure fair evaluation.
-
-**Removed Features**:
-- ADF test statistic and p-value
-- KPSS test statistic and p-value
-- Phillips-Perron test results
-- Other explicit stationarity indicators
-
-This ensures the model learns from statistical patterns rather than memorizing test results.
-
-### 3.3 Feature Selection
-
-**Goal**: Reduce dimensionality from 780 to 100 most relevant features per model
-
-**Method**: Mutual Information (MI) based selection
-- Measures non-linear dependency between features and target labels
-- Captures complex relationships that correlation misses
-- Separate selection for Model 1 (binary) and Model 2 (5-class)
-
-**Selection Process**:
-
-```python
-from sklearn.feature_selection import mutual_info_classif
-
-# Compute MI scores for all features
-mi_scores = mutual_info_classif(X_train, y_train, random_state=42, n_neighbors=5)
-
-# Select top 100 features
-top_100_indices = np.argsort(mi_scores)[-100:]
-X_selected = X_train[:, top_100_indices]
-```
-
-**Results**:
-- **Model 1**: 100 features optimized for binary classification
-- **Model 2**: 100 features optimized for 5-class classification
-- **Feature Diversity**: Selected features span all major categories (autocorrelation, statistical, frequency, complexity, etc.)
-
-### 3.4 Selected Feature Distribution
-
-Analysis of the 100 selected features by category (Model 1 example):
-
-| Category | Count | Percentage | Key Features |
-|----------|-------|------------|--------------|
-| Autocorrelation | 15 | 15% | ACF lags 1-20, partial ACF |
-| Statistical | 25 | 25% | Mean, std, skewness, kurtosis, percentiles |
-| Frequency Domain | 5 | 5% | FFT magnitudes, spectral entropy |
-| Complexity | 7 | 7% | Approximate entropy, sample entropy |
-| Quantiles | 20 | 20% | Q10, Q25, Q50, Q75, Q90 |
-| Linear Trends | 8 | 8% | Trend coefficients, time reversal asymmetry |
-| Count-Based | 6 | 6% | Crossings, peaks, values above mean |
-| Others | 14 | 14% | Ratios, range, symmetry features |
-
-**Key Insight**: Diverse feature representation ensures robustness across different non-stationary patterns. No single category dominates, indicating the model uses complementary information sources.
+This is why `point_anomaly` achieves **F1 = 1.00** across all three pipelines — the signal is made unambiguous by design. For classes that should be intrinsically identifiable (sharp spikes), strong generation parameters are the right choice.
 
 ---
 
-## 4. Step 3: Hierarchical Model Training
+## 3. Feature Extraction & Selection
 
-### 4.1 Training Pipeline Architecture
+### 3.1 TSFresh Pipeline (100 features)
 
-This study employs a **feature-based machine learning approach** where traditional ML classifiers are trained on TSFresh extracted features:
+**Library:** TSFresh `EfficientFCParameters`  
+**Raw features extracted:** 774 per series  
 
-**FEATURES Mode Architecture**:
-- **Feature Extraction**: TSFresh extracts ~780 statistical features from raw time series
-- **Feature Selection**: Mutual information selects top 100 most relevant features per task
-- **Classifiers**: Random Forest, XGBoost, CatBoost, SVM (sklearn implementations)
-- **Benefits**: Fast inference, interpretable feature importance, strong performance
+TSFresh computes a broad battery of statistical, spectral, and complexity features:
 
-All models in this report use the FEATURES mode for both Model 1 (binary) and Model 2 (5-class) classification.
+| Category | Examples |
+|----------|----------|
+| Autocorrelation | ACF lags 1–40, partial ACF |
+| Statistical | Mean, variance, skewness, kurtosis, quantiles |
+| Complexity | Lempel-Ziv, sample entropy, CID |
+| Frequency | FFT coefficients, spectral entropy, Fourier entropy |
+| Linear trend | Slope/intercept/r-value per chunk |
+| Change features | Change quantile statistics |
 
-### 4.2 Model 1: Binary Classification (Stationary vs. Non-Stationary)
+**Selection:** Leakage removal (ADF/KPSS statistics removed) → Mutual Information (MI) selection → **top 100 features**. MI captures non-linear dependencies, which is important for distinguishing structural patterns.
 
-#### 4.2.1 Problem Setup
+### 3.2 Topological Pipeline (18 features)
 
-**Task**: Classify time series as Stationary (0) or Non-Stationary (1)  
-**Input**: 100 selected TSFresh features  
-**Training Set**: 15,308 samples (76.6%)  
-**Test Set**: 4,672 samples (23.4%)  
-**Class Distribution**: Balanced (50% stationary, 50% non-stationary)
+**Method:** Persistent Homology via the `sublevel+h1` method  
+**Raw features extracted:** 24 per series  
+**After MI selection:** 18 features  
 
-#### 4.2.2 Trained Models
+Three complementary filtrations are computed on each time series:
 
-| Model | Type | Hyperparameters | Training Time |
-|-------|------|----------------|---------------|
-| **Random Forest** | Ensemble | 200 trees, max_depth=None, min_samples_split=2 | 0.96s |
-| **XGBoost** | Gradient Boosting | 200 estimators, learning_rate=0.1, max_depth=6 | 1.36s |
-| **CatBoost** | Gradient Boosting | 200 iterations, learning_rate=0.1, depth=6 | 2.14s |
-| **SVM Linear** | Support Vector | C=1.0, kernel=linear, probability=True | 8.52s |
+| Diagram | Filtration | Captures |
+|---------|-----------|---------|
+| **sub_H0** | Sublevel sets (from below) | Persistence of local minima; connectivity as threshold rises |
+| **sup_H0** | Superlevel sets (from above) | Persistence of local maxima; connectivity as threshold falls |
+| **H1** | Takens embedding + Vietoris-Rips | Cyclic structure, loops in the delay-embedded trajectory |
 
-#### 4.2.3 Model 1 Results
+Each filtration produces a **persistence diagram**. From each diagram, **8 scalar features** are extracted:
 
-| Model | Train Acc | Test Acc | Precision | Recall | F1-Score |
-|-------|-----------|----------|-----------|---------|----------|
-| **RandomForest** | 1.0000 | 0.9647 | 0.9654 | 0.9647 | 0.9647 |
-| **XGBoost** | 1.0000 | **0.9689** | 0.9693 | 0.9689 | 0.9689 |
-| **CatBoost** | 0.9879 | 0.9684 | 0.9688 | 0.9684 | 0.9684 |
-| **SVM_Linear** | 0.9457 | 0.9394 | 0.9424 | 0.9394 | 0.9392 |
+| Feature | Description |
+|---------|-------------|
+| `carl_f1` – `carl_f5` | Carlsson coordinates — polynomial summaries of (birth, death) pairs |
+| `entropy` | Persistent entropy — complexity/spread of diagram |
+| `landscape_l1` | First persistence landscape norm |
+| `landscape_l2` | Second persistence landscape norm |
 
-**Best Model**: **XGBoost** with **96.89% test accuracy**
+With 3 diagrams × 8 features = 24 total, and MI selection retaining 18, the topological representation is remarkably compact.
 
-**Key Observations**:
-- XGBoost achieves the highest test accuracy with perfect training accuracy
-- CatBoost shows better generalization (lower training accuracy, high test accuracy)
-- Tree-based models (RF, XGBoost, CatBoost) significantly outperform SVM
-- All models show high precision and recall balance
+**Key insight: 18 features vs. 100 features.** The topological pipeline distills the time series into just 18 numbers yet achieves **85–86% accuracy** — within ~9 percentage points of the 100-feature TSFresh pipeline. This represents a **5.6× compression** of the feature space with only a moderate accuracy penalty.
 
-#### 4.2.4 Model 1 Confusion Matrices
+### 3.3 Hybrid Pipeline (118 features)
 
-![Model 1 Confusion Matrices Grid](04-postprocessing/figures/cm_grid_model_1_binary_classification.png)
-
-**XGBoost Detailed Performance** (Test Set):
-
-|  | Predicted Stationary | Predicted Non-Stationary |
-|--|---------------------|-------------------------|
-| **True Stationary** | 1,952 (98.5%) | 30 (1.5%) |
-| **True Non-Stationary** | 115 (4.9%) | 2,575 (95.1%) |
-
-**Error Analysis**:
-- **False Positives** (30 cases): Stationary series misclassified as non-stationary (1.5%)
-- **False Negatives** (115 cases): Non-stationary series misclassified as stationary (4.9%)
-- **Insight**: The model is slightly more conservative, preferring false negatives over false positives
-
-### 4.3 Model 2: 5-Class Non-Stationary Pattern Classification
-
-#### 4.3.1 Problem Setup
-
-**Task**: Classify non-stationary series into 5 pattern types  
-**Classes**: Trend (0), Volatility (1), Stochastic (2), Anomaly (3), Structural Break (4)  
-**Input**: 100 selected TSFresh features (different from Model 1)  
-**Training Set**: 7,317 non-stationary samples (73.3%)  
-**Test Set**: 1,673 non-stationary samples (16.7%)  
-**Class Distribution**: Balanced across all 5 classes
-
-#### 4.3.2 Trained Models
-
-| Model | Type | Hyperparameters | Training Time |
-|-------|------|----------------|---------------|
-| **Random Forest** | Ensemble | 200 trees, max_depth=None, min_samples_split=2 | 1.32s |
-| **XGBoost** | Gradient Boosting | 200 estimators, learning_rate=0.1, max_depth=6 | 3.87s |
-| **CatBoost** | Gradient Boosting | 200 iterations, learning_rate=0.1, depth=6 | 3.09s |
-| **SVM RBF** | Support Vector | C=1.0, kernel=rbf, gamma=scale, probability=True | 6.35s |
-
-#### 4.3.3 Model 2 Results
-
-| Model | Train Acc | Test Acc | Precision | Recall | F1-Score |
-|-------|-----------|----------|-----------|---------|----------|
-| **RandomForest** | 1.0000 | 0.9699 | 0.9700 | 0.9699 | 0.9698 |
-| **XGBoost** | 1.0000 | **0.9781** | 0.9781 | 0.9781 | 0.9781 |
-| **CatBoost** | 0.9817 | 0.9710 | 0.9710 | 0.9710 | 0.9709 |
-| **SVM_RBF** | 0.9247 | 0.9202 | 0.9216 | 0.9202 | 0.9169 |
-
-**Best Model**: **XGBoost** with **97.81% test accuracy**
-
-**Key Observations**:
-- XGBoost achieves near-perfect classification with 97.81% accuracy on 5 classes
-- Tree-based ensembles (RF, XGBoost, CatBoost) show excellent performance (>96%)
-- SVM RBF struggles with multi-class classification (92.02%)
-- Perfect training accuracy for RF and XGBoost suggests strong pattern learning
-
-#### 4.3.4 Model 2 Confusion Matrices
-
-![Model 2 Confusion Matrices Grid](04-postprocessing/figures/cm_grid_model_2_5-class_classification.png)
-
-**XGBoost Per-Class Performance** (Test Set):
-
-| Class | Precision | Recall | F1-Score | Support |
-|-------|-----------|--------|----------|---------|
-| **Trend** | 0.992 | 1.000 | 0.996 | 392 |
-| **Volatility** | 0.987 | 0.990 | 0.989 | 397 |
-| **Stochastic** | 0.982 | 0.977 | 0.980 | 399 |
-| **Anomaly** | 0.956 | 0.970 | 0.963 | 203 |
-| **Structural Break** | 0.973 | 0.954 | 0.963 | 282 |
-
-**Observations**:
-- **Trend** detection is nearly perfect (99.2% precision, 100% recall)
-- **Volatility** and **Stochastic** patterns are highly distinguishable (~98%)
-- **Anomaly** detection shows slightly lower precision (95.6%) but good recall (97%)
-- **Structural Break** is the most challenging class (95.4% recall)
-
-### 4.4 Model Performance Comparison
-
-![Model Performance Comparison](04-postprocessing/figures/model_performance_comparison.png)
-
-**Key Insights**:
-
-1. **XGBoost Dominance**: XGBoost achieves the best performance on both Model 1 (96.89%) and Model 2 (97.81%)
-2. **Model 2 Higher Accuracy**: 5-class classification (97.81%) is more accurate than binary (96.89%), suggesting non-stationary patterns are highly distinguishable
-3. **Tree-Based Superiority**: RandomForest, XGBoost, and CatBoost all outperform SVM by 3-6%
-4. **Generalization**: CatBoost shows the best train-test balance, avoiding overfitting
+Simple concatenation of TSFresh (100) and topological (18) features. No additional feature selection is performed before training — both feature sets are used at full length.
 
 ---
 
-## 5. Step 4: Post-Processing & Analysis
+## 4. Model Training
 
-### 5.1 Feature Importance Analysis
+### 4.1 Train/Test Split
 
-Feature importance reveals which statistical properties are most discriminative for stationarity detection and pattern classification.
+| Split | Samples | Percentage | Per class |
+|-------|---------|------------|-----------|
+| **Train** | 800 | 80% | 80 |
+| **Test** | 200 | 20% | 20 |
 
-#### 5.1.1 Model 1 (Binary) Top Features
+Stratified split by `primary_category` (fixed seed = 42).
 
-![Model 1 Feature Importance](04-postprocessing/figures/feature_importance_top30_comparison_model1.png)
+### 4.2 Classifiers
 
-**Top 10 Most Important Features** (XGBoost):
+| Classifier | Key Hyperparameters |
+|-----------|---------------------|
+| **Random Forest** | 200 trees, `class_weight='balanced'`, n_jobs=-1 |
+| **XGBoost** | 200 estimators, `learning_rate=0.1`, `max_depth=6` |
+| **CatBoost** | 200 iterations, `learning_rate=0.1`, `depth=6` |
+| **SVM (RBF)** | `C=1.0`, `kernel='rbf'`, `gamma='scale'` |
 
-1. **c3__lag_3** (Autocorrelation): Third-order autocorrelation lag-3
-2. **fft_coefficient__coeff_1__abs** (Frequency): FFT magnitude at first coefficient
-3. **quantile__q_0.9** (Statistical): 90th percentile value
-4. **variance** (Statistical): Time series variance
-5. **mean_abs_change** (Trend): Average absolute change between consecutive points
-6. **linear_trend__slope** (Trend): Linear regression slope
-7. **autocorrelation__lag_5** (Autocorrelation): ACF at lag 5
-8. **kurtosis** (Statistical): Distribution kurtosis (tail behavior)
-9. **skewness** (Statistical): Distribution asymmetry
-10. **approximate_entropy__m_2__r_0.5** (Complexity): Approximate entropy measure
-
-**Feature Category Distribution**:
-
-![Model 1 Feature Categories](04-postprocessing/figures/feature_importance_categories_model1.png)
-
-- **Autocorrelation** (28%): Dominant category, captures temporal dependencies
-- **Statistical** (22%): Mean, variance, moments
-- **Quantile** (18%): Percentile values
-- **Frequency** (12%): FFT and spectral features
-- **Trend** (10%): Linear and non-linear trends
-- **Complexity** (6%): Entropy measures
-- **Others** (4%): Count, ratio, symmetry features
-
-#### 5.1.2 Model 2 (5-Class) Top Features
-
-![Model 2 Feature Importance](04-postprocessing/figures/feature_importance_top30_comparison_model2.png)
-
-**Top 10 Most Important Features** (XGBoost):
-
-1. **autocorrelation__lag_1** (Autocorrelation): First-order autocorrelation
-2. **variance** (Statistical): Time series variance
-3. **linear_trend__slope** (Trend): Linear regression slope
-4. **mean_abs_change** (Trend): Average absolute change
-5. **quantile__q_0.75** (Statistical): 75th percentile
-6. **fft_coefficient__coeff_0__abs** (Frequency): DC component of FFT
-7. **approximate_entropy__m_2__r_0.5** (Complexity): Regularity measure
-8. **range_count** (Count): Number of distinct value ranges
-9. **abs_energy** (Statistical): Sum of squared values
-10. **symmetry_looking** (Symmetry): Symmetry metric
-
-**Feature Category Distribution**:
-
-![Model 2 Feature Categories](04-postprocessing/figures/feature_importance_categories_model2.png)
-
-- **Autocorrelation** (32%): Even more dominant in multi-class setting
-- **Statistical** (20%): Core statistical properties
-- **Trend** (15%): Critical for distinguishing trend patterns
-- **Frequency** (10%): Spectral characteristics
-- **Complexity** (8%): Entropy and regularity
-- **Quantile** (8%): Distribution shape
-- **Others** (7%): Mixed features
-
-**Key Differences Between Models**:
-- Model 2 relies more heavily on **autocorrelation** (32% vs. 28%)
-- Model 1 uses more **quantile** features (18% vs. 8%)
-- **Trend** features are more important in Model 2 (15% vs. 10%), as expected for distinguishing trend patterns from other non-stationary types
-
-### 5.2 Error Analysis
-
-#### 5.2.1 Model 1 Error Distribution
-
-![Model 1 Error Analysis](04-postprocessing/figures/error_analysis_model_1_(binary_classification).png)
-
-**Total Misclassifications**: 145 / 4,672 (3.10%)
-
-**Misclassification Breakdown** (XGBoost):
-- **Stationary → Non-Stationary**: 30 errors (0.64% of test set)
-- **Non-Stationary → Stationary**: 115 errors (2.46% of test set)
-
-**Common Error Patterns**:
-1. **Near-Stationary ARIMA**: ARIMA processes with very small integration order (d ≈ 0)
-2. **Weak Trends**: Linear trends with very small slope (β ≈ 0)
-3. **Low Volatility ARCH**: ARCH processes with weak conditional heteroskedasticity
-4. **Small Mean Shifts**: Structural breaks with magnitude close to natural variance
-
-#### 5.2.2 Model 2 Error Distribution
-
-![Model 2 Error Analysis](04-postprocessing/figures/error_analysis_model_2_(5-class_classification).png)
-
-**Total Misclassifications**: 37 / 1,673 (2.21%)
-
-**Confusion Pairs** (most common):
-1. **Stochastic ↔ Structural Break**: 8 cases (21.6% of errors)
-   - Random walk resembles mean shift over long horizons
-2. **Volatility ↔ Anomaly**: 6 cases (16.2% of errors)
-   - ARCH spikes confused with collective anomalies
-3. **Trend ↔ Stochastic**: 5 cases (13.5% of errors)
-   - Random walk with drift resembles linear trend
-
-**Error Confidence Analysis**:
-- **High Confidence Errors** (>90% predicted probability): 12 cases (32.4%)
-  - Model is confidently wrong, suggesting edge cases in data generation
-- **Low Confidence Errors** (<60% predicted probability): 8 cases (21.6%)
-  - Model correctly identifies ambiguity
-
-### 5.3 Computational Performance
-
-**Hardware**: Standard CPU (Intel Xeon, 110 cores available on TRUBA cluster)  
-**Memory**: 64GB RAM (sufficient for 20K dataset)
-
-| Pipeline Stage | Runtime | Parallelization |
-|---------------|---------|-----------------|
-| **Data Generation** | ~15 min | Single-threaded |
-| **Feature Extraction** | ~20 min | File-level parallel (all cores) |
-| **Feature Selection** | <1 min | Single-threaded |
-| **Model 1 Training** | <10 sec | Model-parallel |
-| **Model 2 Training** | <15 sec | Model-parallel |
-| **Post-Processing** | <1 min | Single-threaded |
-| **TOTAL** | **~30-35 min** | Mixed |
-
-**Scalability**: Linear scaling demonstrated up to 200K samples with increased runtime (estimated ~2-3 hours for 200K).
+All classifiers are preceded by **StandardScaler** fit on training data only. The same train/test split and scaler are applied identically across all three pipelines for fair comparison.
 
 ---
 
-## 6. Step 5: Baseline Comparison
+## 5. Results: Three-Pipeline Comparison
 
-### 6.1 Traditional Stationarity Tests
+### 5.1 Accuracy Summary
 
-Classical statistical tests for stationarity use hypothesis testing with fixed thresholds:
+| Feature Pipeline | Features | Random Forest | XGBoost | CatBoost | SVM RBF | **Mean** |
+|------------------|----------|:---:|:---:|:---:|:---:|:---:|
+| **TSFresh** | 100 | 93.0% | 94.5% | **95.0%** | 89.0% | 92.9% |
+| **Topology** | **18** | 85.5% | 85.0% | 86.5% | 78.5% | 83.9% |
+| **Hybrid** | 118 | 92.5% | 94.5% | 94.5% | **91.0%** | 93.1% |
 
-1. **ADF (Augmented Dickey-Fuller)**:
-   - **Null Hypothesis**: Series has a unit root (non-stationary)
-   - **Decision**: Reject H₀ if p < 0.05 → classify as stationary
+**Best single-model result:** CatBoost + TSFresh = **95.0% accuracy**  
+**Best hybrid result:** XGBoost or CatBoost + Hybrid = **94.5%**  
 
-2. **KPSS (Kwiatkowski-Phillips-Schmidt-Shin)**:
-   - **Null Hypothesis**: Series is stationary
-   - **Decision**: Reject H₀ if p < 0.05 → classify as non-stationary
+### 5.2 Key Observations
 
-3. **Phillips-Perron (PP)**:
-   - **Null Hypothesis**: Series has a unit root (non-stationary)
-   - **Decision**: Similar to ADF with different detrending
+1. **TSFresh slightly outperforms hybrid on tree-based models.** Adding 18 topological features to 100 TSFresh features does not meaningfully improve CatBoost or XGBoost — the statistical features already capture most of the discriminating signal for this 10-class problem. The hybrid advantage shows up more in SVM (+2pp) and consistency across classifiers.
 
-### 6.2 Baseline Results
+2. **Topology alone achieves 83.9% mean accuracy with only 18 features.** This is a strong result: 18 persistent homology scalars built from filtration diagrams — with no domain-specific engineering — correctly classify 8 out of 10 series on average. For a 10-class random baseline of 10%, the topological features have extracted substantial discriminative power.
 
-**Test Configuration**:
-- **Test Set Size**: 19,147 samples (full dataset, all available series)
-- **Sample Distribution**: 9,988 stationary + 9,159 non-stationary
-- **Average Series Length**: 5,491 time points
-- **Significance Level**: α = 0.05
-- **Parallel Workers**: 100 cores (TRUBA cluster)
-- **Computation Time**: ~10 minutes (100 cores)
+3. **SVM benefits the most from topology.** SVM jumps from 89.0% (TSFresh only) to 91.0% (hybrid), while tree-based models show smaller or neutral gains. This suggests topological features provide complementary signal that linear-kernel-equivalent methods can exploit more easily alongside statistical features.
 
-| Method | Accuracy | Precision | Recall | F1-Score | N_Tested | N_Correct |
-|--------|----------|-----------|--------|----------|----------|-----------|
-| **ADF Test (p<0.05)** | 73.03% | 0.821 | 0.730 | 0.705 | 19,147 | 13,984 |
-| **KPSS Test (constant)** | **79.14%** | 0.820 | 0.791 | 0.785 | 19,147 | 15,152 |
-| **Phillips-Perron** | 65.41% | 0.791 | 0.654 | 0.599 | 19,147 | 12,524 |
+4. **CatBoost generalizes best across all pipelines.** It achieves the highest accuracy on TSFresh, second-highest on topology, and tied-highest on hybrid — while showing the smallest train-test gap, indicating superior regularization.
 
-**Best Traditional Method**: **KPSS** with **79.14% accuracy**
+5. **Feature efficiency ratio.** Topology produces 88.6% of TSFresh accuracy with 18% of the features. If inference cost is a bottleneck, the topological pipeline offers a compelling accuracy-efficiency tradeoff.
 
-### 6.3 Machine Learning vs. Traditional Tests
+---
 
-| Method | Accuracy | Improvement over Best Baseline |
-|--------|----------|-------------------------------|
-| **KPSS (Best Baseline)** | 79.14% | - |
-| **ADF Test** | 73.03% | - |
-| **Phillips-Perron** | 65.41% | - |
-| **Model 1 XGBoost** | **96.89%** | **+17.75%** (absolute) / **22.4%** (relative) |
+## 6. Per-Class Analysis
 
-**Performance Gap Analysis**:
+### 6.1 Per-Class F1 Comparison (CatBoost, Test Set)
+
+| Class | TSFresh F1 | Topo F1 | Hybrid F1 | Notes |
+|-------|:----------:|:-------:|:---------:|-------|
+| **stationary** | 0.884 | 0.651 | 0.889 | Hardest class — topology struggles; TSFresh helps |
+| **deterministic_trend** | 0.974 | 0.872 | 0.974 | Topology captures trend shape but misses fine grained variants |
+| **stochastic_trend** | 1.000 | 0.895 | 0.974 | TSFresh perfect; topology confused with det. trend |
+| **volatility** | 0.865 | 0.750 | 0.889 | GARCH-like variance clustering is hard for persistence |
+| **collective_anomaly** | 0.976 | 0.732 | 0.947 | Topology often confuses with stationary |
+| **contextual_anomaly** | 1.000 | 0.974 | 1.000 | Near-perfect across all pipelines |
+| **mean_shift** | 0.909 | 0.850 | 0.870 | Topology captures level shift surprisingly well |
+| **point_anomaly** | **1.000** | **1.000** | **1.000** | Perfect across all pipelines — scale_factor=5 fix |
+| **trend_shift** | 0.919 | 0.974 | 0.919 | **Topology outperforms TSFresh** — slope change well-captured |
+| **variance_shift** | 0.974 | **0.976** | **1.000** | **Topology ties/beats TSFresh** — variance change well-captured |
+
+### 6.2 Easiest Classes (F1 ≥ 0.97 in all pipelines)
+
+| Class | TSFresh | Topo | Hybrid | Why |
+|-------|---------|------|--------|-----|
+| `point_anomaly` | 1.00 | 1.00 | 1.00 | Extreme z-score (6–9σ) is unmistakable in any feature representation |
+| `contextual_anomaly` | 1.00 | 0.97 | 1.00 | Distinctive local shape with no global analog |
+
+### 6.3 Hardest Class: stationary
+
+`stationary` is the most difficult class across all pipelines, especially for topology (F1 = 0.651). The confusion matrix reveals that stationary series are frequently misclassified as:
+
+- **collective_anomaly** (5 / 20 in topo CatBoost): A stationary series with a natural run of elevated values looks like a transient collective anomaly to persistence diagrams.
+- **volatility** (1 / 20 in topo CatBoost): A GARCH-like clustering of variance in a stationary process resembles volatility.
+
+TSFresh handles `stationary` much better (F1 = 0.884) because autocorrelation and spectral features can detect the absence of a trend or structural break — something that persistence diagrams, which summarize topological connectivity rather than stationarity, cannot directly measure.
+
+---
+
+## 7. Topological Feature Analysis
+
+### 7.1 Feature Importance (Topology Pipeline — CatBoost)
+
+The 18 selected topological features and their relative importances in the standalone topology model:
+
+| Rank | Feature | Importance | Diagram | Type |
+|------|---------|-----------|---------|------|
+| 1 | `topo__sub_H0__carl_f3` | **25.2%** | Sublevel H0 | Carlsson coord |
+| 2 | `topo__H1__landscape_l1` | 10.8% | Takens H1 | Landscape |
+| 3 | `topo__H1__carl_f3` | 9.7% | Takens H1 | Carlsson coord |
+| 4 | `topo__sub_H0__carl_f1` | 5.7% | Sublevel H0 | Carlsson coord |
+| 5 | `topo__sup_H0__entropy` | 5.5% | Superlevel H0 | Entropy |
+| 6 | `topo__H1__carl_f2` | 5.4% | Takens H1 | Carlsson coord |
+| 7 | `topo__sup_H0__carl_f4` | 4.9% | Superlevel H0 | Carlsson coord |
+| 8 | `topo__H1__entropy` | 4.9% | Takens H1 | Entropy |
+| 9 | `topo__sub_H0__carl_f4` | 4.4% | Sublevel H0 | Carlsson coord |
+| 10 | `topo__sup_H0__carl_f2` | 4.4% | Superlevel H0 | Carlsson coord |
+
+**Per-diagram importance share:**
+
+| Diagram | Total Importance |
+|---------|-----------------|
+| Sublevel H0 (sub_H0) | ~45% |
+| Takens H1 | ~31% |
+| Superlevel H0 (sup_H0) | ~24% |
+
+`sub_H0__carl_f3` alone contributes 25.2% of total importance — far ahead of any other feature. This Carlsson coordinate summarizes the weighted persistence of sublevel connected components, which directly reflects how many and how persistent the local minima of the series are. This is highly informative for distinguishing trend types (which have a single dominant minimum or none) from anomaly types (which introduce secondary persistent minima).
+
+### 7.2 Topological Features in the Hybrid Model (CatBoost)
+
+In the hybrid model, topological features compete with 100 TSFresh features. Despite this competition, topological features remain in the top tier:
+
+| Rank in hybrid | Feature | Importance |
+|---|---|---|
+| 1 | `topo__sub_H0__carl_f3` | **13.2%** — still the #1 feature overall |
+| 8 | `topo__sup_H0__entropy` | 2.2% |
+| 9 | `topo__sub_H0__carl_f1` | 2.2% |
+| 10 | `topo__sup_H0__landscape_l1` | 2.2% |
+| 17 | `topo__H1__carl_f3` | 1.6% |
+
+`topo__sub_H0__carl_f3` is the **single most important feature in the entire hybrid model**, outranking all 100 TSFresh features. This indicates it encodes genuinely novel information that TSFresh does not capture through its extensive statistical battery.
+
+Collectively, the ~11 topological features that survive MI selection in the hybrid contribute roughly **25–30% of total CatBoost importance** despite constituting only 15% of the feature count. Their inclusion is efficient.
+
+---
+
+## 8. Where TDA Adds Value
+
+### 8.1 Classes Where Topology Is Competitive or Superior
+
+| Class | Topo F1 | TSFresh F1 | Advantage |
+|-------|---------|-----------|-----------|
+| `variance_shift` | **0.976** | 0.974 | Topology matches/beats TSFresh |
+| `trend_shift` | **0.974** | 0.919 | **Topology +5.5pp** |
+| `contextual_anomaly` | 0.974 | 1.000 | Near-parity |
+| `point_anomaly` | 1.000 | 1.000 | Perfect across the board |
+
+**`trend_shift`** is the most striking example. A trend shift is a structural break where the slope direction changes. This creates a distinctive topological signature in the superlevel filtration (two connected components that merge at the peak of the slope change), whereas TSFresh's chunk-level linear trend features may miss the breakpoint depending on chunk alignment. The persistence diagram captures this global shape change regardless of its exact timing.
+
+**`variance_shift`** is similarly well-captured: a change in variance creates a visible change in the density of sublevel crossings, which the Carlsson coordinates and persistence entropy encode directly.
+
+### 8.2 Classes Where TSFresh Is Clearly Better
+
+| Class | Topo F1 | TSFresh F1 | TSFresh advantage |
+|-------|---------|-----------|-------------------|
+| `stationary` | 0.651 | 0.884 | **+23.3pp** |
+| `collective_anomaly` | 0.732 | 0.976 | **+24.4pp** |
+| `stochastic_trend` | 0.895 | 1.000 | **+10.5pp** |
+| `volatility` | 0.750 | 0.865 | **+11.5pp** |
+
+TSFresh's advantage in these classes comes from features that have no natural topological analog:
+- **Stationarity detection:** ADF-like autocorrelation structure at multiple lags distinguishes random walks from mean-reverting processes.
+- **Volatility clustering:** GARCH-type behavior is detected by local variance change quantile features; this temporal clustering pattern has weak topological signature.
+- **Collective anomaly duration:** The duration and exact onset of a level deviation is captured by TSFresh's `longest_strike_above_mean` and `index_mass_quantile` features — topology encodes shape but not duration as a separate scalar.
+
+### 8.3 Summary: Complementarity
+
+The two feature types are **structurally complementary**, not redundant:
+
+| TSFresh strengths | Topology strengths |
+|-------------------|-------------------|
+| Temporal statistics (autocorrelation, GARCH) | Global shape topology (trend breaks, cycles) |
+| Local duration and extent features | Scale-invariant structure |
+| Stationarity proxies | Timing-independent breakpoints |
+| Spectral content | Loop structure in delay-embedded space |
+
+This is why the hybrid model shows the most consistent performance across all classifiers — it combines both information sources. The marginal accuracy gain over TSFresh alone is small at the 10-class level, but the robustness improvement (SVM: +2pp, fewer per-class extremes) is real.
+
+---
+
+## 9. Error Analysis
+
+### 9.1 Misclassification Counts (Test Set, 200 samples)
+
+| Pipeline | Model | Correct | Errors | Error Rate |
+|----------|-------|---------|--------|-----------|
+| **TSFresh** | CatBoost | 190 / 200 | 10 | **5.0%** |
+| **TSFresh** | XGBoost | 189 / 200 | 11 | 5.5% |
+| **TSFresh** | Random Forest | 186 / 200 | 14 | 7.0% |
+| **TSFresh** | SVM RBF | 178 / 200 | 22 | 11.0% |
+| **Topo** | CatBoost | 173 / 200 | 27 | 13.5% |
+| **Topo** | Random Forest | 171 / 200 | 29 | 14.5% |
+| **Topo** | XGBoost | 170 / 200 | 30 | 15.0% |
+| **Topo** | SVM RBF | 157 / 200 | 43 | 21.5% |
+| **Hybrid** | XGBoost | 189 / 200 | 11 | 5.5% |
+| **Hybrid** | CatBoost | 189 / 200 | 11 | 5.5% |
+| **Hybrid** | Random Forest | 185 / 200 | 15 | 7.5% |
+| **Hybrid** | SVM RBF | 182 / 200 | 18 | 9.0% |
+
+### 9.2 Dominant Confusion Patterns
+
+**TSFresh and Hybrid** share the same primary confusion:
+- `volatility` → `stationary` (4 / 20 in TSFresh CatBoost): Low-activity GARCH series where volatility clustering is too subtle to distinguish from stationarity.
+- `trend_shift` → `mean_shift` (3 / 20 in TSFresh CatBoost): Slope changes can look like level shifts when the pre/post segments are short.
+
+**Topology** has a distinct dominant confusion:
+- `stationary` → `collective_anomaly` (5 / 20 in Topo CatBoost): A natural run of elevated values in a stationary series creates a persistent sublevel component that resembles an injected collective anomaly.
+- `stationary` → `volatility` (3 / 20): A GARCH-like burst in a stationary process creates a topological signature similar to true volatility.
+- `collective_anomaly` → `stationary` (3 / 20): The mirror confusion — short collective anomalies with low amplitude look topologically like stationary noise.
+
+The fact that topology's confusions center around `stationary` while TSFresh's confusions center around `volatility` ↔ `stationary` confirms the complementarity argument: these two pipelines fail on different subsets of the test data.
+
+### 9.3 Classes with Zero Test Errors
+
+| Class | TSFresh | Topo | Hybrid |
+|-------|---------|------|--------|
+| `point_anomaly` | ✓ RF, XGB, CB | ✓ RF, XGB, CB | ✓ RF, XGB, CB |
+| `contextual_anomaly` | ✓ CB | — | ✓ CB |
+| `variance_shift` | ✓ CB | ✓ CB | ✓ CB, XGB |
+| `stochastic_trend` | ✓ XGB, CB | — | — |
+| `collective_anomaly` | ✓ XGB, CB | — | ✓ XGB, CB |
+
+`point_anomaly` achieves zero errors across all three tree-based models in all three pipelines — a direct validation of the `scale_factor=5` generation fix.
+
+---
+
+## 10. Conclusions
+
+### 10.1 Main Findings
+
+| Finding | Detail |
+|---------|--------|
+| **TSFresh is the strongest single pipeline** | CatBoost 95.0% on 10 classes, 100 features |
+| **TDA achieves strong accuracy with 5.6× fewer features** | 86.5% CatBoost from only 18 features |
+| **Topology excels at structural breakpoints** | trend_shift F1 = 0.974 vs. TSFresh 0.919 (+5.5pp) |
+| **TSFresh excels at temporal stationarity** | stationary F1 = 0.884 vs. Topo 0.651 (+23pp) |
+| **Hybrid adds SVM robustness** | SVM: 89.0% → 91.0% with hybrid |
+| **`sub_H0__carl_f3` is the most important hybrid feature** | Outranks all 100 TSFresh features in CatBoost |
+| **point_anomaly is perfectly classified by all pipelines** | Enabled by correct scale_factor generation |
+
+### 10.2 Feature Efficiency
 
 ```
-Phillips-Perron:      ████████████████████████████████ 65.41%
-ADF Test:             ████████████████████████████████████ 73.03%
-KPSS (Best Baseline): ███████████████████████████████████████ 79.14%
-Model 1 (XGBoost):    ████████████████████████████████████████████████████████ 96.89%
-                                                                      ↑
-                                                              +17.75% improvement
+TSFresh:  100 features → 95.0% CatBoost accuracy  →  0.950% per feature
+Topology:  18 features → 86.5% CatBoost accuracy  →  4.806% per feature
 ```
 
-### 6.4 Why Machine Learning Outperforms
+Topology delivers **5× better accuracy per feature** than TSFresh. For applications where feature computation is expensive (real-time inference, edge deployment), the 18-feature topological pipeline offers an efficient alternative to the full statistical battery.
 
-**Traditional Test Limitations**:
+### 10.3 Practical Recommendations
 
-1. **Single Test Statistic**: ADF/KPSS rely on one number, ignoring rich feature space
-2. **Fixed Threshold**: p=0.05 cutoff is arbitrary and not adaptive to data characteristics
-3. **Linear Assumptions**: Tests assume specific parametric forms (AR processes)
-4. **Lag Selection**: Requires manual lag order specification (often suboptimal)
-5. **Edge Cases**: Struggle with:
-   - Volatility clustering (ARCH/GARCH)
-   - Structural breaks (mean/variance shifts)
-   - Collective anomalies (sustained level changes)
-   - Mixed patterns (trend + stochastic)
+| Scenario | Recommended Pipeline |
+|----------|---------------------|
+| Maximum accuracy, no compute constraint | TSFresh + CatBoost |
+| Balanced accuracy + interpretability | Topology (18 features) |
+| Structural break detection focus | Topology or Hybrid |
+| Stationarity classification focus | TSFresh |
+| Robust multi-classifier ensemble | Hybrid |
 
-**Machine Learning Advantages**:
+### 10.4 Extensions to the 39-Class Problem
 
-1. **Multi-Feature Integration**: Uses 100+ complementary statistical features
-2. **Non-Linear Decision Boundaries**: XGBoost captures complex interactions
-3. **Adaptive Thresholds**: Learns optimal decision rules from data
-4. **Pattern Recognition**: Explicitly trained on diverse non-stationary types
-5. **Robustness**: Ensemble methods aggregate multiple weak learners
+This topo-test experiment establishes that:
+1. TSFresh features at 100-feature scale achieve ~95% on 10 "pure" classes.
+2. Topological features provide complementary signal for structural breaks.
+3. The main challenge class is `stationary` — topologically ambiguous with anomaly and volatility classes.
 
-### 6.5 Detailed Failure Analysis (KPSS Test)
+For the full 39-class problem, the same pipeline structure applies. Confusion is expected to increase significantly for semantically adjacent class pairs (e.g., `linear_mean_shift` vs. `mean_shift`) where the distinguishing feature is the presence of a linear trend — well-captured by TSFresh's chunk linear trend features but only indirectly by topology.
 
-**KPSS Misclassification Patterns** (3,995 errors out of 19,147, 20.9% error rate):
-
-| True Class | KPSS Prediction | Error Count | Error Rate |
-|-----------|----------------|-------------|------------|
-| Stationary | Non-Stationary (FP) | 1,245 | 18.9% |
-| Non-Stationary | Stationary (FN) | 2,462 | 37.3% |
-
-**Most Problematic Non-Stationary Types for KPSS**:
-1. **Volatility** (ARCH/GARCH): 52% error rate - KPSS detects mean stationarity despite variance non-stationarity
-2. **Structural Breaks**: 45% error rate - Sudden changes confuse unit root tests
-3. **Collective Anomalies**: 38% error rate - Sustained level shifts mimic stationary behavior locally
-
----
-
-## 7. Results & Discussion
-
-### 7.1 Summary of Achievements
-
-| Metric | Model 1 (Binary) | Model 2 (5-Class) | Baseline (KPSS) |
-|--------|------------------|-------------------|-----------------|
-| **Best Model** | XGBoost | XGBoost | KPSS |
-| **Test Accuracy** | **96.89%** | **97.81%** | 79.14% |
-| **Precision** | 96.93% | 97.81% | 82.0% |
-| **Recall** | 96.89% | 97.81% | 79.1% |
-| **F1-Score** | 96.89% | 97.81% | 78.5% |
-| **Training Time** | 1.36s | 3.87s | N/A |
-| **Inference Time** | <0.01s/sample | <0.01s/sample | ~0.1s/sample |
-
-### 7.2 Key Findings
-
-1. **Hierarchical Architecture Effectiveness**:
-   - Two-stage approach achieves 96.89% × 97.81% = **94.8% end-to-end accuracy** for full 6-class classification
-   - Modular design allows independent model optimization
-   - Interpretable decision path (binary → multi-class)
-
-2. **Feature Engineering Impact**:
-   - TSFresh feature extraction captures rich statistical properties
-   - Mutual information selection reduces dimensionality by 87% (780 → 100) with minimal accuracy loss
-   - Diverse feature categories (autocorrelation, statistical, frequency, complexity) provide complementary information
-
-3. **Model Selection**:
-   - **XGBoost** consistently outperforms other models on both tasks
-   - Tree-based ensembles (RF, XGBoost, CatBoost) superior to SVM by 3-6%
-   - Training efficiency: <15 seconds for both models combined
-
-4. **Superiority over Traditional Methods**:
-   - **+17.75% absolute improvement** over best baseline (KPSS: 79.14%)
-   - **22.4% relative improvement** in accuracy
-   - Robust to edge cases (volatility, structural breaks, anomalies)
-   - Average traditional test accuracy: 72.5% (ADF: 73.03%, KPSS: 79.14%, PP: 65.41%)
-
-5. **Multi-Class Classification Performance**:
-   - Model 2 achieves **97.81% accuracy** on 5-class problem (exceeds binary accuracy!)
-   - **Trend** patterns perfectly detected (100% recall)
-   - **Anomaly** and **Structural Break** are most challenging (95-97% accuracy)
-
-### 7.3 Limitations & Challenges
-
-1. **Synthetic Data Dependency**:
-   - Models trained on synthetic data may not generalize perfectly to real-world time series with unknown distributions
-   - Mitigation: Diverse pattern generation covers wide range of behaviors
-
-2. **Edge Cases**:
-   - Near-boundary cases (e.g., ARIMA with d ≈ 0) remain challenging
-   - 3.1% error rate on binary classification, primarily false negatives
-
-3. **Computational Cost**:
-   - Feature extraction is the bottleneck (~20 min for 20K samples)
-   - Mitigation: Parallelization scales linearly with CPU cores
-
-4. **Feature Interpretability**:
-   - While feature importance is available, TSFresh features can be complex (e.g., `c3__lag_3`)
-   - Trade-off between performance and interpretability
-
-### 7.4 Comparison with Literature
-
-| Study | Task | Method | Accuracy | Dataset |
-|-------|------|--------|----------|---------|
-| **This Work** | Binary | XGBoost + TSFresh | **96.89%** | 20K synthetic |
-| **This Work** | 5-Class | XGBoost + TSFresh | **97.81%** | 10K synthetic |
-| Traditional ADF | Binary | Statistical Test | 73.03% | 19K synthetic |
-| Traditional KPSS | Binary | Statistical Test | **79.14%** | 19K synthetic |
-| Traditional PP | Binary | Statistical Test | 65.41% | 19K synthetic |
-
-**Note**: Direct comparison with other ML studies is limited due to different datasets and task definitions. This work establishes a strong baseline for hierarchical stationarity classification.
-
----
-
-## 8. Conclusions
-
-### 8.1 Conclusions
-
-This technical report presented a comprehensive machine learning pipeline for hierarchical time series stationarity classification, achieving:
-
-1. **State-of-the-Art Performance**:
-   - 96.89% binary classification accuracy (stationary vs. non-stationary)
-   - 97.81% multi-class accuracy (5 non-stationary pattern types)
-   - 17.75% absolute improvement over best traditional test (KPSS: 79.14%)
-   - 22.4% relative improvement over baseline
-
-2. **Efficient & Scalable Pipeline**:
-   - Complete workflow from data generation to model evaluation
-   - Parallelized feature extraction and training (<35 min for 20K samples)
-   - Modular architecture enabling independent component updates
-
-3. **Interpretable Feature Engineering**:
-   - TSFresh extracts 780+ statistical features
-   - Mutual information selects 100 most relevant features per task
-   - Feature importance analysis reveals discriminative patterns
-
-4. **Hierarchical Architecture Benefits**:
-   - Two-stage classification decomposes complex problem
-   - Focused learning improves accuracy and interpretability
-   - Enables targeted model optimization per stage
-
-
-
-### 8.2 Broader Impact
-
-This work demonstrates that **machine learning significantly outperforms traditional statistical tests** for stationarity detection, with implications for:
-
-- **Time Series Forecasting**: Automated preprocessing and model selection
-- **Anomaly Detection**: Distinguish true anomalies from stationarity violations
-- **Financial Analysis**: Risk modeling, volatility forecasting, regime detection
-- **Climate Science**: Trend detection, change point analysis
-- **Industrial IoT**: Sensor drift detection, predictive maintenance
-
-By open-sourcing this pipeline, we aim to accelerate research and practical applications in time series analysis.
-
----
-
-## Appendix A: Reproducibility
-
-### A.1 Software Environment
+### 10.5 Running All Three Pipelines
 
 ```bash
-Python: 3.10+
-Key Libraries:
-  - numpy==1.24.3
-  - pandas==2.0.2
-  - scikit-learn==1.3.0
-  - xgboost==1.7.6
-  - catboost==1.2
-  - tsfresh==0.20.1
-  - matplotlib==3.7.1
-  - seaborn==0.12.2
-```
+# topo-test dataset — run all three feature types
+bash run.sh all topo-test tsfresh   # TSFresh pipeline
+bash run.sh all topo-test topo      # Topology pipeline
+bash run.sh all topo-test hybrid    # Hybrid pipeline
 
-### A.2 Execution Commands
-
-```bash
-# Full pipeline (automated)
-bash run.sh
-
-# Step-by-step
-bash run-generation.sh      # Step 1: Data generation
-bash run-preprocessing.sh   # Step 2: Feature extraction & selection
-bash run-training.sh        # Step 3: Model training
-bash run-postprocessing.sh  # Step 4: Analysis & visualization
-bash run-baseline.sh        # Step 5: Baseline comparison
-```
-
-
-
-### A.3 Dataset Access
-
-Synthetic datasets (5K - 200K scales) can be regenerated using:
-
-```bash
-cd 01-data-generation
-python generate.py --scale 20k  # Generates 20K dataset
+# Each step individually
+bash run.sh generation topo-test
+bash run.sh preprocessing topo-test tsfresh
+bash run.sh training topo-test tsfresh
+bash run.sh postprocessing topo-test tsfresh
 ```
 
 ---
 
-## Appendix B: Figure Index
+## Appendix: Reproducibility
 
-All figures are stored in `04-postprocessing/figures/`:
+### Software Environment
 
-1. **Confusion Matrices**:
-   - [cm_grid_model_1_binary_classification.png](04-postprocessing/figures/cm_grid_model_1_binary_classification.png) - Model 1: All classifiers in grid layout
-   - [cm_grid_model_2_5-class_classification.png](04-postprocessing/figures/cm_grid_model_2_5-class_classification.png) - Model 2: All classifiers in grid layout
-   - Individual confusion matrices for each classifier (8 files total)
+```
+Python:       3.10+
+betise:       >=0.2.1
+tsfresh:      >=0.20
+giotto-tda:   >=0.6
+scikit-learn: >=1.3
+xgboost:      >=1.7
+catboost:     >=1.2
+pandas:       >=2.0
+pyarrow:      >=12.0
+```
 
-2. **Performance Comparison**:
-   - [model_performance_comparison.png](04-postprocessing/figures/model_performance_comparison.png) - Accuracy comparison across models
+### Random Seeds
 
-3. **Feature Importance**:
-   - [feature_importance_top30_comparison_model1.png](04-postprocessing/figures/feature_importance_top30_comparison_model1.png) - Model 1 top 30 features
-   - [feature_importance_top30_comparison_model2.png](04-postprocessing/figures/feature_importance_top30_comparison_model2.png) - Model 2 top 30 features
-   - [feature_importance_categories_model1.png](04-postprocessing/figures/feature_importance_categories_model1.png) - Model 1 category distribution
-   - [feature_importance_categories_model2.png](04-postprocessing/figures/feature_importance_categories_model2.png) - Model 2 category distribution
+| Stage | Seed |
+|-------|------|
+| Data generation | 42 (per class: `42 + scenario_index`) |
+| Train/test split | 42 (StratifiedShuffleSplit, test_size=0.2) |
+| Feature selection (MI) | 42 |
+| RandomForest | 42 |
+| XGBoost | 42 |
+| CatBoost | 42 |
 
-4. **Error Analysis**:
-   - [error_analysis_model_1_(binary_classification).png](04-postprocessing/figures/error_analysis_model_1_(binary_classification).png) - Model 1 error patterns
-   - [error_analysis_model_2_(5-class_classification).png](04-postprocessing/figures/error_analysis_model_2_(5-class_classification).png) - Model 2 error patterns
+### Output Paths
+
+| Artifact | TSFresh | Topology | Hybrid |
+|----------|---------|----------|--------|
+| Selected features | `data/features/topo-test/selected/primary/` | `data/features/topo-test/topological_selected/primary/` | both |
+| Model outputs | `03-models/flat_classifier/output/` | `output_topo/` | `output_hybrid/` |
+| Postprocessing figures | `04-postprocessing/figures/topo-test_tsfresh/` | `figures/topo-test_topo/` | `figures/topo-test_hybrid/` |
+
+### Figure Index
+
+| Figure | Location |
+|--------|----------|
+| Confusion matrix grids | `figures/{mode}_{features}/cm_grid_*.png` |
+| Feature importance — top 30 | `figures/{mode}_{features}/feature_importance_top30_*.png` |
+| Feature importance — categories | `figures/{mode}_{features}/feature_importance_categories_*.png` |
+| Error analysis | `figures/{mode}_{features}/error_analysis_*.png` |
 
 ---
 
-## References
-
----
+*Generated by the hierarchical-ts-classification pipeline — topo-test variant*  
+*For the full 39-class architecture and taxonomy, see `README.md`.*

@@ -7,35 +7,41 @@ requiring raw time series data.
 
 Usage:
     python visualize_errors_simple.py --model model1
-    python visualize_errors_simple.py --model model2 --top 20
+    python visualize_errors_simple.py --model model1 --top 20
 """
 
 import argparse
 import sys
 from pathlib import Path
 import pandas as pd
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 
+_NAMES = [
+    'stationary', 'deterministic_trend', 'stochastic_trend', 'volatility',
+    'collective_anomaly', 'contextual_anomaly', 'mean_shift', 'point_anomaly',
+    'trend_shift', 'variance_shift', 'cubic_collective', 'cubic_mean_shift',
+    'cubic_point_anomaly', 'cubic_variance_shift', 'damped_collective',
+    'damped_mean_shift', 'damped_point_anomaly', 'damped_variance_shift',
+    'exponential_collective', 'exponential_mean_shift', 'exponential_point_anomaly',
+    'exponential_variance_shift', 'linear_collective', 'linear_mean_shift',
+    'linear_point_anomaly', 'linear_trend_shift', 'linear_variance_shift',
+    'quadratic_collective', 'quadratic_mean_shift', 'quadratic_point_anomaly',
+    'quadratic_variance_shift', 'stochastic_collective', 'stochastic_mean_shift',
+    'stochastic_point_anomaly', 'stochastic_variance_shift', 'volatility_collective',
+    'volatility_mean_shift', 'volatility_point_anomaly', 'volatility_variance_shift',
+]
+
 # Model configurations
 MODEL_CONFIGS = {
     'model1': {
-        'name': 'Model 1 (Binary Classification)',
-        'saved_models_dir': Path('03-models/hierarchical/model1_binary/output/model1_binary_features'),
-        'class_names': {0: 'Stationary', 1: 'Non-Stationary'}
+        'name': 'Flat Classifier',
+        'saved_models_dir': Path('03-models/flat_classifier/output'),
+        'class_names': {i: n for i, n in enumerate(_NAMES)},
     },
-    'model2': {
-        'name': 'Model 2 (5-Class Classification)',
-        'saved_models_dir': Path('03-models/hierarchical/model2_nonstationary/output/model2_nonstationary_features'),
-        'class_names': {
-            0: 'Trend',
-            1: 'Volatility',
-            2: 'Stochastic',
-            3: 'Anomaly',
-            4: 'Structural Break'
-        }
-    }
 }
 
 
@@ -58,7 +64,7 @@ def load_misclassified_data(model_dir):
     return all_misclassified
 
 
-def plot_error_distribution(all_misclassified, class_names, model_name, save_fig=False):
+def plot_error_distribution(all_misclassified, class_names, model_name, save_fig=False, figures_dir=None):
     """Plot error distribution across classifiers."""
     
     fig, axes = plt.subplots(2, 2, figsize=(16, 12))
@@ -88,11 +94,9 @@ def plot_error_distribution(all_misclassified, class_names, model_name, save_fig
     
     confusion_data = all_errors.groupby(['true_label', 'predicted_label']).size().unstack(fill_value=0)
     
-    # Map numeric labels to names
-    label_names = [class_names.get(i, str(i)) for i in sorted(class_names.keys())]
-    
-    # Reindex to ensure all labels are present
-    all_labels = sorted(class_names.keys())
+    # Use only labels present in the data
+    all_labels = sorted(set(all_errors['true_label']) | set(all_errors['predicted_label']))
+    label_names = [class_names.get(i, str(i)) for i in all_labels]
     confusion_data = confusion_data.reindex(index=all_labels, columns=all_labels, fill_value=0)
     
     sns.heatmap(confusion_data, annot=True, fmt='d', cmap='YlOrRd', ax=ax2, 
@@ -133,7 +137,7 @@ def plot_error_distribution(all_misclassified, class_names, model_name, save_fig
     plt.tight_layout()
     
     if save_fig:
-        output_dir = Path('figures')
+        output_dir = Path(figures_dir) if figures_dir else Path('figures')
         output_dir.mkdir(parents=True, exist_ok=True)
         output_file = output_dir / f'error_analysis_{model_name.lower().replace(" ", "_")}.png'
         plt.savefig(output_file, dpi=150, bbox_inches='tight')
@@ -173,15 +177,17 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
     
-    parser.add_argument('--model', type=str, choices=['model1', 'model2'], 
+    parser.add_argument('--model', type=str, choices=['model1'],
                        default='model1',
-                       help='Which model to analyze (model1: binary, model2: 5-class)')
+                       help='Which model to analyze')
     parser.add_argument('--saved-models-dir', type=str,
                        help='Path to saved models directory (overrides default)')
     parser.add_argument('--top', type=int, default=10,
                        help='Number of worst cases to show (default: 10)')
     parser.add_argument('--save-fig', action='store_true',
                        help='Save figures to figures/')
+    parser.add_argument('--figures-dir', type=str, default=None,
+                       help='Directory to save figures (overrides default figures/)')
     parser.add_argument('--no-plot', action='store_true',
                        help='Skip plotting, only show statistics')
     
@@ -223,8 +229,8 @@ def main():
     # Plot distributions
     if not args.no_plot:
         print(f"\n[3/3] Generating visualizations...")
-        plot_error_distribution(all_misclassified, config['class_names'], 
-                               config['name'], args.save_fig)
+        plot_error_distribution(all_misclassified, config['class_names'],
+                               config['name'], args.save_fig, args.figures_dir)
     
     print(f"\n{'='*80}")
     print("Analysis complete!")

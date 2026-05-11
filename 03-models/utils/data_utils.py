@@ -18,7 +18,7 @@ from sklearn.model_selection import train_test_split
 from .constants import (
     PRIMARY_CATEGORY_MAPPING,
     DEFAULT_RANDOM_STATE,
-    DEFAULT_TEST_SIZE
+    DEFAULT_TEST_SIZE,
 )
 
 
@@ -229,19 +229,6 @@ def load_features_and_labels(features_path, target='binary', verbose=True):
     if target == 'binary':
         y = extract_binary_labels(labels_df)
     elif target == 'primary':
-        # For primary classification, filter out stationary samples first
-        if 'primary_category' in labels_df.columns:
-            # Filter to only non-stationary samples
-            non_stat_mask = labels_df['primary_category'] != 'stationary'
-            if not non_stat_mask.all():
-                n_filtered = (~non_stat_mask).sum()
-                if verbose:
-                    print(f"  Filtering out {n_filtered:,} stationary samples for primary classification")
-                X_df = X_df[non_stat_mask]
-                labels_df = labels_df[non_stat_mask]
-                if verbose:
-                    print(f"  Remaining samples: {len(X_df):,}")
-        
         y = extract_multiclass_labels(labels_df, PRIMARY_CATEGORY_MAPPING, 'primary_category')
     elif target == 'sub':
         # Sub-category requires custom mapping per primary category

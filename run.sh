@@ -3,116 +3,102 @@
 # Master Pipeline Script
 # ============================================================================
 # Usage:
-#   bash run.sh [step]
+#   bash run.sh [step] [mode] [features]
 #
 # Steps:
-#   all           : Run full pipeline (Generation -> Preprocessing -> Training -> Baseline)
+#   all           : Run full pipeline (Generation -> Preprocessing -> Training -> Postprocessing)
 #   generation    : Generate synthetic dataset
 #   preprocessing : Run feature extraction & selection
-#   training      : Train hierarchical models
+#   training      : Train flat classifier
 #   postprocessing: Analyze results & generate figures
-#   baseline      : Run traditional baseline tests
+#
+# Mode    : full (default) | test | topo-test
+# Features: tsfresh (default) | topo | hybrid
+#
+# Examples:
+#   bash run.sh                          # full pipeline, full dataset, tsfresh
+#   bash run.sh all test                 # full pipeline, test mode, tsfresh
+#   bash run.sh training test hybrid     # training only, test mode, hybrid
+#   bash run.sh all topo-test topo       # full pipeline, topo-test, topology
 # ============================================================================
 
 set -e
 
-# Configuration
 LOG_DIR="logs"
 TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
 mkdir -p "$LOG_DIR"
 
-# Colors
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-STEP=${1:-all}  # Default to 'all'
+STEP=${1:-all}      # all | generation | preprocessing | training | postprocessing
+MODE=${2:-full}     # full | test | topo-test
+FEATURES=${3:-tsfresh}  # tsfresh | topo | hybrid
 
-# Valid steps
-VALID_STEPS=("all" "generation" "preprocessing" "training" "postprocessing" "baseline")
+VALID_STEPS=("all" "generation" "preprocessing" "training" "postprocessing")
 
-# Check if step is valid
 if [[ ! " ${VALID_STEPS[@]} " =~ " ${STEP} " ]]; then
     echo -e "${RED}Error: Invalid step '$STEP'${NC}"
     echo ""
-    echo "Valid steps:"
-    echo "  all           - Run full pipeline"
-    echo "  generation    - Generate synthetic dataset"
-    echo "  preprocessing - Run feature extraction & selection"
-    echo "  training      - Train hierarchical models"
-    echo "  postprocessing - Analyze results & generate figures"
-    echo "  baseline      - Run traditional baseline tests"
+    echo "Usage: bash run.sh [step] [mode] [features]"
     echo ""
-    echo "Usage: bash run.sh [step]"
+    echo "Steps   : all | generation | preprocessing | training | postprocessing"
+    echo "Mode    : full (default) | test | topo-test"
+    echo "Features: tsfresh (default) | topo | hybrid"
     exit 1
 fi
 
 function log_run() {
     local script_name=$1
-    local log_file="$LOG_DIR/${TIMESTAMP}_${script_name%.*}.log"
-    
-    echo -e "${YELLOW}>>> Running $script_name...${NC}"
+    shift
+    local args="$*"
+    local label="${script_name%.*}"
+    [[ -n "$args" ]] && label="${label}_$(echo "$args" | tr ' ' '_')"
+    local log_file="$LOG_DIR/${TIMESTAMP}_${label}.log"
+
+    echo -e "${YELLOW}>>> Running $script_name $args${NC}"
     echo "    Log: $log_file"
-    
-    # Run script and pipe output to both stdout and log file
-    # 2>&1 redirects stderr to stdout so both are captured
-    bash "$script_name" 2>&1 | tee "$log_file"
-    
+
+    bash "$script_name" $args 2>&1 | tee "$log_file"
+
     if [ ${PIPESTATUS[0]} -eq 0 ]; then
         echo -e "${GREEN}✓ $script_name completed successfully.${NC}\n"
     else
-        echo -e "${RED}✗ $script_name failed. Check log for details.${NC}\n"
+        echo -e "${RED}✗ $script_name failed. Check: $log_file${NC}\n"
         exit 1
     fi
 }
 
 echo -e "${GREEN}============================================================================${NC}"
-echo -e "${GREEN}MASTER PIPELINE STARTED ($STEP)${NC}"
+echo -e "${GREEN}MASTER PIPELINE STARTED${NC}"
 echo -e "${GREEN}============================================================================${NC}"
-echo "Start time: $(date)"
-echo "Logs directory: $LOG_DIR"
+echo "Step    : $STEP"
+echo "Mode    : $MODE"
+echo "Features: $FEATURES"
+echo "Start   : $(date)"
+echo "Logs    : $LOG_DIR/"
 echo ""
 
-# 1. Generation
 if [[ "$STEP" == "all" || "$STEP" == "generation" ]]; then
-    log_run "run-generation.sh"
+    log_run "run-generation.sh" "$MODE"
 fi
 
-# 2. Preprocessing
 if [[ "$STEP" == "all" || "$STEP" == "preprocessing" ]]; then
-    log_run "run-preprocessing.sh"
+    log_run "run-preprocessing.sh" "$MODE" "$FEATURES"
 fi
 
-# 3. Training
 if [[ "$STEP" == "all" || "$STEP" == "training" ]]; then
-    log_run "run-training.sh"
+    log_run "run-training.sh" "$MODE" "$FEATURES"
 fi
 
-# 4. Post-Processing
 if [[ "$STEP" == "all" || "$STEP" == "postprocessing" ]]; then
-    log_run "run-postprocessing.sh"
-fi
-
-# 5. Baseline Comparison
-if [[ "$STEP" == "all" || "$STEP" == "baseline" ]]; then
-    log_run "run-baseline.sh"
-fi
-
-# Check if any step was executed
-STEPS_EXECUTED=false
-if [[ "$STEP" == "all" || "$STEP" == "generation" || "$STEP" == "preprocessing" || "$STEP" == "training" || "$STEP" == "postprocessing" || "$STEP" == "baseline" ]]; then
-    STEPS_EXECUTED=true
-fi
-
-if [ "$STEPS_EXECUTED" = false ]; then
-    echo -e "${RED}Error: No valid steps were executed.${NC}"
-    echo "Please check the step name and try again."
-    exit 1
+    log_run "run-postprocessing.sh" "$MODE" "$FEATURES"
 fi
 
 echo -e "${GREEN}============================================================================${NC}"
 echo -e "${GREEN}MASTER PIPELINE COMPLETED${NC}"
 echo -e "${GREEN}============================================================================${NC}"
-echo "End time: $(date)"
+echo "End: $(date)"
 

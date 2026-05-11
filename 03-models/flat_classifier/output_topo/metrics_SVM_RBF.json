@@ -1,0 +1,417 @@
+{
+  "model_name": "SVM_RBF",
+  "train_time": 0.03849601745605469,
+  "metrics": {
+    "train": {
+      "accuracy": 0.855,
+      "precision": 0.8676204891917173,
+      "recall": 0.855,
+      "f1": 0.8538036919108432
+    },
+    "test": {
+      "accuracy": 0.785,
+      "precision": 0.8111823570007713,
+      "recall": 0.785,
+      "f1": 0.7898467215865876
+    }
+  },
+  "classification_reports": {
+    "train": {
+      "stationary": {
+        "precision": 0.5726495726495726,
+        "recall": 0.8375,
+        "f1-score": 0.6802030456852792,
+        "support": 80.0
+      },
+      "deterministic_trend": {
+        "precision": 0.9615384615384616,
+        "recall": 0.9375,
+        "f1-score": 0.9493670886075949,
+        "support": 80.0
+      },
+      "stochastic_trend": {
+        "precision": 1.0,
+        "recall": 0.9625,
+        "f1-score": 0.9808917197452229,
+        "support": 80.0
+      },
+      "volatility": {
+        "precision": 0.8194444444444444,
+        "recall": 0.7375,
+        "f1-score": 0.7763157894736842,
+        "support": 80.0
+      },
+      "collective_anomaly": {
+        "precision": 0.76,
+        "recall": 0.475,
+        "f1-score": 0.5846153846153846,
+        "support": 80.0
+      },
+      "contextual_anomaly": {
+        "precision": 0.9506172839506173,
+        "recall": 0.9625,
+        "f1-score": 0.9565217391304348,
+        "support": 80.0
+      },
+      "mean_shift": {
+        "precision": 0.8955223880597015,
+        "recall": 0.75,
+        "f1-score": 0.8163265306122449,
+        "support": 80.0
+      },
+      "point_anomaly": {
+        "precision": 0.963855421686747,
+        "recall": 1.0,
+        "f1-score": 0.9815950920245399,
+        "support": 80.0
+      },
+      "trend_shift": {
+        "precision": 1.0,
+        "recall": 0.975,
+        "f1-score": 0.9873417721518988,
+        "support": 80.0
+      },
+      "variance_shift": {
+        "precision": 0.7525773195876289,
+        "recall": 0.9125,
+        "f1-score": 0.8248587570621468,
+        "support": 80.0
+      },
+      "accuracy": 0.855,
+      "macro avg": {
+        "precision": 0.8676204891917173,
+        "recall": 0.8549999999999999,
+        "f1-score": 0.853803691910843,
+        "support": 800.0
+      },
+      "weighted avg": {
+        "precision": 0.8676204891917173,
+        "recall": 0.855,
+        "f1-score": 0.8538036919108432,
+        "support": 800.0
+      }
+    },
+    "test": {
+      "stationary": {
+        "precision": 0.47058823529411764,
+        "recall": 0.8,
+        "f1-score": 0.5925925925925926,
+        "support": 20.0
+      },
+      "deterministic_trend": {
+        "precision": 0.9,
+        "recall": 0.9,
+        "f1-score": 0.9,
+        "support": 20.0
+      },
+      "stochastic_trend": {
+        "precision": 1.0,
+        "recall": 0.85,
+        "f1-score": 0.918918918918919,
+        "support": 20.0
+      },
+      "volatility": {
+        "precision": 0.7222222222222222,
+        "recall": 0.65,
+        "f1-score": 0.6842105263157895,
+        "support": 20.0
+      },
+      "collective_anomaly": {
+        "precision": 0.5714285714285714,
+        "recall": 0.4,
+        "f1-score": 0.47058823529411764,
+        "support": 20.0
+      },
+      "contextual_anomaly": {
+        "precision": 0.95,
+        "recall": 0.95,
+        "f1-score": 0.95,
+        "support": 20.0
+      },
+      "mean_shift": {
+        "precision": 0.6086956521739131,
+        "recall": 0.7,
+        "f1-score": 0.6511627906976745,
+        "support": 20.0
+      },
+      "point_anomaly": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 20.0
+      },
+      "trend_shift": {
+        "precision": 1.0,
+        "recall": 0.8,
+        "f1-score": 0.8888888888888888,
+        "support": 20.0
+      },
+      "variance_shift": {
+        "precision": 0.8888888888888888,
+        "recall": 0.8,
+        "f1-score": 0.8421052631578947,
+        "support": 20.0
+      },
+      "accuracy": 0.785,
+      "macro avg": {
+        "precision": 0.8111823570007713,
+        "recall": 0.7849999999999999,
+        "f1-score": 0.7898467215865875,
+        "support": 200.0
+      },
+      "weighted avg": {
+        "precision": 0.8111823570007713,
+        "recall": 0.785,
+        "f1-score": 0.7898467215865876,
+        "support": 200.0
+      }
+    }
+  },
+  "confusion_matrices": {
+    "train": [
+      [
+        67,
+        0,
+        0,
+        2,
+        4,
+        1,
+        0,
+        0,
+        0,
+        6
+      ],
+      [
+        0,
+        75,
+        0,
+        0,
+        1,
+        0,
+        3,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        3,
+        77,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        15,
+        0,
+        0,
+        59,
+        4,
+        0,
+        0,
+        2,
+        0,
+        0
+      ],
+      [
+        17,
+        0,
+        0,
+        5,
+        38,
+        2,
+        2,
+        0,
+        0,
+        16
+      ],
+      [
+        0,
+        0,
+        0,
+        1,
+        0,
+        77,
+        0,
+        0,
+        0,
+        2
+      ],
+      [
+        17,
+        0,
+        0,
+        1,
+        1,
+        1,
+        60,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        80,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0,
+        78,
+        0
+      ],
+      [
+        1,
+        0,
+        0,
+        4,
+        2,
+        0,
+        0,
+        0,
+        0,
+        73
+      ]
+    ],
+    "test": [
+      [
+        16,
+        0,
+        0,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      [
+        0,
+        18,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        2,
+        17,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      [
+        5,
+        0,
+        0,
+        13,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        7,
+        0,
+        0,
+        2,
+        8,
+        1,
+        2,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        1,
+        0,
+        19,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        5,
+        0,
+        0,
+        0,
+        1,
+        0,
+        14,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        20,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        4,
+        0,
+        16,
+        0
+      ],
+      [
+        1,
+        0,
+        0,
+        1,
+        2,
+        0,
+        0,
+        0,
+        0,
+        16
+      ]
+    ]
+  },
+  "timestamp_utc": "2026-05-11T14:21:29"
+}

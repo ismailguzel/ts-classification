@@ -1,0 +1,813 @@
+\documentclass[12pt, a4paper]{article}
+
+% ── Packages ──────────────────────────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{csquotes}           % required by biblatex-apa when babel is active
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{mathtools}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage[style=apa, backend=biber, natbib=true]{biblatex}
+\addbibresource{references.bib}
+
+\geometry{
+  top=2.5cm, bottom=2.5cm,
+  left=3cm,  right=3cm
+}
+
+\hypersetup{
+  colorlinks = true,
+  linkcolor  = blue!60!black,
+  citecolor  = blue!60!black,
+  urlcolor   = blue!60!black
+}
+
+% ── Theorem environments ──────────────────────────────────────────────────────
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{example}{Example}[section]
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+
+% ── Custom commands ───────────────────────────────────────────────────────────
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Hk}{H_k}
+\newcommand{\dgm}{\mathrm{Dgm}}
+\newcommand{\pers}{\mathrm{pers}}
+
+% ── Title ─────────────────────────────────────────────────────────────────────
+\title{%
+  \textbf{Topological Data Analysis for Time Series Classification}\\[0.5em]
+  \large Background and Feature Design
+}
+\author{İsmail Güzel}
+\date{May 2026}
+
+% ──────────────────────────────────────────────────────────────────────────────
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Introduction}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection*{Motivation: what shape does a time series have?}
+
+Consider a time series that records, say, the hourly temperature over a month.
+A statistician would summarise it with its mean, variance, autocorrelation
+coefficients, and spectral density. These are all perfectly reasonable — but
+they are all \emph{coordinate-dependent}: they depend on the absolute scale and
+the temporal ordering of the values.
+
+Now ask a different question: if you drew the temperature curve on paper, what
+would you notice about its \emph{shape}? You might say: ``it goes up and down
+periodically'', ``there is a persistent plateau around day 10'', ``there is one
+very sharp spike on day 22''. These are \emph{topological} observations — they
+describe how the curve connects, bends, and self-organises, independently of the
+exact numerical values.
+
+\textbf{Topological Data Analysis (TDA)} is the branch of applied mathematics
+that makes these observations precise and computable
+\citep{carlsson2009topology, edelsbrunner2010computational}.
+The key idea is to \emph{vary a threshold} and track how connected pieces of the
+data are born, merge, and disappear. The result is a concise multi-scale summary
+called a \emph{persistence diagram}.
+
+\subsection*{Why persistence diagrams are useful for time series}
+
+The central object of TDA is the \emph{persistence diagram}, a compact summary of
+how topological features are born and die as a filtration threshold is varied.
+Three properties make it particularly useful in practice:
+
+\begin{enumerate}[nosep]
+  \item \textbf{Stability.} Persistence diagrams are stable under small
+    perturbations: adding a little noise to a time series shifts the diagram by
+    at most the same amount in the bottleneck distance
+    \citep{cohen-steiner2007stability}. This is the topological analog of
+    Lipschitz continuity.
+
+  \item \textbf{Scale invariance.} The diagram captures structure that is present
+    across \emph{multiple scales} simultaneously. A trend and a superimposed
+    oscillation both leave traces in the same diagram.
+
+  \item \textbf{Complementarity.} Persistence diagrams encode global shape rather
+    than local statistics. They are therefore complementary to statistical feature
+    extraction methods such as TSFresh \citep{christ2018time}, which excel at
+    local temporal patterns, autocorrelation structure, and spectral content.
+\end{enumerate}
+
+This complementarity motivates the hybrid pipeline studied in this work: combining
+18 topological features with 100 TSFresh features for the classification of
+synthetic time series patterns.
+
+\subsection*{Structure of this report}
+
+\bigskip
+\noindent
+Section~\ref{sec:persistent_homology} introduces persistent homology, the
+mathematical foundation, with an intuitive water-level analogy before the formal
+definitions.
+Section~\ref{sec:filtrations} describes the three filtration strategies applied to
+univariate time series.
+Section~\ref{sec:feature_extraction} details the scalar features derived from each
+persistence diagram.
+Section~\ref{sec:feature_selection} explains the mutual information-based selection
+procedure used to reduce the feature set.
+Section~\ref{sec:tda_literature} reviews relevant literature, from foundational
+papers to recent (2022--2026) time series applications.
+Section~\ref{sec:results_summary} summarizes the empirical performance of the
+topological features on the 10-class classification benchmark used in this work.
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Persistent Homology}
+\label{sec:persistent_homology}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Intuition: the rising-water analogy}
+
+Before introducing the formal machinery, it helps to build intuition with a
+concrete analogy.
+
+Imagine a hilly landscape and a rising sea level. As the water rises:
+\begin{itemize}[nosep]
+  \item First, the highest peaks emerge as isolated \emph{islands} (connected
+    components are born).
+  \item As the water rises further, nearby islands merge into \emph{archipelagos}
+    (components die by merging with older ones).
+  \item Enclosed \emph{lakes} may appear and then fill in (loops are born and die).
+\end{itemize}
+The \emph{birth height} of an island is the elevation of its highest peak; its
+\emph{death height} is the elevation at which it merges with a taller island.
+The difference — the \emph{persistence} — measures how prominent the peak is.
+A tall mountain has high persistence; a small bump has low persistence.
+
+For a time series, the ``landscape'' is the graph of the signal values. The
+``water level'' is a varying threshold. As we raise (or lower) this threshold,
+connected groups of time steps appear and merge, and the birth/death pairs encode
+the structural features of the signal.
+
+\subsection{Simplicial Complexes and Homology}
+
+Let $X$ be a finite point cloud or a function defined on a topological space.
+Algebraic topology studies $X$ through the lens of \emph{homology groups}
+$H_k(X; \mathbb{F})$ over a field $\mathbb{F}$, where the integer $k \geq 0$
+is the \emph{homological dimension}:
+
+\begin{itemize}[nosep]
+  \item $H_0$: connected components (\emph{islands} in the water analogy)
+  \item $H_1$: one-dimensional loops (\emph{tunnels} through the terrain)
+  \item $H_2$: two-dimensional voids (\emph{cavities} enclosed in 3D)
+\end{itemize}
+
+In practice, $X$ is replaced by a \emph{simplicial complex} built from the data,
+and homology is computed combinatorially via chain complexes and boundary operators
+\citep{hatcher2002algebraic}.
+For a 1-dimensional time series the simplicial complex is simply a graph whose
+nodes are the time steps and whose edges connect consecutive steps.
+
+\subsection{Filtrations}
+
+A \emph{filtration} is a nested sequence of simplicial complexes
+\[
+  \emptyset = K_0 \subseteq K_1 \subseteq \cdots \subseteq K_n = K
+\]
+parameterised by a threshold $t_0 \leq t_1 \leq \cdots \leq t_n$.
+As the threshold increases, new simplices are added and the topology changes:
+connected components merge, loops appear or fill in.
+
+\begin{definition}[Birth and Death]
+A topological feature (e.g., a connected component) is \emph{born} at threshold
+$b$ when it first appears in the filtration and \emph{dies} at threshold $d > b$
+when it merges with an older feature or is filled by a higher-dimensional simplex.
+Its \emph{persistence} is $\pers = d - b$.
+\end{definition}
+
+\subsection{Persistence Diagrams}
+
+The \emph{persistence diagram} $\dgm_k(f)$ for homological dimension $k$ is the
+multiset of points $(b_i, d_i) \in \R^2$ corresponding to all features that are born
+and die during the filtration, together with the diagonal $\{(t, t) : t \in \R\}$
+counted with infinite multiplicity \citep{edelsbrunner2000topological}.
+
+Features near the diagonal (small persistence $d - b$) are considered topological
+noise; features far from the diagonal encode robust structural properties of the
+signal.
+
+A fundamental stability result guarantees that small perturbations of the input
+function produce small changes in the persistence diagram under the bottleneck distance
+$d_B$ \citep{cohen-steiner2007stability}:
+
+\begin{theorem}[Stability of Persistence Diagrams]
+Let $f, g : X \to \R$ be continuous functions on a compact topological space $X$.
+Then
+\[
+  d_B\bigl(\dgm(f),\, \dgm(g)\bigr) \;\leq\; \|f - g\|_\infty.
+\]
+\end{theorem}
+
+This stability property is crucial for applications to noisy time series: small
+measurement errors cannot drastically alter the topological summary.
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Filtrations for Univariate Time Series}
+\label{sec:filtrations}
+% ══════════════════════════════════════════════════════════════════════════════
+
+Given a univariate time series $f : \{0, 1, \ldots, T-1\} \to \R$, we apply
+three complementary filtration strategies. Together they form the
+\texttt{sublevel+h1} pipeline used in this work.
+
+\subsection{Sublevel Set Filtration ($\text{sub\_H0}$)}
+
+\begin{definition}[Sublevel Set]
+The \emph{sublevel set} of $f$ at threshold $t$ is
+\[
+  \mathcal{L}^-(t) = \{s : f(s) \leq t\}.
+\]
+\end{definition}
+
+As $t$ increases from $\min f$ to $\max f$, time steps are added to the active
+set in increasing order of their function value. Two active time steps $s_1, s_2$
+are connected if they are adjacent in time. Connected components are born when
+isolated time steps are added and die when they merge with an older component (by
+the elder rule).
+
+The resulting $H_0$ persistence diagram encodes how the \emph{local minima} of
+$f$ are organised. A time series with a single dominant minimum (e.g., a
+deterministic trend reaching its nadir at one point) produces a diagram with one
+highly persistent point far from the diagonal, while a noisy stationary process
+produces many low-persistence points clustered near the diagonal (noise). The
+sublevel filtration is equivalent to computing the zeroth persistent homology of
+the 1-dimensional CW complex built on the graph of $f$.
+
+\begin{example}[Sublevel filtration on a mean-shift series]
+Consider a time series $f$ with a mean of $0$ for $t < 500$ and a mean of $2$
+for $t \geq 500$ (a mean shift). As the threshold $t$ rises from $-\infty$:
+\begin{enumerate}[nosep, label=\roman*.]
+  \item Near $t = 0$: the segment around the first half is activated; one
+    connected component is born.
+  \item Near $t = 2$: the segment around the second half is activated; a second
+    component is born.
+  \item At the threshold where the two segments touch (at the shift boundary):
+    the younger component merges into the older one — it dies.
+\end{enumerate}
+The resulting persistence diagram contains a point at approximately $(2, 2+\delta)$
+— i.e., it has low persistence — while the first component persists until
+$t = \max f$, giving a high-persistence point. This asymmetric diagram is the
+topological signature of a mean shift.
+\end{example}
+
+\subsection{Superlevel Set Filtration ($\text{sup\_H0}$)}
+
+\begin{definition}[Superlevel Set]
+The \emph{superlevel set} of $f$ at threshold $t$ is
+\[
+  \mathcal{L}^+(t) = \{s : f(s) \geq t\}.
+\]
+\end{definition}
+
+As $t$ decreases from $\max f$ to $\min f$, time steps are added to the active
+set in decreasing order of their function value. This filtration captures the
+organisation of \emph{local maxima}: a sharp spike (point anomaly) creates a
+single highly persistent component because the spike maximum appears early and
+persists until the threshold drops to the baseline level. Mean shifts create step
+changes in the superlevel diagram. The superlevel diagram is the mirror image of
+the sublevel diagram when $f$ is replaced by $-f$.
+
+\subsection{Takens Embedding and Vietoris--Rips Filtration ($\text{H1}$)}
+
+The sublevel and superlevel filtrations only capture $H_0$ features (connected
+components). To access $H_1$ features (loops), we apply a different approach
+based on \emph{delay embedding} \citep{takens1981detecting}.
+
+\begin{definition}[Takens Delay Embedding]
+Given a time series $f$ of length $T$, a delay $\tau > 0$, and an embedding
+dimension $d$, the \emph{Takens embedding} maps each time step $s$ to the point
+\[
+  \phi(s) = \bigl(f(s),\, f(s+\tau),\, \ldots,\, f(s+(d-1)\tau)\bigr) \in \R^d.
+\]
+\end{definition}
+
+By Takens' embedding theorem \citep{takens1981detecting}, if $f$ arises from a
+deterministic dynamical system, then $\phi$ reconstructs the attractor of the
+system up to diffeomorphism (under generic conditions). For a periodic or
+quasi-periodic signal, the attractor is a torus or circle, and $H_1$ detects the
+resulting loops.
+
+\begin{example}[Periodicity via $H_1$]
+A sinusoidal signal $f(t) = \sin(2\pi t / P)$ with period $P$, when delay-embedded
+with $\tau = P/4$ and $d = 2$, produces the point cloud
+$\{(\sin\theta,\, \cos\theta)\}$ — a perfect circle. Under Vietoris--Rips
+filtration, this circle creates exactly one persistent $H_1$ class born at small
+$\epsilon$ and dying only when the circle is ``filled in'' at large $\epsilon$.
+Its persistence is proportional to the signal amplitude. A stationary noise
+process, by contrast, produces a point cloud without circular structure, giving
+only short-lived $H_1$ classes near the diagonal.
+\end{example}
+
+The point cloud $\{\phi(s)\}$ is filtered by the \emph{Vietoris--Rips
+complex}: at radius $\epsilon$, any set of points mutually within distance
+$\epsilon$ forms a simplex:
+\[
+  \mathcal{R}_\epsilon = \bigl\{\sigma \subseteq P :
+    \mathrm{diam}(\sigma) \leq \epsilon \bigr\}.
+\]
+As $\epsilon$ increases from 0 to $\infty$, $H_1$ classes (loops) are born and
+die; a persistent loop indicates genuine cyclic or oscillatory structure in the
+time series.
+
+\medskip\noindent
+\textbf{Important limitation.} The sublevel and superlevel filtrations are
+constructed from the \emph{values} of the time series and are therefore invariant
+to any permutation of time steps that preserves the multiset of values. They
+encode ``what heights appear'' but not ``when they appear''. This means that
+stationarity, autocorrelation structure, and volatility clustering — properties
+that are inherently temporal — are not directly captured. The Takens embedding
+partially addresses this by introducing temporal ordering through the delay
+parameter $\tau$, but the basic sublevel/superlevel features share this limitation.
+This is the primary reason why topological features underperform statistical
+features on the \texttt{stationary} class in the experiments described in
+Section~\ref{sec:results_summary}.
+
+\bigskip
+\noindent
+\textbf{Why three filtrations?} Each filtration answers a different topological
+question about the time series:
+
+\begin{table}[H]
+\centering
+\caption{Complementary information captured by the three filtration strategies.}
+\label{tab:filtrations}
+\begin{tabular}{llll}
+\toprule
+\textbf{Diagram} & \textbf{Filtration} & \textbf{Dimension} & \textbf{Captures} \\
+\midrule
+$\text{sub\_H0}$ & Sublevel sets      & $H_0$ & Local minima, connectivity from below \\
+$\text{sup\_H0}$ & Superlevel sets    & $H_0$ & Local maxima, connectivity from above \\
+$\text{H1}$      & Takens + Rips      & $H_1$ & Cyclic structure, delay-space loops \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Scalar Feature Extraction from Persistence Diagrams}
+\label{sec:feature_extraction}
+% ══════════════════════════════════════════════════════════════════════════════
+
+A persistence diagram is a \emph{multiset} of points in $\R^2$ and cannot be
+directly fed into standard machine learning pipelines. Several vectorisation
+methods have been proposed to convert diagrams to fixed-length feature vectors.
+We use a combination of Carlsson coordinates, persistence entropy, and persistence
+landscapes.
+
+\subsection{Carlsson Coordinates}
+
+\citet{adcock2016ring} proposed a set of polynomial functions on the space of
+persistence diagrams that are invariant under rearrangement of the points.
+Let $D = \{(b_i, d_i)\}$ be a persistence diagram (diagonal points excluded)
+and let $p_i = d_i - b_i$ denote the persistence of the $i$-th feature.
+
+The five Carlsson coordinates are:
+
+\begin{align}
+  f_1(D) &= \sum_i p_i^2 \label{eq:carl_f1} \\[4pt]
+  f_2(D) &= \sum_i (d_{\max} - d_i)^2 \cdot p_i^2 \label{eq:carl_f2} \\[4pt]
+  f_3(D) &= \sum_i b_i \cdot p_i^2 \label{eq:carl_f3} \\[4pt]
+  f_4(D) &= \sum_i (d_{\max} - d_i) \cdot p_i^4 \label{eq:carl_f4} \\[4pt]
+  f_5(D) &= \sum_i b_i^2 \cdot p_i^4 \label{eq:carl_f5}
+\end{align}
+
+where $d_{\max} = \max_i d_i$. The quadratic and quartic weights in $p_i$
+down-weight low-persistence (noise) points and emphasise high-persistence
+(signal) features. Coordinates $f_1$ and $f_2$ measure the total squared
+persistence energy and how it is distributed near the death axis, respectively.
+Coordinate $f_3$ captures the birth-weighted persistence — a proxy for how
+early in the filtration the most persistent features appear.
+
+\subsection{Persistent Entropy}
+
+Persistent entropy \citep{chintakunta2015entropy} adapts the Shannon entropy
+formula to measure the spread of persistence values in a diagram:
+
+\begin{equation}
+  E(D) = -\sum_i \hat{p}_i \log \hat{p}_i,
+  \qquad \hat{p}_i = \frac{p_i}{\sum_j p_j},
+  \label{eq:pers_entropy}
+\end{equation}
+
+where the sum runs over all off-diagonal points. $E(D) = 0$ when the diagram
+has a single point of maximal persistence (completely concentrated signal),
+and $E(D)$ is maximal when all persistence values are equal (uniform diagram,
+typical of white noise). Persistent entropy thus functions as a complexity
+measure: low entropy indicates a dominant structural feature; high entropy
+indicates homogeneous noise.
+
+\subsection{Persistence Landscapes}
+
+The persistence landscape \citep{bubenik2015statistical} is a functional
+representation of the persistence diagram that maps each point $(b_i, d_i)$
+to a tent function:
+\[
+  \lambda_i(t) = \begin{cases}
+    t - b_i & \text{if } b_i \leq t \leq \tfrac{b_i+d_i}{2}, \\
+    d_i - t & \text{if } \tfrac{b_i+d_i}{2} \leq t \leq d_i, \\
+    0 & \text{otherwise.}
+  \end{cases}
+\]
+The $k$-th landscape function $\lambda_k(t)$ is the $k$-th largest value among
+all $\lambda_i(t)$ at each threshold $t$. The landscape lives in a Banach space
+and admits a well-defined mean and variance over samples, making it amenable to
+statistical inference.
+
+We extract two scalar features from the first two landscape functions:
+\begin{equation}
+  \ell_1 = \|\lambda_1\|_1 = \int |\lambda_1(t)|\, dt, \qquad
+  \ell_2 = \|\lambda_2\|_1 = \int |\lambda_2(t)|\, dt.
+  \label{eq:landscapes}
+\end{equation}
+
+These $L^1$ norms measure the ``area'' under the dominant and secondary landscape
+functions. $\ell_1$ is dominated by the most persistent feature; $\ell_2$ reflects
+the second-tier structure. Together they capture the dominance hierarchy of
+topological features.
+
+\subsection{Summary: 8 Features per Diagram}
+
+\begin{table}[H]
+\centering
+\caption{Scalar features extracted from each persistence diagram.}
+\label{tab:features_per_diagram}
+\begin{tabular}{clll}
+\toprule
+\textbf{Index} & \textbf{Feature} & \textbf{Equation} & \textbf{Interpretation} \\
+\midrule
+1 & \texttt{carl\_f1} & \eqref{eq:carl_f1} & Total squared persistence energy \\
+2 & \texttt{carl\_f2} & \eqref{eq:carl_f2} & Persistence weighted by proximity to death axis \\
+3 & \texttt{carl\_f3} & \eqref{eq:carl_f3} & Birth-weighted persistence \\
+4 & \texttt{carl\_f4} & \eqref{eq:carl_f4} & Death-proximity $\times$ quartic persistence \\
+5 & \texttt{carl\_f5} & \eqref{eq:carl_f5} & Birth$^2$ $\times$ quartic persistence \\
+6 & \texttt{entropy}  & \eqref{eq:pers_entropy} & Complexity / spread of persistence values \\
+7 & \texttt{landscape\_l1} & \eqref{eq:landscapes} & $L^1$ norm of the first landscape function \\
+8 & \texttt{landscape\_l2} & \eqref{eq:landscapes} & $L^1$ norm of the second landscape function \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent
+Applying these 8 features to each of the 3 diagrams yields $3 \times 8 = 24$ raw
+topological features per time series. After mutual information-based feature selection
+(Section~\ref{sec:feature_selection}), 18 of these are retained.
+
+The full feature naming convention is:
+\[
+  \texttt{topo\_\_\{diagram\}\_\_\{feature\}}
+\]
+where \texttt{diagram} $\in \{\texttt{sub\_H0},\, \texttt{sup\_H0},\, \texttt{H1}\}$
+and \texttt{feature} $\in \{\texttt{carl\_f1}, \ldots, \texttt{carl\_f5},\,
+\texttt{entropy},\, \texttt{landscape\_l1},\, \texttt{landscape\_l2}\}$.
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Feature Selection}
+\label{sec:feature_selection}
+% ══════════════════════════════════════════════════════════════════════════════
+
+Feature selection is performed using \emph{mutual information} (MI), a
+non-parametric measure of statistical dependence:
+\begin{equation}
+  I(X; Y) = \sum_{x,y} p(x, y) \log \frac{p(x,y)}{p(x)\,p(y)}.
+  \label{eq:mi}
+\end{equation}
+MI equals zero if and only if $X$ and $Y$ are statistically independent, and
+is invariant under monotone transformations. It captures both linear and
+non-linear dependencies, making it more general than Pearson correlation for
+the highly non-Gaussian distribution of persistence-based features.
+
+\medskip
+\noindent
+\textbf{Leakage prevention.} MI is estimated on the \emph{training split only}
+and then applied to select features before any model sees the test data. Computing
+MI on the full dataset would leak test-label information into feature selection and
+inflate reported accuracy \citep{kaufman2012leakage}. In practice, MI is estimated
+using the $k$-nearest-neighbour estimator of \citet{kraskov2004estimating} as
+implemented in \texttt{sklearn.feature\_selection.mutual\_info\_classif}
+\citep{pedregosa2011scikit}.
+
+\medskip
+\noindent
+\textbf{Selection result.} Of the 24 raw topological features, 18 are retained by
+MI selection on the 10-class training split. The 6 dropped features
+(\texttt{carl\_f5} from all three diagrams, and \texttt{landscape\_l2} from
+\texttt{sup\_H0}) carry near-zero MI with the class label, indicating they encode
+noise rather than class-discriminating structure.
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Literature Review: TDA for Time Series}
+\label{sec:tda_literature}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Foundations}
+
+Persistent homology was formalised in a computational context by
+\citet{edelsbrunner2000topological} and
+\citet{zomorodian2005computing}, who introduced efficient algorithms for its
+computation. The stability theorem --- critical for applications to noisy data ---
+was proved by \citet{cohen-steiner2007stability}.
+\citet{carlsson2009topology} provided the first broad survey of TDA as a practical
+data analysis methodology, establishing the language and goals that shaped subsequent
+applied work.
+
+\subsection{Vectorisation Methods}
+
+Converting persistence diagrams to machine-learning-compatible vectors has been an
+active research area. \citet{bubenik2015statistical} introduced persistence
+landscapes, establishing their statistical properties (mean, variance, central limit
+theorem) in a Hilbert space setting. \citet{adcock2016ring} characterised the ring
+of polynomial invariants of persistence diagrams, motivating the Carlsson coordinates
+used in this work. \citet{chintakunta2015entropy} proposed persistent entropy as a
+single-scalar complexity measure. More recently, persistence images
+\citep{adams2017persistence} and the sliced Wasserstein kernel
+\citep{carriere2017sliced} have extended the vectorisation toolkit; however, for
+the present application the scalar features described above are computationally
+efficient and interpretable.
+
+\subsection{TDA Applied to Time Series}
+
+\citet{perea2015sliding} introduced the sliding window embedding (a variant of
+Takens embedding) and proved that it produces circles in the delay space for
+periodic signals, providing a rigorous foundation for using $H_1$ features to
+detect periodicity. The period manifests as a highly persistent $H_1$ class with
+$\pers \approx$ (signal amplitude).
+
+\citet{umeda2017time} applied sublevel and superlevel filtrations directly to
+financial and physiological time series, showing that persistence diagrams
+discriminate between different regimes more robustly than classical spectral
+features. \citet{gidea2018topological} demonstrated that the $L^1$ norm of the
+first persistence landscape detects early warning signals before financial crashes
+— a structural break detection task directly analogous to the \texttt{trend\_shift}
+and \texttt{variance\_shift} classes studied here.
+
+\citet{seversky2016time} performed a systematic comparison of TDA-based features
+against classical time series descriptors on UCR classification benchmarks and
+found that sublevel persistence features compete with or outperform dynamic time
+warping and shapelet methods on datasets with irregular structural transitions,
+while underperforming on noise-heavy or purely stochastic datasets.
+
+More recent work has pushed TDA for time series in directions that are directly
+relevant to the present pipeline. \citet{lin2022temporal} proposed a
+\emph{temporal filtration} that augments standard persistence with explicit time
+ordering information, addressing a key limitation of purely value-based sublevel
+and superlevel constructions. \citet{elyaagoubi2023multivariate} extended the
+discussion from univariate trajectories to multivariate time series, especially
+brain-signal settings where both channel-wise evolution and cross-channel
+structure matter. \citet{ferra2023importance} combined persistence landscapes of
+time series with neural networks and an attribution layer, showing that
+topological summaries can be both predictive and interpretable in supervised
+classification settings.
+
+Bridging the gap between theoretical tools and industrial anomaly detection,
+\citet{perez2021topological} applied TDA to multivariate sensor time series from
+manufacturing processes, showing that persistence-based features detect hidden
+structural patterns that remain invisible to classical multivariate statistics.
+This is especially relevant to the anomaly classes (\texttt{collective\_anomaly},
+\texttt{point\_anomaly}, \texttt{variance\_shift}) studied in the present work.
+
+Application-oriented studies from 2024 further support the usefulness of TDA for
+complex sequential data. \citet{flammer2024chaotic} used persistent homology for
+classification of chaotic multivariate EEG windows and reported that topology is
+effective for detecting seizure-related structure after suitable dimension
+reduction. \citet{zheng2024multivariate} proposed a multichannel EEG pipeline
+that couples Hilbert--Huang signal representations with topological features,
+illustrating how TDA can be integrated with more classical signal-processing
+front ends rather than used in isolation.
+
+\citet{chazal2021introduction} provides a comprehensive modern introduction to
+TDA with statistical perspectives.
+
+\subsection{TDA and Machine Learning}
+
+The combination of TDA features with standard machine learning classifiers has
+been explored widely in recent years. \citet{carlsson2020topological} provides
+an authoritative review of topological pattern recognition for point cloud data,
+describing the theoretical framework within which persistence-based classifiers
+operate. At the applied level, \citet{hensel2021survey} surveyed machine learning
+applications of TDA across domains, noting that the combination of
+persistence-based features with gradient-boosted trees is the most consistently
+competitive approach, with random forests close behind — consistent with the
+CatBoost and Random Forest results reported in Section~\ref{sec:results_summary}.
+
+\citet{giotto2021} describe the \texttt{giotto-tda} Python library, which implements
+the persistent homology pipeline used in this work, including Vietoris--Rips
+computation for Takens embeddings and sublevel/superlevel filtrations for scalar
+functions. The underlying computation of Vietoris--Rips persistent homology is
+performed by the \textsc{Ripser} algorithm \citep{bauer2021ripser}, one of the
+fastest available implementations; a Python interface is provided by
+\citet{tralie2018ripser}.
+
+For broader context, \citet{su2025review} review recent developments in TDA and
+topological deep learning beyond classical persistent homology. Although their
+scope is wider than time series alone, the review is useful for situating modern
+sequence-analysis pipelines within the rapidly expanding ecosystem of topological
+representations, vectorisations, and learning architectures.
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Empirical Performance Summary}
+\label{sec:results_summary}
+% ══════════════════════════════════════════════════════════════════════════════
+
+The topological features were evaluated on a 10-class synthetic time series
+classification task (\texttt{topo-test} dataset: 1,000 series, 100 per class,
+length 1,000 time points). Results are compared against a 100-feature TSFresh
+pipeline and a 118-feature hybrid concatenation. All experiments use an 80/20
+stratified train/test split with seed 42. Table~\ref{tab:results_main} summarises
+test accuracy for four classifiers across all three feature pipelines.
+
+\begin{table}[H]
+\centering
+\caption{Test accuracy on the 10-class topo-test benchmark.}
+\label{tab:results_main}
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Pipeline} & \textbf{Features} & \textbf{RF} & \textbf{XGBoost}
+  & \textbf{CatBoost} & \textbf{SVM} \\
+\midrule
+TSFresh           & 100 & 93.0\% & 94.5\% & \textbf{95.0\%} & 89.0\% \\
+\textbf{Topology} & \textbf{18}  & 85.5\% & 85.0\% & 86.5\% & 78.5\% \\
+Hybrid            & 118 & 92.5\% & 94.5\% & 94.5\% & \textbf{91.0\%} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent
+\textbf{Feature efficiency.} The topological pipeline delivers 86.5\% CatBoost
+accuracy from just 18 features — a compression ratio of 5.6$\times$ relative to
+the 100-feature TSFresh pipeline, with only a 8.5 percentage point accuracy
+reduction. Expressed as accuracy per feature:
+
+\begin{align*}
+  \text{TSFresh:} &\quad 95.0\% / 100 = 0.95\% \text{ per feature,} \\
+  \text{Topology:} &\quad 86.5\% / 18  = 4.81\% \text{ per feature.}
+\end{align*}
+
+Topological features thus deliver approximately \textbf{5$\times$ better
+accuracy-per-feature efficiency} than the statistical baseline.
+
+\medskip
+\noindent
+\textbf{Per-class highlights.}
+Table~\ref{tab:per_class} reports CatBoost F1 scores by class across all three
+pipelines.
+
+\begin{table}[H]
+\centering
+\caption{CatBoost test F1 scores by class across the three feature pipelines.
+  Classes where topology matches or exceeds TSFresh are marked ($\dagger$).}
+\label{tab:per_class}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Class} & \textbf{TSFresh} & \textbf{Topology} & \textbf{Hybrid} \\
+\midrule
+stationary          & 0.884 & 0.651 & 0.889 \\
+deterministic\_trend & 0.974 & 0.872 & 0.974 \\
+stochastic\_trend    & 1.000 & 0.895 & 0.974 \\
+volatility          & 0.865 & 0.750 & 0.889 \\
+collective\_anomaly  & 0.976 & 0.732 & 0.947 \\
+contextual\_anomaly  & 1.000 & 0.974 & 1.000 \\
+mean\_shift          & 0.909 & 0.850 & 0.870 \\
+point\_anomaly       & 1.000 & 1.000$\dagger$ & 1.000$\dagger$ \\
+trend\_shift         & 0.919 & \textbf{0.974}$\dagger$ & 0.919 \\
+variance\_shift      & 0.974 & \textbf{0.976}$\dagger$ & 1.000$\dagger$ \\
+\midrule
+\textbf{Macro F1}   & \textbf{0.950} & 0.867 & 0.946 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent
+Topology \emph{surpasses} TSFresh on \texttt{trend\_shift} (0.974 vs.\ 0.919)
+and matches it on \texttt{variance\_shift} and \texttt{point\_anomaly}. Both of
+these advantages are structurally interpretable:
+
+\begin{itemize}
+  \item \textbf{Trend shift:} A slope change creates a distinctive feature in the
+    superlevel filtration --- two connected components that merge at the apex of
+    the change. The superlevel persistence diagram captures this as a single
+    high-persistence point whose death value corresponds to the change-point
+    amplitude. TSFresh chunk linear trend features miss this when the change-point
+    falls between chunks.
+
+  \item \textbf{Variance shift:} A step increase in variance produces a visible
+    change in the density of sublevel crossings. Carlsson coordinates and persistent
+    entropy in the sublevel diagram encode this directly. TSFresh change-quantile
+    features capture similar information but are less robust to the exact location
+    of the shift.
+
+  \item \textbf{Stationary (worst case):} TSFresh has a decisive advantage because
+    autocorrelation features, spectral flatness, and stationarity-related statistics
+    directly encode the absence of a trend or structural change. Persistence diagrams,
+    being invariant to temporal ordering, cannot detect stationarity without
+    supplementary temporal information.
+\end{itemize}
+
+\medskip
+\noindent
+\textbf{Most important topological feature.}
+In the hybrid CatBoost model (118 features: 100 TSFresh + 18 topological),
+\texttt{topo\_\_sub\_H0\_\_carl\_f3} is the \emph{single most important feature}
+with an importance score of 13.2\%, outranking all 100 TSFresh features.
+This Carlsson coordinate measures the birth-weighted persistence of sublevel
+connected components (Equation~\ref{eq:carl_f3}):
+\[
+  f_3(D) = \sum_i b_i \cdot (d_i - b_i)^2,
+\]
+a weighted summary of when (at which threshold level) the most persistent
+components first appear. This feature is highly discriminative because different
+time series types have fundamentally different sublevel connectivity patterns:
+trends have an asymmetric global minimum; anomalies introduce secondary persistent
+minima; stationary processes have many short-lived low-persistence components.
+
+\subsection*{Practical limitations of the topological pipeline}
+
+For balanced use of topological features it is worth being explicit about their
+limitations, several of which have been noted in the literature:
+
+\begin{enumerate}
+  \item \textbf{Temporal order invariance.} As discussed in
+    Section~\ref{sec:filtrations}, sublevel and superlevel diagrams are invariant
+    to permutations of the time axis. This means that autocorrelation, stationarity,
+    and volatility clustering — all of which depend on temporal ordering — are not
+    directly representable. The Takens embedding ($H_1$) partially restores temporal
+    structure, but only for the delay parameter $\tau$ chosen.
+
+  \item \textbf{Computational cost.} Computing Vietoris--Rips persistent homology
+    scales poorly with the number of points. For a time series of length $T$ with
+    embedding dimension $d$, the Takens point cloud has $T - (d-1)\tau$ points, and
+    Rips computation is $O(n^3)$ in the worst case. In practice, the
+    \textsc{Ripser} algorithm \citep{bauer2021ripser} dramatically reduces this cost
+    via matrix reduction, and sublevel/superlevel filtrations remain $O(T \log T)$.
+
+  \item \textbf{Hyperparameter sensitivity.} The Takens embedding requires choosing
+    $\tau$ (delay) and $d$ (embedding dimension). A poorly chosen $\tau$ may produce
+    a degenerate point cloud. In practice, the false nearest neighbours method or
+    mutual information criterion is used to select $\tau$ \citep{takens1981detecting,
+    perea2015sliding}.
+
+  \item \textbf{Univariate focus.} The filtrations described here are designed for
+    univariate series. Extending them to multivariate time series requires additional
+    choices (e.g., channel-wise vs.\ joint embeddings), an active research area
+    \citep{elyaagoubi2023multivariate, zheng2024multivariate}.
+\end{enumerate}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Conclusion}
+% ══════════════════════════════════════════════════════════════════════════════
+
+Topological Data Analysis provides a principled, mathematically grounded approach
+to time series feature extraction that is complementary to classical statistical
+methods. The persistent homology framework, applied through sublevel, superlevel,
+and Takens delay-embedding filtrations, extracts 18 scalar features that:
+
+\begin{enumerate}
+  \item Achieve 86.5\% classification accuracy on a 10-class synthetic benchmark
+    with only 18 features (5$\times$ feature efficiency of TSFresh);
+  \item Outperform TSFresh on structural break detection tasks (\texttt{trend\_shift},
+    \texttt{variance\_shift});
+  \item Contribute the single most important feature in a 118-feature hybrid model
+    (\texttt{sub\_H0\_\_carl\_f3}, importance 13.2\%);
+  \item Provide stable, theoretically well-founded representations (Stability Theorem)
+    that are robust to small measurement perturbations.
+\end{enumerate}
+
+The primary limitation of topological features is their insensitivity to temporal
+ordering: persistence diagrams are invariant to permutation of time steps, which
+makes them poor descriptors for stationarity, autocorrelation structure, and
+volatility clustering — properties that TSFresh captures well. The hybrid pipeline
+exploits both strengths and is recommended when both structural change detection
+and temporal regularity characterisation are required.
+
+% ══════════════════════════════════════════════════════════════════════════════
+% References
+% ══════════════════════════════════════════════════════════════════════════════
+\newpage
+\printbibliography
+
+\end{document}

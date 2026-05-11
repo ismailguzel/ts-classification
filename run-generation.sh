@@ -1,54 +1,46 @@
 #!/bin/bash
 # ============================================================================
-# Data Generation Pipeline
+# Data Generation Pipeline (betise)
 # ============================================================================
-# Generates synthetic time series dataset (20k scale by default).
-# Output: data/raw/unified-20k/
+# Generates synthetic time series dataset (config-driven).
+# Output: data/raw/dataset/dataset.parquet
+#
+# Usage:
+#   bash run-generation.sh           # full dataset (1000/class, 39 classes)
+#   bash run-generation.sh test      # test dataset  (100/class, 39 classes)
+#   bash run-generation.sh topo-test # topology-friendly dataset (100/class, 10 classes)
 # ============================================================================
 
-set -e  # Exit on error
+set -e
 
-# Load required module (if on cluster)
-if command -v module &> /dev/null; then
-    module load apps/truba-ai/gpu-2024.0
+PYTHON="${PYTHON:-python}"
+MODE=${1:-full}
+
+if [ "$MODE" == "test" ]; then
+    CONFIG="test-config.json"
+    OUTPUT_FILE="data/raw/test/test.parquet"
+elif [ "$MODE" == "topo-test" ]; then
+    CONFIG="topo-test-config.json"
+    OUTPUT_FILE="data/raw/topo-test/topo-test.parquet"
+else
+    CONFIG="full-dataset-config.json"
+    OUTPUT_FILE="data/raw/dataset/dataset.parquet"
 fi
 
-# Activate environment
-conda activate ts-generation
-
-# Configuration
-SCALE="20k"  # Default scale
-
 echo "============================================================"
-echo "Starting Data Generation Pipeline ($SCALE)"
+echo "Data Generation — $MODE ($CONFIG)"
 echo "============================================================"
 echo "Start time: $(date)"
-echo ""
 
-# Navigate to generation directory
 cd 01-data-generation
-
-# Print configuration summary
-python config.py "$SCALE"
-
-# Run generation
-python generate.py --scale "$SCALE"
-
+$PYTHON generate.py --config "$CONFIG"
 cd ..
 
-# Check output
-OUTPUT_DIR="data/raw/unified-$SCALE"
-if [ -d "$OUTPUT_DIR" ] && [ "$(ls -A $OUTPUT_DIR)" ]; then
-   echo "✓ Data generation successful: $OUTPUT_DIR"
+if [ -f "$OUTPUT_FILE" ]; then
+    echo "✓ Done: $OUTPUT_FILE"
 else
-   echo "✗ Error: Output directory not created or empty: $OUTPUT_DIR"
-   exit 1
+    echo "✗ Error: Output file not found: $OUTPUT_FILE"
+    exit 1
 fi
 
-echo ""
-echo "============================================================"
-echo "Data Generation Complete!"
-echo "Output: data/raw/unified-$SCALE"
-echo "============================================================"
 echo "End time: $(date)"
-

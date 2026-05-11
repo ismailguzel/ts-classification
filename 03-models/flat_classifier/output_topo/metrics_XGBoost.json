@@ -1,0 +1,459 @@
+{
+  "model_name": "XGBoost",
+  "train_time": 0.9753580093383789,
+  "metrics": {
+    "train": {
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "test": {
+      "accuracy": 0.85,
+      "precision": 0.8562159409218233,
+      "recall": 0.85,
+      "f1": 0.8509661994321814
+    }
+  },
+  "classification_reports": {
+    "train": {
+      "stationary": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 80.0
+      },
+      "deterministic_trend": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 80.0
+      },
+      "stochastic_trend": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 80.0
+      },
+      "volatility": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 80.0
+      },
+      "collective_anomaly": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 80.0
+      },
+      "contextual_anomaly": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 80.0
+      },
+      "mean_shift": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 80.0
+      },
+      "point_anomaly": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 80.0
+      },
+      "trend_shift": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 80.0
+      },
+      "variance_shift": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 80.0
+      },
+      "accuracy": 1.0,
+      "macro avg": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 800.0
+      },
+      "weighted avg": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 800.0
+      }
+    },
+    "test": {
+      "stationary": {
+        "precision": 0.5833333333333334,
+        "recall": 0.7,
+        "f1-score": 0.6363636363636364,
+        "support": 20.0
+      },
+      "deterministic_trend": {
+        "precision": 0.9,
+        "recall": 0.9,
+        "f1-score": 0.9,
+        "support": 20.0
+      },
+      "stochastic_trend": {
+        "precision": 0.9,
+        "recall": 0.9,
+        "f1-score": 0.9,
+        "support": 20.0
+      },
+      "volatility": {
+        "precision": 0.75,
+        "recall": 0.75,
+        "f1-score": 0.75,
+        "support": 20.0
+      },
+      "collective_anomaly": {
+        "precision": 0.7058823529411765,
+        "recall": 0.6,
+        "f1-score": 0.6486486486486487,
+        "support": 20.0
+      },
+      "contextual_anomaly": {
+        "precision": 1.0,
+        "recall": 0.9,
+        "f1-score": 0.9473684210526315,
+        "support": 20.0
+      },
+      "mean_shift": {
+        "precision": 0.8181818181818182,
+        "recall": 0.9,
+        "f1-score": 0.8571428571428571,
+        "support": 20.0
+      },
+      "point_anomaly": {
+        "precision": 0.9523809523809523,
+        "recall": 1.0,
+        "f1-score": 0.975609756097561,
+        "support": 20.0
+      },
+      "trend_shift": {
+        "precision": 1.0,
+        "recall": 0.85,
+        "f1-score": 0.918918918918919,
+        "support": 20.0
+      },
+      "variance_shift": {
+        "precision": 0.9523809523809523,
+        "recall": 1.0,
+        "f1-score": 0.975609756097561,
+        "support": 20.0
+      },
+      "accuracy": 0.85,
+      "macro avg": {
+        "precision": 0.8562159409218232,
+        "recall": 0.85,
+        "f1-score": 0.8509661994321813,
+        "support": 200.0
+      },
+      "weighted avg": {
+        "precision": 0.8562159409218233,
+        "recall": 0.85,
+        "f1-score": 0.8509661994321814,
+        "support": 200.0
+      }
+    }
+  },
+  "confusion_matrices": {
+    "train": [
+      [
+        80,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        80,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        80,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        80,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        80,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        80,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        80,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        80,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        80,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        80
+      ]
+    ],
+    "test": [
+      [
+        14,
+        0,
+        0,
+        2,
+        4,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        18,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        18,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      [
+        2,
+        0,
+        0,
+        15,
+        1,
+        0,
+        0,
+        1,
+        0,
+        1
+      ],
+      [
+        6,
+        1,
+        0,
+        1,
+        12,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        2,
+        0,
+        18,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        18,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        20,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        2,
+        0,
+        17,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        20
+      ]
+    ]
+  },
+  "timestamp_utc": "2026-05-11T14:21:28",
+  "feature_importance": {
+    "features": [
+      "topo__sup_H0__entropy",
+      "topo__sub_H0__entropy",
+      "topo__sup_H0__carl_f3",
+      "topo__H1__entropy",
+      "topo__sub_H0__landscape_l1",
+      "topo__H1__carl_f3",
+      "topo__sub_H0__carl_f3",
+      "topo__sub_H0__carl_f2",
+      "topo__sub_H0__carl_f1",
+      "topo__H1__carl_f1",
+      "topo__H1__carl_f4",
+      "topo__H1__landscape_l1",
+      "topo__sup_H0__carl_f4",
+      "topo__sup_H0__carl_f2",
+      "topo__H1__carl_f2",
+      "topo__sub_H0__carl_f4",
+      "topo__sup_H0__landscape_l1",
+      "topo__sup_H0__carl_f1"
+    ],
+    "importances": [
+      0.12319839000701904,
+      0.12111330777406693,
+      0.10818612575531006,
+      0.08727999031543732,
+      0.08454642444849014,
+      0.0723385438323021,
+      0.07138622552156448,
+      0.05485346168279648,
+      0.04718488082289696,
+      0.04149987921118736,
+      0.03637852147221565,
+      0.03612400218844414,
+      0.034236155450344086,
+      0.024543963372707367,
+      0.020448720082640648,
+      0.01468263752758503,
+      0.01325431652367115,
+      0.008744461461901665
+    ]
+  }
+}

@@ -1,0 +1,238 @@
+============================================================
+Post-Processing — topo-test  |  features: hybrid
+============================================================
+Model dir: /Users/iguzel/Desktop/hierarchical-ts-classification/03-models/flat_classifier/output_hybrid
+Start    : Mon May 11 17:23:18 +03 2026
+Step 1: Feature Importance
+
+================================================================================
+FEATURE IMPORTANCE ANALYSIS
+================================================================================
+Model: Flat Classifier
+Saved Models: /Users/iguzel/Desktop/hierarchical-ts-classification/03-models/flat_classifier/output_hybrid
+Normalization: sum
+================================================================================
+
+[1/3] Loading feature importance files...
+  XGBoost: 50 features
+  CatBoost: 50 features
+  RandomForest: 50 features
+
+[2/3] Analyzing feature categories...
+
+================================================================================
+FEATURE IMPORTANCE SUMMARY BY CATEGORY
+================================================================================
+
+XGBoost:
+--------------------------------------------------------------------------------
+Category                Count    Total Imp     Mean Imp      Max Imp
+--------------------------------------------------------------------------------
+Quantile                   10       0.4406       0.0441       0.2473
+Statistical                11       0.1865       0.0170       0.1008
+Autocorrelation             8       0.1648       0.0206       0.0705
+Ratio                       2       0.0445       0.0223       0.0365
+Complexity                  2       0.0434       0.0217       0.0305
+Topo_sub_h0                 3       0.0249       0.0083       0.0164
+Linear                      4       0.0241       0.0060       0.0148
+Topo_sup_h0                 2       0.0203       0.0101       0.0103
+Frequency                   2       0.0175       0.0088       0.0120
+Topo_takens_h1              3       0.0141       0.0047       0.0063
+Other                       2       0.0114       0.0057       0.0073
+Range                       1       0.0080       0.0080       0.0080
+
+Total features: 50
+Total importance: 1.0000
+
+CatBoost:
+--------------------------------------------------------------------------------
+Category                Count    Total Imp     Mean Imp      Max Imp
+--------------------------------------------------------------------------------
+Topo_sub_h0                 3       0.1962       0.0654       0.1574
+Autocorrelation             7       0.1610       0.0230       0.0479
+Statistical                 8       0.1474       0.0184       0.0321
+Quantile                   12       0.1376       0.0115       0.0341
+Other                       4       0.0928       0.0232       0.0365
+Topo_sup_h0                 5       0.0778       0.0156       0.0268
+Frequency                   1       0.0666       0.0666       0.0666
+Complexity                  2       0.0349       0.0175       0.0242
+Topo_takens_h1              2       0.0278       0.0139       0.0188
+Ratio                       2       0.0198       0.0099       0.0107
+Linear                      2       0.0190       0.0095       0.0110
+Range                       1       0.0117       0.0117       0.0117
+Stationarity                1       0.0075       0.0075       0.0075
+
+Total features: 50
+Total importance: 1.0000
+
+RandomForest:
+--------------------------------------------------------------------------------
+Category                Count    Total Imp     Mean Imp      Max Imp
+--------------------------------------------------------------------------------
+Quantile                   13       0.2388       0.0184       0.0247
+Autocorrelation             9       0.1803       0.0200       0.0538
+Statistical                10       0.1469       0.0147       0.0321
+Frequency                   2       0.0798       0.0399       0.0703
+Other                       4       0.0777       0.0194       0.0226
+Topo_sub_h0                 2       0.0655       0.0328       0.0483
+Complexity                  2       0.0574       0.0287       0.0330
+Topo_sup_h0                 3       0.0548       0.0183       0.0202
+Range                       1       0.0380       0.0380       0.0380
+Ratio                       2       0.0310       0.0155       0.0201
+Linear                      1       0.0178       0.0178       0.0178
+Topo_takens_h1              1       0.0120       0.0120       0.0120
+
+Total features: 50
+Total importance: 1.0000
+
+
+[3/3] Generating visualizations...
+Figure saved to: /Users/iguzel/Desktop/hierarchical-ts-classification/04-postprocessing/figures/topo-test_hybrid/feature_importance_top30_comparison_model1.png
+Figure saved to: /Users/iguzel/Desktop/hierarchical-ts-classification/04-postprocessing/figures/topo-test_hybrid/feature_importance_categories_model1.png
+
+================================================================================
+Analysis complete!
+================================================================================
+
+Step 2: Error Analysis
+/Users/iguzel/Desktop/hierarchical-ts-classification/04-postprocessing/visualize_errors_simple.py:146: UserWarning: FigureCanvasAgg is non-interactive, and thus cannot be shown
+  plt.show()
+
+================================================================================
+MISCLASSIFICATION ANALYSIS
+================================================================================
+Model: Flat Classifier
+Saved Models: /Users/iguzel/Desktop/hierarchical-ts-classification/03-models/flat_classifier/output_hybrid
+================================================================================
+
+[1/3] Loading misclassified samples...
+  SVM_RBF: 18 misclassified samples
+  XGBoost: 11 misclassified samples
+  RandomForest: 15 misclassified samples
+  CatBoost: 11 misclassified samples
+
+Total misclassified samples: 55
+
+[2/3] Analyzing worst cases...
+
+================================================================================
+TOP 10 WORST MISCLASSIFICATIONS (Highest Confidence Errors)
+================================================================================
+
+
+SVM_RBF:
+--------------------------------------------------------------------------------
+  ID:    200 | True: stationary           → Predicted: collective_anomaly   | Confidence: 0.8674
+  ID:    765 | True: volatility           → Predicted: stationary           | Confidence: 0.7793
+  ID:    698 | True: collective_anomaly   → Predicted: stationary           | Confidence: 0.7701
+  ID:    144 | True: collective_anomaly   → Predicted: stationary           | Confidence: 0.7392
+  ID:    952 | True: stochastic_trend     → Predicted: deterministic_trend  | Confidence: 0.7260
+  ID:    642 | True: volatility           → Predicted: stationary           | Confidence: 0.7172
+  ID:    813 | True: volatility           → Predicted: stationary           | Confidence: 0.6509
+  ID:    868 | True: volatility           → Predicted: stationary           | Confidence: 0.6367
+  ID:    817 | True: collective_anomaly   → Predicted: mean_shift           | Confidence: 0.5817
+  ID:    115 | True: trend_shift          → Predicted: mean_shift           | Confidence: 0.5664
+
+XGBoost:
+--------------------------------------------------------------------------------
+  ID:    642 | True: volatility           → Predicted: stationary           | Confidence: 0.9852
+  ID:    144 | True: collective_anomaly   → Predicted: stationary           | Confidence: 0.9799
+  ID:    922 | True: stationary           → Predicted: collective_anomaly   | Confidence: 0.9797
+  ID:    278 | True: deterministic_trend  → Predicted: mean_shift           | Confidence: 0.9546
+  ID:    813 | True: volatility           → Predicted: stationary           | Confidence: 0.9533
+  ID:    868 | True: volatility           → Predicted: stationary           | Confidence: 0.9084
+  ID:    696 | True: trend_shift          → Predicted: mean_shift           | Confidence: 0.8548
+  ID:    750 | True: trend_shift          → Predicted: mean_shift           | Confidence: 0.6848
+  ID:    506 | True: mean_shift           → Predicted: deterministic_trend  | Confidence: 0.6469
+  ID:    204 | True: stochastic_trend     → Predicted: trend_shift          | Confidence: 0.5073
+
+RandomForest:
+--------------------------------------------------------------------------------
+  ID:    813 | True: volatility           → Predicted: stationary           | Confidence: 0.8800
+  ID:    750 | True: trend_shift          → Predicted: mean_shift           | Confidence: 0.8450
+  ID:    144 | True: collective_anomaly   → Predicted: stationary           | Confidence: 0.7100
+  ID:    642 | True: volatility           → Predicted: stationary           | Confidence: 0.6900
+  ID:    115 | True: trend_shift          → Predicted: mean_shift           | Confidence: 0.6800
+  ID:    741 | True: variance_shift       → Predicted: volatility           | Confidence: 0.6750
+  ID:    868 | True: volatility           → Predicted: stationary           | Confidence: 0.6450
+  ID:    696 | True: trend_shift          → Predicted: mean_shift           | Confidence: 0.6300
+  ID:    765 | True: volatility           → Predicted: stationary           | Confidence: 0.6000
+  ID:    922 | True: stationary           → Predicted: collective_anomaly   | Confidence: 0.5400
+
+CatBoost:
+--------------------------------------------------------------------------------
+  ID:    813 | True: volatility           → Predicted: stationary           | Confidence: 0.8769
+  ID:    868 | True: volatility           → Predicted: stationary           | Confidence: 0.8597
+  ID:    750 | True: trend_shift          → Predicted: mean_shift           | Confidence: 0.8464
+  ID:    696 | True: trend_shift          → Predicted: mean_shift           | Confidence: 0.8070
+  ID:    278 | True: deterministic_trend  → Predicted: mean_shift           | Confidence: 0.7966
+  ID:    765 | True: volatility           → Predicted: stationary           | Confidence: 0.7085
+  ID:    144 | True: collective_anomaly   → Predicted: stationary           | Confidence: 0.6468
+  ID:    642 | True: volatility           → Predicted: stationary           | Confidence: 0.6396
+  ID:    817 | True: collective_anomaly   → Predicted: mean_shift           | Confidence: 0.4726
+  ID:    115 | True: trend_shift          → Predicted: mean_shift           | Confidence: 0.4709
+
+[3/3] Generating visualizations...
+
+Figure saved to: /Users/iguzel/Desktop/hierarchical-ts-classification/04-postprocessing/figures/topo-test_hybrid/error_analysis_flat_classifier.png
+
+================================================================================
+Analysis complete!
+================================================================================
+
+Step 3: Confusion Matrices
+
+================================================================================
+CONFUSION MATRIX VISUALIZATION
+================================================================================
+Model(s): model1
+Normalized: False
+Save figures: True
+Format: png
+Individual plots: True
+Grid plots: True
+================================================================================
+
+================================================================================
+Processing Flat Classifier
+================================================================================
+
+Loading predictions from: /Users/iguzel/Desktop/hierarchical-ts-classification/03-models/flat_classifier/output_hybrid
+
+  RandomForest:
+    Loaded 200 predictions  (10 classes)
+    Accuracy: 0.9250
+  Saved: cm_flat_classifier_randomforest.png
+
+  XGBoost:
+    Loaded 200 predictions  (10 classes)
+    Accuracy: 0.9450
+  Saved: cm_flat_classifier_xgboost.png
+
+  CatBoost:
+    Loaded 200 predictions  (10 classes)
+    Accuracy: 0.9450
+  Saved: cm_flat_classifier_catboost.png
+
+  SVM_RBF:
+    Loaded 200 predictions  (10 classes)
+    Accuracy: 0.9100
+  Saved: cm_flat_classifier_svm_rbf.png
+
+Generating grid visualization...
+
+  Saved grid: cm_grid_flat_classifier.png
+
+================================================================================
+Completed Flat Classifier
+================================================================================
+
+================================================================================
+All figures saved to: /Users/iguzel/Desktop/hierarchical-ts-classification/04-postprocessing/figures/topo-test_hybrid
+================================================================================
+
+============================================================
+Post-Processing Complete!  features=hybrid
+Figures: /Users/iguzel/Desktop/hierarchical-ts-classification/04-postprocessing/figures/topo-test_hybrid
+End: Mon May 11 17:23:49 +03 2026
+============================================================

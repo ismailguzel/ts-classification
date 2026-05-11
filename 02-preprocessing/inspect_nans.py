@@ -7,11 +7,11 @@ Modes:
 
 Usage:
     # 1. Scan for problems
-    python inspect_nans.py --mode scan --input ../data/raw/unified-20k --output nan_report.csv
+    python inspect_nans.py --mode scan --input ../data/raw/dataset --output nan_report.csv
 
     # 2. Inspect a specific series (found in the scan report)
     python inspect_nans.py --mode inspect \
-        --file ../data/raw/unified-20k/volatility/aparch/long.parquet \
+        --file ../data/raw/dataset/dataset.parquet \
         --series-id 15519
 """
 

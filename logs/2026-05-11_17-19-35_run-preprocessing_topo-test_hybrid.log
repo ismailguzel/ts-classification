@@ -1,0 +1,188 @@
+============================================================
+Preprocessing — topo-test  |  features: hybrid
+============================================================
+Input : /Users/iguzel/Desktop/hierarchical-ts-classification/data/raw/topo-test
+Start : Mon May 11 17:19:35 +03 2026
+
+--- TSFresh ---
+Output : /Users/iguzel/Desktop/hierarchical-ts-classification/data/features/topo-test/selected
+Step 1: Feature Extraction (TSFresh efficient)
+Found 1 files to process.
+Initialized with 8 cores.
+Feature Set: efficient
+
+[1/1] Processing: /Users/iguzel/Desktop/hierarchical-ts-classification/data/raw/topo-test/topo-test.parquet
+   Done in 21.4s. Shape: (1000, 777)
+
+Merging all chunks...
+   Combining 1 parts...
+   Saved features.parquet (1000, 778)
+   Saved labels.parquet (1000, 4)
+
+Process Complete! Output: /Users/iguzel/Desktop/hierarchical-ts-classification/data/features/topo-test/allfeatures
+Cleaning up temp files...
+Step 2: Leakage Removal
+================================================================================
+REMOVE DATA LEAKAGE FEATURES
+================================================================================
+Input: /Users/iguzel/Desktop/hierarchical-ts-classification/data/features/topo-test/allfeatures
+Mode: LIVE
+Backup: No
+
+Checking for 23 leakage patterns:
+  • ADF (Augmented Dickey-Fuller)
+  • KPSS (Kwiatkowski-Phillips-Schmidt-Shin)
+  • Phillips-Perron (PP)
+  • Unit Root tests
+  • Stationarity tests
+  • Variance Ratio tests
+================================================================================
+
+Found 1 feature files
+
+📁 features.parquet
+   Total features: 777
+   Leakage features: 3
+      - data__augmented_dickey_fuller__attr_"teststat"__autolag_"AIC"
+      - data__augmented_dickey_fuller__attr_"pvalue"__autolag_"AIC"
+      - data__augmented_dickey_fuller__attr_"usedlag"__autolag_"AIC"
+   Cleaned: 777 -> 771 features
+   Updated: feature_names.txt
+     777 -> 774 features
+
+================================================================================
+SUMMARY
+================================================================================
+Files processed: 1
+Files cleaned: 1
+Total leakage features removed: 3
+
+Cleanup completed!
+================================================================================
+Step 3: Feature Selection (top 100, train-only MI)
+================================================================================
+Feature Selection
+================================================================================
+Input:        /Users/iguzel/Desktop/hierarchical-ts-classification/data/features/topo-test/allfeatures
+Output:       /Users/iguzel/Desktop/hierarchical-ts-classification/data/features/topo-test/selected
+Method:       mutual_info
+N features:   100
+Target:       primary
+Test size:    0.2  (selector fit on train split only)
+Random state: 42
+================================================================================
+Loading features from: /Users/iguzel/Desktop/hierarchical-ts-classification/data/features/topo-test/allfeatures/features.parquet
+Loading labels from: /Users/iguzel/Desktop/hierarchical-ts-classification/data/features/topo-test/allfeatures/labels.parquet
+
+================================================================================
+Processing target: primary
+================================================================================
+================================================================================
+Feature Selection - Method: mutual_info
+Target: primary
+Fitting selector on train subset (800 rows), applying to full dataset (1000 rows).
+================================================================================
+
+Removing low variance features (threshold=0.001)...
+Original features: 774
+Selected features: 686
+Removed: 88
+
+Selecting top 100 features using mutual information...
+Original features: 686
+Selected features: 100
+
+Saving selected features to: /Users/iguzel/Desktop/hierarchical-ts-classification/data/features/topo-test/selected/features_primary_mutual_info.parquet
+Saving labels to: /Users/iguzel/Desktop/hierarchical-ts-classification/data/features/topo-test/selected/labels_primary.parquet
+Saving feature names to: /Users/iguzel/Desktop/hierarchical-ts-classification/data/features/topo-test/selected/feature_names_primary_mutual_info.txt
+Saving standardized features to: /Users/iguzel/Desktop/hierarchical-ts-classification/data/features/topo-test/selected/primary/features.parquet
+Saving standardized labels to: /Users/iguzel/Desktop/hierarchical-ts-classification/data/features/topo-test/selected/primary/labels.parquet
+
+Selected features and standardized files saved successfully!
+
+Feature selection completed successfully!
+
+--- Topology ---
+Output : /Users/iguzel/Desktop/hierarchical-ts-classification/data/features/topo-test/topological_selected
+Step 1: Topological Feature Extraction (method=sublevel+h1)
+======================================================================
+Topological Feature Extraction
+======================================================================
+Filtration method  : sublevel+h1
+Diagram features   : stats  (8 per diagram)
+Diagrams           : 3
+Total features     : 24
+Input              : /Users/iguzel/Desktop/hierarchical-ts-classification/data/raw/topo-test
+Output             : /Users/iguzel/Desktop/hierarchical-ts-classification/data/features/topo-test/topological
+Takens delay       : auto (MI, max=50)
+Takens dimension   : auto (FNN, max=10)
+n_perm             : 500
+n_jobs             : -1
+======================================================================
+Found 1 parquet file(s).
+Total series   : 1000
+Features/series: 24
+Parallel jobs  : 8  |  Batch: 200
+Batches:   0%|          | 0/5 [00:00<?, ?batch/s]Batches:  20%|██        | 1/5 [00:09<00:39,  9.92s/batch]Batches:  40%|████      | 2/5 [00:17<00:25,  8.42s/batch]Batches:  60%|██████    | 3/5 [00:24<00:16,  8.02s/batch]Batches:  80%|████████  | 4/5 [00:32<00:07,  7.82s/batch]Batches: 100%|██████████| 5/5 [00:40<00:00,  7.96s/batch]Batches: 100%|██████████| 5/5 [00:40<00:00,  8.11s/batch]
+  Batch 1/5: 200 ok, 0 failed
+  Batch 2/5: 200 ok, 0 failed
+  Batch 3/5: 200 ok, 0 failed
+  Batch 4/5: 200 ok, 0 failed
+  Batch 5/5: 200 ok, 0 failed
+
+Saved features.parquet  (1000, 25)
+Saved labels.parquet    (1000, 4)
+
+  delay — mean=5.3 median=3 min=2 max=37
+  dim   — mean=6.7 median=10 min=1 max=10
+
+Output: /Users/iguzel/Desktop/hierarchical-ts-classification/data/features/topo-test/topological
+Step 2: Topology Feature Selection (top 100, train-only MI)
+================================================================================
+Feature Selection
+================================================================================
+Input:        /Users/iguzel/Desktop/hierarchical-ts-classification/data/features/topo-test/topological
+Output:       /Users/iguzel/Desktop/hierarchical-ts-classification/data/features/topo-test/topological_selected
+Method:       mutual_info
+N features:   100
+Target:       primary
+Test size:    0.2  (selector fit on train split only)
+Random state: 42
+================================================================================
+Loading features from: /Users/iguzel/Desktop/hierarchical-ts-classification/data/features/topo-test/topological/features.parquet
+Loading labels from: /Users/iguzel/Desktop/hierarchical-ts-classification/data/features/topo-test/topological/labels.parquet
+
+================================================================================
+Processing target: primary
+================================================================================
+================================================================================
+Feature Selection - Method: mutual_info
+Target: primary
+Fitting selector on train subset (800 rows), applying to full dataset (1000 rows).
+================================================================================
+
+Removing low variance features (threshold=0.001)...
+Original features: 24
+Selected features: 18
+Removed: 6
+
+Selecting top 100 features using mutual information...
+Original features: 18
+Selected features: 18
+
+Saving selected features to: /Users/iguzel/Desktop/hierarchical-ts-classification/data/features/topo-test/topological_selected/features_primary_mutual_info.parquet
+Saving labels to: /Users/iguzel/Desktop/hierarchical-ts-classification/data/features/topo-test/topological_selected/labels_primary.parquet
+Saving feature names to: /Users/iguzel/Desktop/hierarchical-ts-classification/data/features/topo-test/topological_selected/feature_names_primary_mutual_info.txt
+Saving standardized features to: /Users/iguzel/Desktop/hierarchical-ts-classification/data/features/topo-test/topological_selected/primary/features.parquet
+Saving standardized labels to: /Users/iguzel/Desktop/hierarchical-ts-classification/data/features/topo-test/topological_selected/primary/labels.parquet
+
+Selected features and standardized files saved successfully!
+
+Feature selection completed successfully!
+
+============================================================
+Preprocessing Complete!  features=hybrid
+  TSFresh  : /Users/iguzel/Desktop/hierarchical-ts-classification/data/features/topo-test/selected
+  Topology : /Users/iguzel/Desktop/hierarchical-ts-classification/data/features/topo-test/topological_selected
+End: Mon May 11 17:20:48 +03 2026
+============================================================

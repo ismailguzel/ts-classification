@@ -1,5 +1,5 @@
 """
-Utilities for hierarchical time series classification models.
+Utilities for time series classification models.
 
 This package provides:
 - metrics: Comprehensive model evaluation
@@ -19,7 +19,6 @@ from .data_utils import (
 from .constants import (
     PRIMARY_CATEGORY_MAPPING,
     PRIMARY_CATEGORY_REVERSE,
-    BINARY_CLASS_NAMES,
     PRIMARY_CLASS_NAMES,
     DEFAULT_RANDOM_STATE,
     DEFAULT_TEST_SIZE,
@@ -29,7 +28,7 @@ from .constants import (
 __all__ = [
     # Metrics
     'ModelEvaluator',
-    
+
     # Data utilities
     'standardize_identifier_column',
     'extract_binary_labels',
@@ -37,11 +36,10 @@ __all__ = [
     'load_features_and_labels',
     'split_train_test',
     'remove_series_id_leakage',
-    
+
     # Constants
     'PRIMARY_CATEGORY_MAPPING',
     'PRIMARY_CATEGORY_REVERSE',
-    'BINARY_CLASS_NAMES',
     'PRIMARY_CLASS_NAMES',
     'DEFAULT_RANDOM_STATE',
     'DEFAULT_TEST_SIZE',

@@ -7,7 +7,7 @@ from prediction CSV files.
 
 Usage:
     python visualize_confusion_matrices.py --model model1
-    python visualize_confusion_matrices.py --model model2 --save-fig
+    python visualize_confusion_matrices.py --model model1 --save-fig
     python visualize_confusion_matrices.py --model both --format png
 """
 
@@ -15,25 +15,36 @@ import argparse
 import sys
 from pathlib import Path
 import pandas as pd
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 from sklearn.metrics import confusion_matrix
 
+CLASS_NAMES_39 = [
+    'stationary', 'deterministic_trend', 'stochastic_trend', 'volatility',
+    'collective_anomaly', 'contextual_anomaly', 'mean_shift', 'point_anomaly',
+    'trend_shift', 'variance_shift', 'cubic_collective', 'cubic_mean_shift',
+    'cubic_point_anomaly', 'cubic_variance_shift', 'damped_collective',
+    'damped_mean_shift', 'damped_point_anomaly', 'damped_variance_shift',
+    'exponential_collective', 'exponential_mean_shift', 'exponential_point_anomaly',
+    'exponential_variance_shift', 'linear_collective', 'linear_mean_shift',
+    'linear_point_anomaly', 'linear_trend_shift', 'linear_variance_shift',
+    'quadratic_collective', 'quadratic_mean_shift', 'quadratic_point_anomaly',
+    'quadratic_variance_shift', 'stochastic_collective', 'stochastic_mean_shift',
+    'stochastic_point_anomaly', 'stochastic_variance_shift', 'volatility_collective',
+    'volatility_mean_shift', 'volatility_point_anomaly', 'volatility_variance_shift',
+]
+
 # Model configurations
 MODEL_CONFIGS = {
     'model1': {
-        'name': 'Model 1: Binary Classification',
-        'output_dir': Path('03-models/hierarchical/model1_binary/output/model1_binary_features'),
-        'class_names': ['Stationary', 'Non-Stationary'],
-        'classifiers': ['RandomForest', 'XGBoost', 'CatBoost', 'SVM_Linear']
-    },
-    'model2': {
-        'name': 'Model 2: 5-Class Classification',
-        'output_dir': Path('03-models/hierarchical/model2_nonstationary/output/model2_nonstationary_features'),
-        'class_names': ['Trend', 'Volatility', 'Stochastic', 'Anomaly', 'Structural Break'],
+        'name': 'Flat Classifier',
+        'output_dir': Path('03-models/flat_classifier/output'),
+        'class_names': CLASS_NAMES_39,
         'classifiers': ['RandomForest', 'XGBoost', 'CatBoost', 'SVM_RBF']
-    }
+    },
 }
 
 
@@ -196,58 +207,71 @@ def plot_confusion_matrices_grid(all_cms, class_names, classifiers, model_name,
     plt.close()
 
 
-def process_model(model_key, normalize=False, save_fig=False, 
-                 individual=True, grid=True, fmt='png'):
+def process_model(model_key, normalize=False, save_fig=False,
+                 individual=True, grid=True, fmt='png', figures_dir=None):
     """Process confusion matrices for a specific model."""
-    
+
     config = MODEL_CONFIGS[model_key]
-    
+
     print(f"\n{'='*80}")
     print(f"Processing {config['name']}")
     print(f"{'='*80}\n")
-    
-    # Make paths absolute
+
     project_root = Path(__file__).parent.parent
-    output_dir = project_root / config['output_dir']
-    figures_dir = project_root / '04-postprocessing' / 'figures'
+    cfg_dir = config['output_dir']
+    output_dir = cfg_dir if cfg_dir.is_absolute() else project_root / cfg_dir
+    if figures_dir is None:
+        figures_dir = project_root / '04-postprocessing' / 'figures'
+    else:
+        figures_dir = Path(figures_dir)
     
     if not output_dir.exists():
         print(f"Error: Output directory not found: {output_dir}")
         return
-    
+
     print(f"Loading predictions from: {output_dir}")
-    
+
+    # Determine actual class names from first available prediction file
+    all_class_names = config['class_names']
+    present_class_names = all_class_names  # will be refined below
+
     all_cms = []
     valid_classifiers = []
-    
+
     for classifier in config['classifiers']:
         print(f"\n  {classifier}:")
         df = load_predictions(output_dir, classifier)
-        
+
         if df is None:
             all_cms.append(None)
             continue
-        
+
+        # Derive class names from labels present in this file
+        present_labels = sorted(set(df['true_label']) | set(df['predicted_label']))
+        if max(present_labels) < len(all_class_names):
+            present_class_names = [all_class_names[i] for i in present_labels]
+        else:
+            present_class_names = [str(i) for i in present_labels]
+
         cm = create_confusion_matrix(df)
         all_cms.append(cm)
         valid_classifiers.append(classifier)
-        
-        print(f"    Loaded {len(df)} predictions")
+
+        print(f"    Loaded {len(df)} predictions  ({len(present_labels)} classes)")
         print(f"    Accuracy: {(df['true_label'] == df['predicted_label']).mean():.4f}")
-        
-        # Plot individual confusion matrix
+
         if individual:
-            plot_confusion_matrix_single(cm, config['class_names'], classifier, 
+            plot_confusion_matrix_single(cm, present_class_names, classifier,
                                         config['name'], normalize=normalize,
                                         save_fig=save_fig, output_dir=figures_dir, fmt=fmt)
-    
+
     # Plot grid of all confusion matrices
     if grid and valid_classifiers:
         print(f"\nGenerating grid visualization...")
         valid_cms = [cm for cm in all_cms if cm is not None]
-        plot_confusion_matrices_grid(valid_cms, config['class_names'], 
+        plot_confusion_matrices_grid(valid_cms, present_class_names,
                                     valid_classifiers, config['name'],
-                                    normalize=normalize, save_fig=save_fig, 
+                                    normalize=normalize, save_fig=save_fig,
                                     output_dir=figures_dir, fmt=fmt)
     
     print(f"\n{'='*80}")
@@ -265,20 +289,24 @@ Examples:
   python visualize_confusion_matrices.py --model model1
   
   # Model 2 with normalized matrices and save
-  python visualize_confusion_matrices.py --model model2 --normalize --save-fig
+  python visualize_confusion_matrices.py --model model1 --normalize --save-fig
   
   # Both models, grid only, save as PDF
   python visualize_confusion_matrices.py --model both --grid-only --save-fig --format pdf
         """
     )
     
-    parser.add_argument('--model', type=str, choices=['model1', 'model2', 'both'], 
-                       default='both',
-                       help='Which model to process (default: both)')
+    parser.add_argument('--model', type=str, choices=['model1'],
+                       default='model1',
+                       help='Which model to process')
+    parser.add_argument('--saved-models-dir', type=str, default=None,
+                       help='Path to saved models directory (overrides default)')
     parser.add_argument('--normalize', action='store_true',
                        help='Show normalized confusion matrices (proportions)')
     parser.add_argument('--save-fig', action='store_true',
                        help='Save figures to 04-postprocessing/figures/')
+    parser.add_argument('--figures-dir', type=str, default=None,
+                       help='Directory to save figures (overrides default figures/)')
     parser.add_argument('--format', type=str, choices=['png', 'pdf', 'svg'], 
                        default='png',
                        help='Output figure format (default: png)')
@@ -304,18 +332,17 @@ Examples:
     print(f"Grid plots: {grid}")
     print(f"{'='*80}")
     
-    # Process models
-    if args.model == 'both':
-        process_model('model1', normalize=args.normalize, save_fig=args.save_fig,
-                     individual=individual, grid=grid, fmt=args.format)
-        process_model('model2', normalize=args.normalize, save_fig=args.save_fig,
-                     individual=individual, grid=grid, fmt=args.format)
-    else:
+    if args.saved_models_dir:
+        MODEL_CONFIGS[args.model]['output_dir'] = Path(args.saved_models_dir)
+
+    # Process model
+    if True:
         process_model(args.model, normalize=args.normalize, save_fig=args.save_fig,
-                     individual=individual, grid=grid, fmt=args.format)
-    
+                     individual=individual, grid=grid, fmt=args.format,
+                     figures_dir=args.figures_dir)
+
     if args.save_fig:
-        figures_dir = Path(__file__).parent / 'figures'
+        figures_dir = Path(args.figures_dir) if args.figures_dir else Path(__file__).parent / 'figures'
         print(f"\n{'='*80}")
         print(f"All figures saved to: {figures_dir}")
         print(f"{'='*80}\n")

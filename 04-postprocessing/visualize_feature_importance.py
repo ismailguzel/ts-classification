@@ -7,7 +7,7 @@ comprehensive visualizations with feature categorization.
 
 Usage:
     python visualize_feature_importance.py --model model1
-    python visualize_feature_importance.py --model model2 --top 30
+    python visualize_feature_importance.py --model model1 --top 30
     python visualize_feature_importance.py --model model1 --classifier XGBoost
 """
 
@@ -16,6 +16,8 @@ import sys
 from pathlib import Path
 import pandas as pd
 import numpy as np
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import seaborn as sns
 from collections import defaultdict
@@ -24,19 +26,15 @@ import re
 # Model configurations
 MODEL_CONFIGS = {
     'model1': {
-        'name': 'Model 1 (Binary Classification)',
-        'saved_models_dir': Path('03-models/hierarchical/model1_binary/saved_models/model1_binary_features'),
+        'name': 'Flat Classifier',
+        'saved_models_dir': Path('03-models/flat_classifier/output'),
     },
-    'model2': {
-        'name': 'Model 2 (5-Class Classification)',
-        'saved_models_dir': Path('03-models/hierarchical/model2_nonstationary/saved_models/model2_nonstationary_features'),
-    }
 }
 
 # Feature category mapping based on TSFresh feature names
 FEATURE_CATEGORIES = {
     'autocorrelation': ['agg_autocorrelation', 'autocorrelation', 'partial_autocorrelation'],
-    'statistical': ['variance', 'standard_deviation', 'mean', 'median', 'skewness', 'kurtosis', 
+    'statistical': ['variance', 'standard_deviation', 'mean', 'median', 'skewness', 'kurtosis',
                    'abs_energy', 'absolute_sum_of_changes', 'mean_abs_change', 'mean_change'],
     'stationarity': ['augmented_dickey_fuller', 'c3', 'cid_ce'],
     'frequency': ['fft_coefficient', 'fft_aggregated', 'spkt_welch_density', 'cwt_coefficients'],
@@ -48,38 +46,75 @@ FEATURE_CATEGORIES = {
              'has_duplicate', 'sum_values'],
     'ratio': ['ratio_beyond_r_sigma', 'ratio_value_number_to_time_series_length',
              'percentage_of_reoccurring_datapoints_to_all_datapoints'],
-    'range': ['range_count', 'value_count', 'first_location_of_maximum', 
+    'range': ['range_count', 'value_count', 'first_location_of_maximum',
              'last_location_of_maximum', 'first_location_of_minimum', 'last_location_of_minimum'],
     'symmetry': ['symmetry_looking'],
 }
 
 # Color mapping for categories (consistent colors across all plots)
 CATEGORY_COLORS = {
-    'autocorrelation': '#e74c3c',  # Red
-    'statistical': '#3498db',      # Blue
-    'stationarity': '#2ecc71',     # Green
-    'frequency': '#f39c12',        # Orange
-    'complexity': '#9b59b6',       # Purple
-    'quantile': '#1abc9c',         # Turquoise
-    'linear': '#e67e22',           # Dark Orange
-    'count': '#34495e',            # Dark Gray
-    'ratio': '#16a085',            # Dark Turquoise
-    'range': '#c0392b',            # Dark Red
-    'symmetry': '#8e44ad',         # Dark Purple
-    'other': '#95a5a6',            # Light Gray
+    # Topology categories
+    'topo_sub_H0':    '#c0392b',  # Dark Red    — sublevel persistence H0
+    'topo_sup_H0':    '#e67e22',  # Orange      — superlevel persistence H0
+    'topo_takens_H0': '#2980b9',  # Blue        — Takens embedding H0
+    'topo_takens_H1': '#27ae60',  # Green       — Takens embedding H1
+    # TSFresh categories
+    'autocorrelation': '#e74c3c',
+    'statistical':     '#3498db',
+    'stationarity':    '#2ecc71',
+    'frequency':       '#f39c12',
+    'complexity':      '#9b59b6',
+    'quantile':        '#1abc9c',
+    'linear':          '#e67e22',
+    'count':           '#34495e',
+    'ratio':           '#16a085',
+    'range':           '#c0392b',
+    'symmetry':        '#8e44ad',
+    'other':           '#95a5a6',
+}
+
+# Human-readable labels for the legend
+CATEGORY_LABELS = {
+    'topo_sub_H0':    'Sublevel H0',
+    'topo_sup_H0':    'Superlevel H0',
+    'topo_takens_H0': 'Takens H0',
+    'topo_takens_H1': 'Takens H1',
 }
 
 
 def categorize_feature(feature_name):
     """Categorize a feature based on its name."""
+    # Topology features — check exact prefixes first
+    if feature_name.startswith('topo__sub_H0__'):
+        return 'topo_sub_H0'
+    if feature_name.startswith('topo__sup_H0__'):
+        return 'topo_sup_H0'
+    if feature_name.startswith('topo__H0__'):
+        return 'topo_takens_H0'
+    if feature_name.startswith('topo__H1__'):
+        return 'topo_takens_H1'
+
+    # TSFresh features — substring match
     feature_lower = feature_name.lower()
-    
     for category, patterns in FEATURE_CATEGORIES.items():
         for pattern in patterns:
             if pattern in feature_lower:
                 return category
-    
+
     return 'other'
+
+
+def shorten_feature_name(feature_name, max_len=50):
+    """Return a readable short name for display."""
+    if feature_name.startswith('topo__'):
+        # topo__sub_H0__carl_f3  →  sub_H0 / carl_f3
+        parts = feature_name.split('__', 1)   # ['topo', 'sub_H0__carl_f3']
+        short = parts[1].replace('__', ' / ')
+    else:
+        short = feature_name.replace('data__', '').replace('"', '')
+    if len(short) > max_len:
+        short = short[:max_len - 3] + '...'
+    return short
 
 
 def normalize_importance(df, method='sum'):
@@ -181,14 +216,7 @@ def plot_top_features(all_importance, top_n=20, save_fig=False, output_dir=None,
         y_pos = np.arange(len(top_features))
         bars = ax.barh(y_pos, top_features['importance'], color=feature_colors)
         
-        # Shorten feature names for display
-        shortened_names = []
-        for feat in top_features['feature']:
-            # Remove 'data__' prefix and truncate long names
-            short = feat.replace('data__', '').replace('"', '')
-            if len(short) > 50:
-                short = short[:47] + '...'
-            shortened_names.append(short)
+        shortened_names = [shorten_feature_name(f) for f in top_features['feature']]
         
         ax.set_yticks(y_pos)
         ax.set_yticklabels(shortened_names, fontsize=9)
@@ -217,8 +245,9 @@ def plot_top_features(all_importance, top_n=20, save_fig=False, output_dir=None,
     for df in all_importance.values():
         all_categories.update(df['category'].unique())
     
-    legend_elements = [plt.Rectangle((0,0),1,1, facecolor=CATEGORY_COLORS.get(cat, CATEGORY_COLORS['other']), 
-                                    label=cat.capitalize()) 
+    legend_elements = [plt.Rectangle((0,0),1,1,
+                                    facecolor=CATEGORY_COLORS.get(cat, CATEGORY_COLORS['other']),
+                                    label=CATEGORY_LABELS.get(cat, cat.capitalize()))
                       for cat in sorted(all_categories)]
     fig.legend(handles=legend_elements, loc='lower center', ncol=5, 
               bbox_to_anchor=(0.5, -0.02), fontsize=10, title='Feature Categories')
@@ -282,7 +311,7 @@ def plot_category_distribution(all_importance, save_fig=False, output_dir=None, 
             autotext.set_fontweight('bold')
         
         # Add legend instead of labels to avoid overlap
-        legend_labels = [f'{cat.capitalize()}: {pct:.1f}%' 
+        legend_labels = [f'{CATEGORY_LABELS.get(cat, cat.capitalize())}: {pct:.1f}%'
                         for cat, pct in zip(category_importance.index, percentages)]
         ax1.legend(wedges, legend_labels, 
                   title="Categories",
@@ -299,7 +328,7 @@ def plot_category_distribution(all_importance, save_fig=False, output_dir=None, 
         y_pos = np.arange(len(category_importance))
         bars = ax2.barh(y_pos, category_importance.values, color=colors)
         ax2.set_yticks(y_pos)
-        ax2.set_yticklabels([cat.capitalize() for cat in category_importance.index])
+        ax2.set_yticklabels([CATEGORY_LABELS.get(cat, cat.capitalize()) for cat in category_importance.index])
         ax2.set_xlabel('Total Importance', fontsize=11)
         ax2.set_title(f'Category Importance Ranking', fontsize=11, fontweight='bold')
         ax2.grid(axis='x', alpha=0.3)
@@ -360,9 +389,9 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
     
-    parser.add_argument('--model', type=str, choices=['model1', 'model2'], 
+    parser.add_argument('--model', type=str, choices=['model1'],
                        default='model1',
-                       help='Which model to analyze (model1: binary, model2: 5-class)')
+                       help='Which model to analyze')
     parser.add_argument('--classifier', type=str,
                        help='Specific classifier to analyze (e.g., XGBoost, RandomForest)')
     parser.add_argument('--top', type=int, default=20,
@@ -371,6 +400,8 @@ def main():
                        help='Path to saved models directory (overrides default)')
     parser.add_argument('--save-fig', action='store_true',
                        help='Save figures to figures/')
+    parser.add_argument('--figures-dir', type=str, default=None,
+                       help='Directory to save figures (overrides default figures/)')
     parser.add_argument('--no-plot', action='store_true',
                        help='Skip plotting, only show statistics')
     parser.add_argument('--normalize', type=str, choices=['sum', 'minmax', 'none'],
@@ -431,7 +462,10 @@ def main():
     if args.save_fig or not args.no_plot:
         print(f"\n[3/3] Generating visualizations...")
         
-        output_dir = Path('figures') if args.save_fig else None
+        if args.save_fig:
+            output_dir = Path(args.figures_dir) if args.figures_dir else Path('figures')
+        else:
+            output_dir = None
         if output_dir:
             output_dir.mkdir(parents=True, exist_ok=True)
         

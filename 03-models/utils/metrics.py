@@ -1,5 +1,5 @@
 """
-Model evaluation utilities for hierarchical time series classification.
+Model evaluation utilities for time series classification.
 """
 
 import numpy as np
@@ -64,12 +64,15 @@ class ModelEvaluator:
             y_test, y_test_pred, average='weighted', zero_division=0
         )
         
+        present_labels = sorted(set(y_train) | set(y_test))
+        present_names = [self.class_names[i] for i in present_labels] if self.class_names else None
+
         train_report = sklearn_classification_report(
-            y_train, y_train_pred, target_names=self.class_names,
+            y_train, y_train_pred, labels=present_labels, target_names=present_names,
             output_dict=True, zero_division=0
         )
         test_report = sklearn_classification_report(
-            y_test, y_test_pred, target_names=self.class_names,
+            y_test, y_test_pred, labels=present_labels, target_names=present_names,
             output_dict=True, zero_division=0
         )
         

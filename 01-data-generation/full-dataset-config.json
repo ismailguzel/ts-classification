@@ -1,0 +1,138 @@
+{
+  "output_root": "../data/raw/dataset",
+  "output_name": "dataset.parquet",
+  "fixed_length": 1000,
+  "random_seed": 42,
+  "classes": {
+    "stationary": [
+      {"base_series": "ar", "n": 250, "features": {}},
+      {"base_series": "ma", "n": 250, "features": {}},
+      {"base_series": "arma", "n": 250, "features": {}},
+      {"base_series": "white_noise", "n": 250, "features": {}}
+    ],
+    "deterministic_trend": [
+      {"base_series": "ar", "n": 250, "features": {"linear_trend": {"enabled": true, "direction": "upward"}}},
+      {"base_series": "ar", "n": 250, "features": {"quadratic_trend": {"enabled": true, "direction": "upward"}}},
+      {"base_series": "ar", "n": 250, "features": {"cubic_trend": {"enabled": true, "direction": "upward"}}},
+      {"base_series": "ar", "n": 250, "features": {"exponential_trend": {"enabled": true, "direction": "upward"}}}
+    ],
+    "stochastic_trend": [
+      {"base_series": "random_walk", "n": 200, "features": {}},
+      {"base_series": "random_walk_drift", "n": 200, "features": {}},
+      {"base_series": "ari", "n": 200, "features": {}},
+      {"base_series": "ima", "n": 200, "features": {}},
+      {"base_series": "arima", "n": 200, "features": {}}
+    ],
+    "volatility": [
+      {"base_series": "arch", "n": 250, "features": {}},
+      {"base_series": "garch", "n": 250, "features": {}},
+      {"base_series": "egarch", "n": 250, "features": {}},
+      {"base_series": "aparch", "n": 250, "features": {}}
+    ],
+    "collective_anomaly": [
+      {"base_series": "ar", "n": 1000, "features": {"collective_anomaly": {"enabled": true, "mode": "single", "location": "random"}}}
+    ],
+    "contextual_anomaly": [
+      {"base_series": "ar", "n": 1000, "features": {"contextual_anomaly": {"enabled": true, "mode": "single", "location": "random"}}}
+    ],
+    "mean_shift": [
+      {"base_series": "ar", "n": 1000, "features": {"mean_shift": {"enabled": true, "mode": "single", "direction": "up"}}}
+    ],
+    "point_anomaly": [
+      {"base_series": "ar", "n": 1000, "features": {"point_anomaly": {"enabled": true, "mode": "single", "location": "random"}}}
+    ],
+    "trend_shift": [
+      {"base_series": "ar", "n": 1000, "features": {"trend_shift": {"enabled": true, "mode": "single", "change_type": "direction_change"}}}
+    ],
+    "variance_shift": [
+      {"base_series": "ar", "n": 1000, "features": {"variance_shift": {"enabled": true, "mode": "single", "direction": "up"}}}
+    ],
+    "cubic_collective": [
+      {"base_series": "ar", "n": 1000, "features": {"cubic_trend": {"enabled": true, "direction": "upward"}, "collective_anomaly": {"enabled": true, "mode": "single", "location": "random"}}}
+    ],
+    "cubic_mean_shift": [
+      {"base_series": "ar", "n": 1000, "features": {"cubic_trend": {"enabled": true, "direction": "upward"}, "mean_shift": {"enabled": true, "mode": "single", "direction": "up"}}}
+    ],
+    "cubic_point_anomaly": [
+      {"base_series": "ar", "n": 1000, "features": {"cubic_trend": {"enabled": true, "direction": "upward"}, "point_anomaly": {"enabled": true, "mode": "single", "location": "random"}}}
+    ],
+    "cubic_variance_shift": [
+      {"base_series": "ar", "n": 1000, "features": {"cubic_trend": {"enabled": true, "direction": "upward"}, "variance_shift": {"enabled": true, "mode": "single", "direction": "up"}}}
+    ],
+    "damped_collective": [
+      {"base_series": "ar", "n": 1000, "features": {"exponential_trend": {"enabled": true, "direction": "downward"}, "collective_anomaly": {"enabled": true, "mode": "single", "location": "random"}}}
+    ],
+    "damped_mean_shift": [
+      {"base_series": "ar", "n": 1000, "features": {"exponential_trend": {"enabled": true, "direction": "downward"}, "mean_shift": {"enabled": true, "mode": "single", "direction": "up"}}}
+    ],
+    "damped_point_anomaly": [
+      {"base_series": "ar", "n": 1000, "features": {"exponential_trend": {"enabled": true, "direction": "downward"}, "point_anomaly": {"enabled": true, "mode": "single", "location": "random"}}}
+    ],
+    "damped_variance_shift": [
+      {"base_series": "ar", "n": 1000, "features": {"exponential_trend": {"enabled": true, "direction": "downward"}, "variance_shift": {"enabled": true, "mode": "single", "direction": "up"}}}
+    ],
+    "exponential_collective": [
+      {"base_series": "ar", "n": 1000, "features": {"exponential_trend": {"enabled": true, "direction": "upward"}, "collective_anomaly": {"enabled": true, "mode": "single", "location": "random"}}}
+    ],
+    "exponential_mean_shift": [
+      {"base_series": "ar", "n": 1000, "features": {"exponential_trend": {"enabled": true, "direction": "upward"}, "mean_shift": {"enabled": true, "mode": "single", "direction": "up"}}}
+    ],
+    "exponential_point_anomaly": [
+      {"base_series": "ar", "n": 1000, "features": {"exponential_trend": {"enabled": true, "direction": "upward"}, "point_anomaly": {"enabled": true, "mode": "single", "location": "random"}}}
+    ],
+    "exponential_variance_shift": [
+      {"base_series": "ar", "n": 1000, "features": {"exponential_trend": {"enabled": true, "direction": "upward"}, "variance_shift": {"enabled": true, "mode": "single", "direction": "up"}}}
+    ],
+    "linear_collective": [
+      {"base_series": "ar", "n": 1000, "features": {"linear_trend": {"enabled": true, "direction": "upward"}, "collective_anomaly": {"enabled": true, "mode": "single", "location": "random"}}}
+    ],
+    "linear_mean_shift": [
+      {"base_series": "ar", "n": 1000, "features": {"linear_trend": {"enabled": true, "direction": "upward"}, "mean_shift": {"enabled": true, "mode": "single", "direction": "up"}}}
+    ],
+    "linear_point_anomaly": [
+      {"base_series": "ar", "n": 1000, "features": {"linear_trend": {"enabled": true, "direction": "upward"}, "point_anomaly": {"enabled": true, "mode": "single", "location": "random"}}}
+    ],
+    "linear_trend_shift": [
+      {"base_series": "ar", "n": 1000, "features": {"linear_trend": {"enabled": true, "direction": "upward"}, "trend_shift": {"enabled": true, "mode": "single", "change_type": "direction_change"}}}
+    ],
+    "linear_variance_shift": [
+      {"base_series": "ar", "n": 1000, "features": {"linear_trend": {"enabled": true, "direction": "upward"}, "variance_shift": {"enabled": true, "mode": "single", "direction": "up"}}}
+    ],
+    "quadratic_collective": [
+      {"base_series": "ar", "n": 1000, "features": {"quadratic_trend": {"enabled": true, "direction": "upward"}, "collective_anomaly": {"enabled": true, "mode": "single", "location": "random"}}}
+    ],
+    "quadratic_mean_shift": [
+      {"base_series": "ar", "n": 1000, "features": {"quadratic_trend": {"enabled": true, "direction": "upward"}, "mean_shift": {"enabled": true, "mode": "single", "direction": "up"}}}
+    ],
+    "quadratic_point_anomaly": [
+      {"base_series": "ar", "n": 1000, "features": {"quadratic_trend": {"enabled": true, "direction": "upward"}, "point_anomaly": {"enabled": true, "mode": "single", "location": "random"}}}
+    ],
+    "quadratic_variance_shift": [
+      {"base_series": "ar", "n": 1000, "features": {"quadratic_trend": {"enabled": true, "direction": "upward"}, "variance_shift": {"enabled": true, "mode": "single", "direction": "up"}}}
+    ],
+    "stochastic_collective": [
+      {"base_series": "arima", "n": 1000, "features": {"collective_anomaly": {"enabled": true, "mode": "single", "location": "random"}}}
+    ],
+    "stochastic_mean_shift": [
+      {"base_series": "arima", "n": 1000, "features": {"mean_shift": {"enabled": true, "mode": "single", "direction": "up"}}}
+    ],
+    "stochastic_point_anomaly": [
+      {"base_series": "arima", "n": 1000, "features": {"point_anomaly": {"enabled": true, "mode": "single", "location": "random"}}}
+    ],
+    "stochastic_variance_shift": [
+      {"base_series": "arima", "n": 1000, "features": {"variance_shift": {"enabled": true, "mode": "single", "direction": "up"}}}
+    ],
+    "volatility_collective": [
+      {"base_series": "garch", "n": 1000, "features": {"collective_anomaly": {"enabled": true, "mode": "single", "location": "random"}}}
+    ],
+    "volatility_mean_shift": [
+      {"base_series": "garch", "n": 1000, "features": {"mean_shift": {"enabled": true, "mode": "single", "direction": "up"}}}
+    ],
+    "volatility_point_anomaly": [
+      {"base_series": "garch", "n": 1000, "features": {"point_anomaly": {"enabled": true, "mode": "single", "location": "random"}}}
+    ],
+    "volatility_variance_shift": [
+      {"base_series": "garch", "n": 1000, "features": {"variance_shift": {"enabled": true, "mode": "single", "direction": "up"}}}
+    ]
+  }
+}

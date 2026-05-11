@@ -90,13 +90,10 @@ python visualize_misclassified.py --id 15255 --model model1
 # Save figure to figures/ directory
 python visualize_misclassified.py --id 15255 --model model1 --save-fig
 
-# Use Model 2 (5-class classification)
-python visualize_misclassified.py --id 17071 --model model2 --save-fig
-
 # Custom paths
 python visualize_misclassified.py --id 3344 --model model1 \
-    --saved-models-dir ../03-models/hierarchical/model1_binary/saved_models/model1_binary_features \
-    --raw-data-dir ../data/raw/unified-20k
+    --saved-models-dir ../03-models/flat_classifier/output \
+    --raw-data-dir ../data/raw/dataset
 ```
 
 **How to Find Series IDs:**

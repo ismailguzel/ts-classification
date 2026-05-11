@@ -10,7 +10,7 @@ This script loads a time series by ID and visualizes it along with:
 
 Usage:
     python visualize_misclassified.py --id 15255 --model model1
-    python visualize_misclassified.py --id 17071 --model model2 --save-fig
+    python visualize_misclassified.py --id 17071 --model model1 --save-fig
 """
 
 import argparse
@@ -18,32 +18,37 @@ import sys
 from pathlib import Path
 import numpy as np
 import pandas as pd
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import seaborn as sns
 
 # Add parent directory to path for imports
 sys.path.append(str(Path(__file__).parent.parent))
 
+_NAMES = [
+    'stationary', 'deterministic_trend', 'stochastic_trend', 'volatility',
+    'collective_anomaly', 'contextual_anomaly', 'mean_shift', 'point_anomaly',
+    'trend_shift', 'variance_shift', 'cubic_collective', 'cubic_mean_shift',
+    'cubic_point_anomaly', 'cubic_variance_shift', 'damped_collective',
+    'damped_mean_shift', 'damped_point_anomaly', 'damped_variance_shift',
+    'exponential_collective', 'exponential_mean_shift', 'exponential_point_anomaly',
+    'exponential_variance_shift', 'linear_collective', 'linear_mean_shift',
+    'linear_point_anomaly', 'linear_trend_shift', 'linear_variance_shift',
+    'quadratic_collective', 'quadratic_mean_shift', 'quadratic_point_anomaly',
+    'quadratic_variance_shift', 'stochastic_collective', 'stochastic_mean_shift',
+    'stochastic_point_anomaly', 'stochastic_variance_shift', 'volatility_collective',
+    'volatility_mean_shift', 'volatility_point_anomaly', 'volatility_variance_shift',
+]
+
 # Model configurations
 MODEL_CONFIGS = {
     'model1': {
-        'name': 'Model 1 (Binary Classification)',
-        'saved_models_dir': Path('03-models/hierarchical/model1_binary/saved_models/model1_binary_features'),
-        'raw_data_dir': Path('data/raw/unified-20k'),
-        'class_names': {0: 'Stationary', 1: 'Non-Stationary'}
+        'name': 'Flat Classifier',
+        'saved_models_dir': Path('03-models/flat_classifier/output'),
+        'raw_data_dir': Path('data/raw/dataset'),
+        'class_names': {i: n for i, n in enumerate(_NAMES)},
     },
-    'model2': {
-        'name': 'Model 2 (5-Class Classification)',
-        'saved_models_dir': Path('03-models/hierarchical/model2_nonstationary/saved_models/model2_nonstationary_features'),
-        'raw_data_dir': Path('data/raw/unified-20k'),
-        'class_names': {
-            0: 'Trend',
-            1: 'Volatility',
-            2: 'Stochastic',
-            3: 'Anomaly',
-            4: 'Structural Break'
-        }
-    }
 }
 
 
@@ -238,7 +243,7 @@ Examples:
   python visualize_misclassified.py --id 15255 --model model1
   
   # Visualize from Model 2 and save figure
-  python visualize_misclassified.py --id 17071 --model model2 --save-fig
+  python visualize_misclassified.py --id 17071 --model model1 --save-fig
   
   # Use custom paths
   python visualize_misclassified.py --id 3344 --model model1 \\
@@ -249,9 +254,9 @@ Examples:
     
     parser.add_argument('--id', type=int, required=True,
                        help='Time series ID to visualize')
-    parser.add_argument('--model', type=str, choices=['model1', 'model2'], 
+    parser.add_argument('--model', type=str, choices=['model1'],
                        default='model1',
-                       help='Which model to use (model1: binary, model2: 5-class)')
+                       help='Which model to use')
     parser.add_argument('--saved-models-dir', type=str,
                        help='Path to saved models directory (overrides default)')
     parser.add_argument('--raw-data-dir', type=str,

@@ -1,0 +1,459 @@
+{
+  "model_name": "CatBoost",
+  "train_time": 1.1665401458740234,
+  "metrics": {
+    "train": {
+      "accuracy": 0.97625,
+      "precision": 0.9771883501591475,
+      "recall": 0.97625,
+      "f1": 0.9764036062067754
+    },
+    "test": {
+      "accuracy": 0.865,
+      "precision": 0.8714543605390287,
+      "recall": 0.865,
+      "f1": 0.8673729526486489
+    }
+  },
+  "classification_reports": {
+    "train": {
+      "stationary": {
+        "precision": 0.8977272727272727,
+        "recall": 0.9875,
+        "f1-score": 0.9404761904761905,
+        "support": 80.0
+      },
+      "deterministic_trend": {
+        "precision": 0.9873417721518988,
+        "recall": 0.975,
+        "f1-score": 0.9811320754716981,
+        "support": 80.0
+      },
+      "stochastic_trend": {
+        "precision": 1.0,
+        "recall": 0.9875,
+        "f1-score": 0.9937106918238994,
+        "support": 80.0
+      },
+      "volatility": {
+        "precision": 0.9868421052631579,
+        "recall": 0.9375,
+        "f1-score": 0.9615384615384616,
+        "support": 80.0
+      },
+      "collective_anomaly": {
+        "precision": 0.9743589743589743,
+        "recall": 0.95,
+        "f1-score": 0.9620253164556962,
+        "support": 80.0
+      },
+      "contextual_anomaly": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 80.0
+      },
+      "mean_shift": {
+        "precision": 0.9506172839506173,
+        "recall": 0.9625,
+        "f1-score": 0.9565217391304348,
+        "support": 80.0
+      },
+      "point_anomaly": {
+        "precision": 0.9876543209876543,
+        "recall": 1.0,
+        "f1-score": 0.9937888198757764,
+        "support": 80.0
+      },
+      "trend_shift": {
+        "precision": 1.0,
+        "recall": 0.9875,
+        "f1-score": 0.9937106918238994,
+        "support": 80.0
+      },
+      "variance_shift": {
+        "precision": 0.9873417721518988,
+        "recall": 0.975,
+        "f1-score": 0.9811320754716981,
+        "support": 80.0
+      },
+      "accuracy": 0.97625,
+      "macro avg": {
+        "precision": 0.9771883501591473,
+        "recall": 0.97625,
+        "f1-score": 0.9764036062067755,
+        "support": 800.0
+      },
+      "weighted avg": {
+        "precision": 0.9771883501591475,
+        "recall": 0.97625,
+        "f1-score": 0.9764036062067754,
+        "support": 800.0
+      }
+    },
+    "test": {
+      "stationary": {
+        "precision": 0.6086956521739131,
+        "recall": 0.7,
+        "f1-score": 0.6511627906976745,
+        "support": 20.0
+      },
+      "deterministic_trend": {
+        "precision": 0.8947368421052632,
+        "recall": 0.85,
+        "f1-score": 0.8717948717948718,
+        "support": 20.0
+      },
+      "stochastic_trend": {
+        "precision": 0.9444444444444444,
+        "recall": 0.85,
+        "f1-score": 0.8947368421052632,
+        "support": 20.0
+      },
+      "volatility": {
+        "precision": 0.75,
+        "recall": 0.75,
+        "f1-score": 0.75,
+        "support": 20.0
+      },
+      "collective_anomaly": {
+        "precision": 0.7142857142857143,
+        "recall": 0.75,
+        "f1-score": 0.7317073170731707,
+        "support": 20.0
+      },
+      "contextual_anomaly": {
+        "precision": 1.0,
+        "recall": 0.95,
+        "f1-score": 0.9743589743589743,
+        "support": 20.0
+      },
+      "mean_shift": {
+        "precision": 0.85,
+        "recall": 0.85,
+        "f1-score": 0.85,
+        "support": 20.0
+      },
+      "point_anomaly": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 20.0
+      },
+      "trend_shift": {
+        "precision": 1.0,
+        "recall": 0.95,
+        "f1-score": 0.9743589743589743,
+        "support": 20.0
+      },
+      "variance_shift": {
+        "precision": 0.9523809523809523,
+        "recall": 1.0,
+        "f1-score": 0.975609756097561,
+        "support": 20.0
+      },
+      "accuracy": 0.865,
+      "macro avg": {
+        "precision": 0.8714543605390288,
+        "recall": 0.8649999999999999,
+        "f1-score": 0.867372952648649,
+        "support": 200.0
+      },
+      "weighted avg": {
+        "precision": 0.8714543605390287,
+        "recall": 0.865,
+        "f1-score": 0.8673729526486489,
+        "support": 200.0
+      }
+    }
+  },
+  "confusion_matrices": {
+    "train": [
+      [
+        79,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        78,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        79,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        3,
+        0,
+        0,
+        75,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1
+      ],
+      [
+        3,
+        0,
+        0,
+        0,
+        76,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        80,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        77,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        80,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        79,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        78
+      ]
+    ],
+    "test": [
+      [
+        14,
+        0,
+        0,
+        1,
+        5,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        17,
+        1,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        2,
+        17,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      [
+        3,
+        0,
+        0,
+        15,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      [
+        3,
+        0,
+        0,
+        2,
+        15,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        1,
+        0,
+        19,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        17,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        20,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        19,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        20
+      ]
+    ]
+  },
+  "timestamp_utc": "2026-05-11T14:21:29",
+  "feature_importance": {
+    "features": [
+      "topo__sub_H0__carl_f3",
+      "topo__H1__landscape_l1",
+      "topo__H1__carl_f3",
+      "topo__sub_H0__carl_f1",
+      "topo__sup_H0__entropy",
+      "topo__H1__carl_f2",
+      "topo__sup_H0__carl_f4",
+      "topo__H1__entropy",
+      "topo__sub_H0__carl_f4",
+      "topo__sup_H0__carl_f2",
+      "topo__sub_H0__carl_f2",
+      "topo__sub_H0__landscape_l1",
+      "topo__H1__carl_f1",
+      "topo__sub_H0__entropy",
+      "topo__H1__carl_f4",
+      "topo__sup_H0__landscape_l1",
+      "topo__sup_H0__carl_f3",
+      "topo__sup_H0__carl_f1"
+    ],
+    "importances": [
+      25.170436211671653,
+      10.756205196603762,
+      9.726762692044732,
+      5.730225561179375,
+      5.511812093887111,
+      5.352451397151738,
+      4.940042851186342,
+      4.869341365597016,
+      4.437400544340771,
+      4.436523746916013,
+      2.9455202117607593,
+      2.550545165416314,
+      2.381668707211236,
+      2.312711047989078,
+      2.305712852339168,
+      2.2701841527647693,
+      2.1752194766666415,
+      2.12723672527351
+    ]
+  }
+}

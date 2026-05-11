@@ -1,0 +1,142 @@
+============================================================
+Training — topo-test  |  features: topo
+============================================================
+Input : /Users/iguzel/Desktop/hierarchical-ts-classification/data/features/topo-test/topological_selected
+Output: /Users/iguzel/Desktop/hierarchical-ts-classification/03-models/flat_classifier/output_topo
+Start : Mon May 11 17:21:23 +03 2026
+================================================================================
+FLAT CLASSIFICATION
+================================================================================
+Feature type  : topo
+Features path : /Users/iguzel/Desktop/hierarchical-ts-classification/data/features/topo-test/topological_selected
+Classifier    : all
+n_jobs        : -1
+Save dir      : /Users/iguzel/Desktop/hierarchical-ts-classification/03-models/flat_classifier/output_topo
+================================================================================
+
+[1/5] Loading features (topo)...
+Loading from target subdirectory 'primary'
+  Features: /Users/iguzel/Desktop/hierarchical-ts-classification/data/features/topo-test/topological_selected/primary/features.parquet
+  Labels:   /Users/iguzel/Desktop/hierarchical-ts-classification/data/features/topo-test/topological_selected/primary/labels.parquet
+  Features shape: (1000, 19)
+  Labels shape:   (1000, 2)
+  Aligned samples: 1,000
+
+  Class distribution:
+    0:    100 ( 10.0%)
+    1:    100 ( 10.0%)
+    2:    100 ( 10.0%)
+    3:    100 ( 10.0%)
+    4:    100 ( 10.0%)
+    5:    100 ( 10.0%)
+    6:    100 ( 10.0%)
+    7:    100 ( 10.0%)
+    8:    100 ( 10.0%)
+    9:    100 ( 10.0%)
+
+Feature matrix : (1000, 18)
+Classes        : 10
+
+[2/5] Splitting data (stratified)...
+Train : 800   Test : 200
+
+[3/5] Training models...
+
+  ▸ RandomForest
+
+================================================================================
+EVALUATING MODEL: RandomForest
+================================================================================
+
+ ACCURACY:
+  Train: 1.0000
+  Test:  0.8550
+
+ WEIGHTED METRICS:
+  Test Precision: 0.8623
+  Test Recall:    0.8550
+  Test F1:        0.8570
+Predictions saved to: /Users/iguzel/Desktop/hierarchical-ts-classification/03-models/flat_classifier/output_topo/predictions_RandomForest.csv
+Misclassified samples saved to: /Users/iguzel/Desktop/hierarchical-ts-classification/03-models/flat_classifier/output_topo/misclassified_RandomForest.csv (29 errors)
+Feature importance saved to: /Users/iguzel/Desktop/hierarchical-ts-classification/03-models/flat_classifier/output_topo/feature_importance_RandomForest.csv
+================================================================================
+
+    accuracy=0.8550  time=0.2s
+
+  ▸ XGBoost
+
+================================================================================
+EVALUATING MODEL: XGBoost
+================================================================================
+
+ ACCURACY:
+  Train: 1.0000
+  Test:  0.8500
+
+ WEIGHTED METRICS:
+  Test Precision: 0.8562
+  Test Recall:    0.8500
+  Test F1:        0.8510
+Predictions saved to: /Users/iguzel/Desktop/hierarchical-ts-classification/03-models/flat_classifier/output_topo/predictions_XGBoost.csv
+Misclassified samples saved to: /Users/iguzel/Desktop/hierarchical-ts-classification/03-models/flat_classifier/output_topo/misclassified_XGBoost.csv (30 errors)
+Feature importance saved to: /Users/iguzel/Desktop/hierarchical-ts-classification/03-models/flat_classifier/output_topo/feature_importance_XGBoost.csv
+================================================================================
+
+    accuracy=0.8500  time=1.0s
+
+  ▸ CatBoost
+
+================================================================================
+EVALUATING MODEL: CatBoost
+================================================================================
+
+ ACCURACY:
+  Train: 0.9762
+  Test:  0.8650
+
+ WEIGHTED METRICS:
+  Test Precision: 0.8715
+  Test Recall:    0.8650
+  Test F1:        0.8674
+Predictions saved to: /Users/iguzel/Desktop/hierarchical-ts-classification/03-models/flat_classifier/output_topo/predictions_CatBoost.csv
+Misclassified samples saved to: /Users/iguzel/Desktop/hierarchical-ts-classification/03-models/flat_classifier/output_topo/misclassified_CatBoost.csv (27 errors)
+Feature importance saved to: /Users/iguzel/Desktop/hierarchical-ts-classification/03-models/flat_classifier/output_topo/feature_importance_CatBoost.csv
+================================================================================
+
+    accuracy=0.8650  time=1.2s
+
+  ▸ SVM_RBF
+
+================================================================================
+EVALUATING MODEL: SVM_RBF
+================================================================================
+
+ ACCURACY:
+  Train: 0.8550
+  Test:  0.7850
+
+ WEIGHTED METRICS:
+  Test Precision: 0.8112
+  Test Recall:    0.7850
+  Test F1:        0.7898
+Predictions saved to: /Users/iguzel/Desktop/hierarchical-ts-classification/03-models/flat_classifier/output_topo/predictions_SVM_RBF.csv
+Misclassified samples saved to: /Users/iguzel/Desktop/hierarchical-ts-classification/03-models/flat_classifier/output_topo/misclassified_SVM_RBF.csv (43 errors)
+================================================================================
+
+    accuracy=0.7850  time=0.0s
+
+[4/5] Saving metrics...
+
+[5/5] Saving best model...
+
+================================================================================
+TRAINING COMPLETE
+================================================================================
+Best model : CatBoost  (86.50%)
+Output dir : /Users/iguzel/Desktop/hierarchical-ts-classification/03-models/flat_classifier/output_topo
+================================================================================
+============================================================
+Training Complete!  features=topo
+Output: /Users/iguzel/Desktop/hierarchical-ts-classification/03-models/flat_classifier/output_topo
+End   : Mon May 11 17:21:29 +03 2026
+============================================================
