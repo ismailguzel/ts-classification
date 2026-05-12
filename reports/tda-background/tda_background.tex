@@ -387,22 +387,32 @@ persistence diagrams that are invariant under rearrangement of the points.
 Let $D = \{(b_i, d_i)\}$ be a persistence diagram (diagonal points excluded)
 and let $p_i = d_i - b_i$ denote the persistence of the $i$-th feature.
 
-The five Carlsson coordinates are:
+The five Carlsson-type invariants used in this work are:
 
 \begin{align}
-  f_1(D) &= \sum_i p_i^2 \label{eq:carl_f1} \\[4pt]
-  f_2(D) &= \sum_i (d_{\max} - d_i)^2 \cdot p_i^2 \label{eq:carl_f2} \\[4pt]
-  f_3(D) &= \sum_i b_i \cdot p_i^2 \label{eq:carl_f3} \\[4pt]
-  f_4(D) &= \sum_i (d_{\max} - d_i) \cdot p_i^4 \label{eq:carl_f4} \\[4pt]
-  f_5(D) &= \sum_i b_i^2 \cdot p_i^4 \label{eq:carl_f5}
+  f_1(D) &= \sum_i b_i \cdot p_i                        \label{eq:carl_f1} \\[4pt]
+  f_2(D) &= \sum_i (d_{\max} - d_i) \cdot p_i           \label{eq:carl_f2} \\[4pt]
+  f_3(D) &= \sum_i b_i^2 \cdot p_i^4                    \label{eq:carl_f3} \\[4pt]
+  f_4(D) &= \sum_i (d_{\max} - d_i)^2 \cdot p_i^4       \label{eq:carl_f4} \\[4pt]
+  f_5(D) &= \max_i p_i                                  \label{eq:carl_f5_max}
 \end{align}
 
-where $d_{\max} = \max_i d_i$. The quadratic and quartic weights in $p_i$
-down-weight low-persistence (noise) points and emphasise high-persistence
-(signal) features. Coordinates $f_1$ and $f_2$ measure the total squared
-persistence energy and how it is distributed near the death axis, respectively.
-Coordinate $f_3$ captures the birth-weighted persistence — a proxy for how
-early in the filtration the most persistent features appear.
+where $d_{\max} = \max_i d_i$. The first two coordinates are linear in
+persistence and use birth/death as weights — $f_1$ is the
+\emph{birth-weighted total persistence} (a signed quantity that captures
+\emph{where} on the filtration axis the bars are concentrated; it can be
+negative when births lie below zero), and $f_2$ is the analogous
+\emph{death-distance-weighted total persistence}. The third and fourth
+coordinates raise both factors to higher powers ($b_i^2$ or $(d_{\max} - d_i)^2$
+multiplied by $p_i^4$); the quartic in $p_i$ aggressively down-weights
+low-persistence (noise) bars and emphasises long-lived (signal) features,
+while the quadratic birth/death weight sharpens the contrast between bars at
+extreme filtration levels and those near the centre. Finally, $f_5$ is simply
+the single most persistent bar — a robust summary of the dominant topological
+feature in the diagram. This particular five-statistic set follows the form
+used by \citet{umeda2017time} for time-series classification rather than the
+original ring-of-polynomial-invariants construction of \citet{adcock2016ring},
+which proposes a larger family of polynomial features.
 
 \subsection{Persistent Entropy}
 
@@ -439,17 +449,29 @@ all $\lambda_i(t)$ at each threshold $t$. The landscape lives in a Banach space
 and admits a well-defined mean and variance over samples, making it amenable to
 statistical inference.
 
-We extract two scalar features from the first two landscape functions:
+\medskip\noindent
+\textbf{Discretisation used in this work.} We discretise the filtration axis
+into $R = 100$ uniform grid points spanning $[\min_i b_i,\, \max_i d_i]$, and
+on each grid point we store the top-$K$ landscape values
+$\lambda_1(t),\,\ldots,\,\lambda_K(t)$ with $K = 5$. The five landscape levels
+are then averaged into a single discrete function
 \begin{equation}
-  \ell_1 = \|\lambda_1\|_1 = \int |\lambda_1(t)|\, dt, \qquad
-  \ell_2 = \|\lambda_2\|_1 = \int |\lambda_2(t)|\, dt.
+  \bar\lambda(t) \;=\; \frac{1}{K} \sum_{k=1}^{K} \lambda_k(t),
+\end{equation}
+which we treat as a vector $\bar\lambda \in \R^R$. Two scalar summaries are
+extracted from $\bar\lambda$:
+\begin{equation}
+  \ell_1 \;=\; \|\bar\lambda\|_1 \;=\; \sum_{r=1}^{R} |\bar\lambda(t_r)|,
+  \qquad
+  \ell_2 \;=\; \|\bar\lambda\|_2 \;=\; \sqrt{\sum_{r=1}^{R} \bar\lambda(t_r)^2}.
   \label{eq:landscapes}
 \end{equation}
 
-These $L^1$ norms measure the ``area'' under the dominant and secondary landscape
-functions. $\ell_1$ is dominated by the most persistent feature; $\ell_2$ reflects
-the second-tier structure. Together they capture the dominance hierarchy of
-topological features.
+The $L^1$ norm captures the total ``area'' of the averaged landscape — large
+when many bars overlap in the same region of the filtration axis. The $L^2$
+norm is closer to a peak detector — large when one or two regions dominate.
+Together they summarise the dominance hierarchy of topological features while
+remaining computationally cheap (no per-level vectorisation is stored).
 
 \subsection{Summary: 8 Features per Diagram}
 
@@ -461,14 +483,14 @@ topological features.
 \toprule
 \textbf{Index} & \textbf{Feature} & \textbf{Equation} & \textbf{Interpretation} \\
 \midrule
-1 & \texttt{carl\_f1} & \eqref{eq:carl_f1} & Total squared persistence energy \\
-2 & \texttt{carl\_f2} & \eqref{eq:carl_f2} & Persistence weighted by proximity to death axis \\
-3 & \texttt{carl\_f3} & \eqref{eq:carl_f3} & Birth-weighted persistence \\
-4 & \texttt{carl\_f4} & \eqref{eq:carl_f4} & Death-proximity $\times$ quartic persistence \\
-5 & \texttt{carl\_f5} & \eqref{eq:carl_f5} & Birth$^2$ $\times$ quartic persistence \\
-6 & \texttt{entropy}  & \eqref{eq:pers_entropy} & Complexity / spread of persistence values \\
-7 & \texttt{landscape\_l1} & \eqref{eq:landscapes} & $L^1$ norm of the first landscape function \\
-8 & \texttt{landscape\_l2} & \eqref{eq:landscapes} & $L^1$ norm of the second landscape function \\
+1 & \texttt{carl\_f1}       & \eqref{eq:carl_f1}      & Birth-weighted total persistence (signed) \\
+2 & \texttt{carl\_f2}       & \eqref{eq:carl_f2}      & Death-distance-weighted total persistence \\
+3 & \texttt{carl\_f3}       & \eqref{eq:carl_f3}      & $b^2 \times p^4$: long bars at extreme births \\
+4 & \texttt{carl\_f4}       & \eqref{eq:carl_f4}      & $(d_{\max}-d)^2 \times p^4$: long bars dying early \\
+5 & \texttt{carl\_f5\_max}  & \eqref{eq:carl_f5_max}  & Most persistent bar (single max) \\
+6 & \texttt{entropy}        & \eqref{eq:pers_entropy} & Complexity / spread of persistence values \\
+7 & \texttt{landscape\_l1}  & \eqref{eq:landscapes}   & $L^1$ norm of mean persistence landscape \\
+8 & \texttt{landscape\_l2}  & \eqref{eq:landscapes}   & $L^2$ norm of mean persistence landscape \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -483,8 +505,9 @@ The full feature naming convention is:
   \texttt{topo\_\_\{diagram\}\_\_\{feature\}}
 \]
 where \texttt{diagram} $\in \{\texttt{sub\_H0},\, \texttt{sup\_H0},\, \texttt{H1}\}$
-and \texttt{feature} $\in \{\texttt{carl\_f1}, \ldots, \texttt{carl\_f5},\,
-\texttt{entropy},\, \texttt{landscape\_l1},\, \texttt{landscape\_l2}\}$.
+and \texttt{feature} $\in \{\texttt{carl\_f1},\, \texttt{carl\_f2},\, \texttt{carl\_f3},\,
+\texttt{carl\_f4},\, \texttt{carl\_f5\_max},\, \texttt{entropy},\,
+\texttt{landscape\_l1},\, \texttt{landscape\_l2}\}$.
 
 % ══════════════════════════════════════════════════════════════════════════════
 \section{Feature Selection}
@@ -514,11 +537,29 @@ implemented in \texttt{sklearn.feature\_selection.mutual\_info\_classif}
 
 \medskip
 \noindent
-\textbf{Selection result.} Of the 24 raw topological features, 18 are retained by
-MI selection on the 10-class training split. The 6 dropped features
-(\texttt{carl\_f5} from all three diagrams, and \texttt{landscape\_l2} from
-\texttt{sup\_H0}) carry near-zero MI with the class label, indicating they encode
-noise rather than class-discriminating structure.
+\textbf{Selection result.} Of the 24 raw topological features, 18 are retained
+on the 10-class training split. The 6 dropped features are
+\texttt{carl\_f5\_max} and \texttt{landscape\_l2} from each of the three
+diagrams (\texttt{H1}, \texttt{sub\_H0}, \texttt{sup\_H0}).
+
+\medskip\noindent
+\textbf{Why high-MI features are dropped.} It would be incorrect to attribute
+these removals solely to low MI: in fact, \texttt{sup\_H0\_\_carl\_f5\_max}
+and \texttt{sup\_H0\_\_landscape\_l2} carry some of the \emph{highest} MI scores
+in the pool. The selection procedure combines MI ranking with a
+\emph{correlation-based redundancy filter}: among groups of features whose pairwise
+Pearson correlation exceeds a threshold, only one representative is kept. The
+six dropped features fall into two structurally redundant pairs per diagram:
+\begin{itemize}[nosep]
+  \item \texttt{carl\_f5\_max} (maximum bar lifetime) is highly correlated with
+    \texttt{landscape\_l1} (area under the mean landscape), because both grow
+    monotonically with the length of the dominant persistent bar;
+  \item \texttt{landscape\_l2} ($L^2$ norm of the mean landscape) is highly
+    correlated with \texttt{landscape\_l1} ($L^1$ norm of the same vector) since
+    both are norms of the same discrete function.
+\end{itemize}
+The retained 18 features therefore represent the same topological information
+in a less redundant form, rather than a strictly higher-MI subset.
 
 % ══════════════════════════════════════════════════════════════════════════════
 \section{Literature Review: TDA for Time Series}
@@ -659,17 +700,19 @@ Hybrid            & 118 & 92.5\% & 94.5\% & 94.5\% & \textbf{91.0\%} \\
 
 \noindent
 \textbf{Feature efficiency.} The topological pipeline delivers 86.5\% CatBoost
-accuracy from just 18 features — a compression ratio of 5.6$\times$ relative to
-the 100-feature TSFresh pipeline, with only a 8.5 percentage point accuracy
+accuracy from just 18 features — using $100/18 \approx 5.6\times$ fewer features
+than the TSFresh pipeline at the cost of an 8.5 percentage point accuracy
 reduction. Expressed as accuracy per feature:
 
 \begin{align*}
-  \text{TSFresh:} &\quad 95.0\% / 100 = 0.95\% \text{ per feature,} \\
-  \text{Topology:} &\quad 86.5\% / 18  = 4.81\% \text{ per feature.}
+  \text{TSFresh:} &\quad 95.0\,\% / 100 = 0.95\,\% \text{ per feature,} \\
+  \text{Topology:} &\quad 86.5\,\% / 18  = 4.81\,\% \text{ per feature.}
 \end{align*}
 
-Topological features thus deliver approximately \textbf{5$\times$ better
-accuracy-per-feature efficiency} than the statistical baseline.
+The accuracy-per-feature ratio is therefore
+$4.81 / 0.95 \approx 5.1\times$ — topological features achieve
+approximately \textbf{5$\times$ better accuracy-per-feature efficiency} than
+the statistical baseline.
 
 \medskip
 \noindent
@@ -708,12 +751,17 @@ and matches it on \texttt{variance\_shift} and \texttt{point\_anomaly}. Both of
 these advantages are structurally interpretable:
 
 \begin{itemize}
-  \item \textbf{Trend shift:} A slope change creates a distinctive feature in the
-    superlevel filtration --- two connected components that merge at the apex of
-    the change. The superlevel persistence diagram captures this as a single
-    high-persistence point whose death value corresponds to the change-point
-    amplitude. TSFresh chunk linear trend features miss this when the change-point
-    falls between chunks.
+  \item \textbf{Trend shift:} A slope change creates a distinctive asymmetry in
+    the \emph{sublevel} filtration: the segment on one side of the change point
+    has a different minimum than the other, and the two sublevel components
+    merge at a filtration level determined by the change-point amplitude. The
+    sublevel persistence diagram therefore contains a single high-persistence
+    point whose birth captures the lower of the two minima, which is exactly the
+    pattern that \texttt{sub\_H0\_\_carl\_f3} emphasises (large $b^2 \cdot p^4$
+    at extreme births). This is consistent with the empirical finding that
+    \texttt{sub\_H0\_\_carl\_f3} is the single most important feature in the
+    hybrid model. TSFresh chunk linear-trend features miss this signature
+    whenever the change point falls between chunks.
 
   \item \textbf{Variance shift:} A step increase in variance produces a visible
     change in the density of sublevel crossings. Carlsson coordinates and persistent
@@ -734,16 +782,21 @@ these advantages are structurally interpretable:
 In the hybrid CatBoost model (118 features: 100 TSFresh + 18 topological),
 \texttt{topo\_\_sub\_H0\_\_carl\_f3} is the \emph{single most important feature}
 with an importance score of 13.2\%, outranking all 100 TSFresh features.
-This Carlsson coordinate measures the birth-weighted persistence of sublevel
-connected components (Equation~\ref{eq:carl_f3}):
+This coordinate (Equation~\ref{eq:carl_f3}) takes the form
 \[
-  f_3(D) = \sum_i b_i \cdot (d_i - b_i)^2,
+  f_3(D) = \sum_i b_i^2 \cdot (d_i - b_i)^4,
 \]
-a weighted summary of when (at which threshold level) the most persistent
-components first appear. This feature is highly discriminative because different
-time series types have fundamentally different sublevel connectivity patterns:
-trends have an asymmetric global minimum; anomalies introduce secondary persistent
-minima; stationary processes have many short-lived low-persistence components.
+combining a quadratic birth weight with a quartic persistence weight. The
+$b_i^2$ factor amplifies bars born at extreme filtration values, while $p_i^4$
+aggressively suppresses short (noise) bars. The result is a single scalar that
+fires strongly when a series contains \emph{long-lived bars whose births occur
+at extreme signal levels} — exactly the pattern produced by trend-like
+asymmetric global minima and persistent secondary minima of anomaly classes.
+Stationary processes, by contrast, produce many short-lived
+low-persistence components with births clustered near zero, so the $b^2 \cdot
+p^4$ weighting drives $f_3$ toward small values. This is why
+\texttt{sub\_H0\_\_carl\_f3} is highly discriminative across the ten classes
+studied here.
 
 \subsection*{Practical limitations of the topological pipeline}
 
@@ -788,7 +841,8 @@ and Takens delay-embedding filtrations, extracts 18 scalar features that:
 
 \begin{enumerate}
   \item Achieve 86.5\% classification accuracy on a 10-class synthetic benchmark
-    with only 18 features (5$\times$ feature efficiency of TSFresh);
+    with only 18 features ($\sim 5.1\times$ better accuracy-per-feature than the
+    100-feature TSFresh pipeline);
   \item Outperform TSFresh on structural break detection tasks (\texttt{trend\_shift},
     \texttt{variance\_shift});
   \item Contribute the single most important feature in a 118-feature hybrid model

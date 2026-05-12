@@ -14,11 +14,11 @@
 \contentsline {subsection}{\numberline {4.2}Persistent Entropy}{7}{subsection.4.2}%
 \contentsline {subsection}{\numberline {4.3}Persistence Landscapes}{7}{subsection.4.3}%
 \contentsline {subsection}{\numberline {4.4}Summary: 8 Features per Diagram}{8}{subsection.4.4}%
-\contentsline {section}{\numberline {5}Feature Selection}{8}{section.5}%
+\contentsline {section}{\numberline {5}Feature Selection}{9}{section.5}%
 \contentsline {section}{\numberline {6}Literature Review: TDA for Time Series}{9}{section.6}%
 \contentsline {subsection}{\numberline {6.1}Foundations}{9}{subsection.6.1}%
-\contentsline {subsection}{\numberline {6.2}Vectorisation Methods}{9}{subsection.6.2}%
-\contentsline {subsection}{\numberline {6.3}TDA Applied to Time Series}{9}{subsection.6.3}%
-\contentsline {subsection}{\numberline {6.4}TDA and Machine Learning}{10}{subsection.6.4}%
+\contentsline {subsection}{\numberline {6.2}Vectorisation Methods}{10}{subsection.6.2}%
+\contentsline {subsection}{\numberline {6.3}TDA Applied to Time Series}{10}{subsection.6.3}%
+\contentsline {subsection}{\numberline {6.4}TDA and Machine Learning}{11}{subsection.6.4}%
 \contentsline {section}{\numberline {7}Empirical Performance Summary}{11}{section.7}%
-\contentsline {section}{\numberline {8}Conclusion}{13}{section.8}%
+\contentsline {section}{\numberline {8}Conclusion}{14}{section.8}%

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.5.21)  11 MAY 2026 19:12
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.5.21)  12 MAY 2026 17:36
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1390,16 +1390,11 @@ Overfull \hbox (13.04326pt too wide) in paragraph at lines 361--370
 [6]
 
 [7]
-Overfull \hbox (28.27446pt too wide) in paragraph at lines 460--474
- [][] 
- []
-
-
-Overfull \hbox (198.44028pt too wide) in paragraph at lines 484--488
+Overfull \hbox (355.51364pt too wide) in paragraph at lines 506--511
 \T1/cmr/m/n/12 where \T1/cmtt/m/n/12 diagram $\OMS/cmsy/m/n/12 2 f[]\OML/cmm/m/
 it/12 ;  [];  []\OMS/cmsy/m/n/12 g$ \T1/cmr/m/n/12 and \T1/cmtt/m/n/12 feature 
-$\OMS/cmsy/m/n/12 2 f[]\OML/cmm/m/it/12 ; [] ; [];  [];  [];  []\OMS/cmsy/m/n/1
-2 g$\T1/cmr/m/n/12 . 
+$\OMS/cmsy/m/n/12 2 f[]\OML/cmm/m/it/12 ;  [];  [];  [];  [];  [];  [];  []\OMS
+/cmsy/m/n/12 g$\T1/cmr/m/n/12 . 
  []
 
 
@@ -1409,17 +1404,13 @@ $\OMS/cmsy/m/n/12 2 f[]\OML/cmm/m/it/12 ; [] ; [];  [];  [];  []\OMS/cmsy/m/n/1
 [9]
 
 [10]
-Overfull \hbox (11.60295pt too wide) in paragraph at lines 671--673
-[]\T1/cmr/m/n/12 Topological fea-tures thus de-liver ap-prox-i-mately \T1/cmr/b
-x/n/12 5$\OMS/cmsy/m/n/12 ^^B$ \T1/cmr/bx/n/12 bet-ter accuracy-per-feature
- []
-
-
 
 [11]
 
 [12]
-Overfull \hbox (61.07135pt too wide) in paragraph at lines 792--794
+
+[13]
+Overfull \hbox (61.07135pt too wide) in paragraph at lines 846--848
 []\T1/cmr/m/n/12 Outperform TS-Fresh on struc-tural break de-tec-tion tasks (\T
 1/cmtt/m/n/12 trend_shift\T1/cmr/m/n/12 , \T1/cmtt/m/n/12 variance_shift\T1/cmr
 /m/n/12 ); 
@@ -1427,19 +1418,19 @@ Overfull \hbox (61.07135pt too wide) in paragraph at lines 792--794
 
 
 
-[13]
-Overfull \hbox (2.31622pt too wide) in paragraph at lines 812--812
+[14]
+Overfull \hbox (2.31622pt too wide) in paragraph at lines 866--866
 [][]\T1/cmr/m/n/12 Flammer, M. (2024). Per-sis-tent homology-based clas-si-fi-c
 a-tion of chaotic multi-variate
  []
 
 
 
-[14]
-
 [15]
 
-[16] (./tda_background.aux)
+[16]
+
+[17] (./tda_background.aux)
  ***********
 LaTeX2e <2024-11-01> patch level 2
 L3 programming layer <2025-01-18>
@@ -1451,10 +1442,10 @@ Package logreq Info: Writing requests to 'tda_background.run.xml'.
 
  ) 
 Here is how much of TeX's memory you used:
- 44122 strings out of 473190
- 984522 string characters out of 5715800
- 1997543 words of memory out of 5000000
- 66634 multiletter control sequences out of 15000+600000
+ 44126 strings out of 473190
+ 984569 string characters out of 5715800
+ 1997562 words of memory out of 5000000
+ 66636 multiletter control sequences out of 15000+600000
  577981 words of font info for 83 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  84i,12n,87p,735b,5050s stack positions out of 10000i,1000n,20000p,200000b,200000s
@@ -1476,10 +1467,10 @@ e/2025/texmf-dist/fonts/type1/public/cm-super/sfrm1200.pfb></usr/local/texlive/
 2025/texmf-dist/fonts/type1/public/cm-super/sfrm1440.pfb></usr/local/texlive/20
 25/texmf-dist/fonts/type1/public/cm-super/sfti1200.pfb></usr/local/texlive/2025
 /texmf-dist/fonts/type1/public/cm-super/sftt1200.pfb>
-Output written on tda_background.pdf (16 pages, 346428 bytes).
+Output written on tda_background.pdf (17 pages, 352800 bytes).
 PDF statistics:
- 498 PDF objects out of 1000 (max. 8388607)
- 438 compressed objects within 5 object streams
- 112 named destinations out of 1000 (max. 500000)
+ 505 PDF objects out of 1000 (max. 8388607)
+ 444 compressed objects within 5 object streams
+ 114 named destinations out of 1000 (max. 500000)
  197 words of extra memory for PDF output out of 10000 (max. 10000000)
 
