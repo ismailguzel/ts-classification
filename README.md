@@ -1,6 +1,6 @@
-# Time Series Classification — 39 Classes
+# Time Series Classification 
 
-A machine learning pipeline for flat 39-class time series classification using synthetic data generated with the **betise** library. Supports three feature pipelines: TSFresh statistical features, persistent homology (topology), and a hybrid merge of both.
+A machine learning pipeline for flat 39-class time series classification using synthetic data generated with the **betise** library. Three feature pipelines are supported: TSFresh, persistent homology (topology), and their hybrid concatenation.
 
 ---
 
@@ -10,171 +10,61 @@ A machine learning pipeline for flat 39-class time series classification using s
 # Full dataset, TSFresh (default)
 bash run.sh
 
-# Test dataset (39 classes), TSFresh
-bash run.sh all test
+# topo-test benchmark (10 classes), all three feature types
+bash run.sh generation       topo-test
+bash run.sh preprocessing    topo-test hybrid     # extracts both TSFresh and topology
+bash run.sh training         topo-test tsfresh
+bash run.sh training         topo-test topo
+bash run.sh training         topo-test hybrid
 ```
 
-### Systematic topo-test run (all three feature types)
-
-The most efficient way to benchmark all three pipelines on the topo-test dataset:
-
-```bash
-# Step 1 — generate data once
-bash run.sh generation topo-test
-
-# Step 2 — preprocess once (hybrid covers both tsfresh + topo in one pass)
-bash run.sh preprocessing topo-test hybrid
-
-# Step 3 — train and evaluate each feature type independently
-bash run.sh training topo-test topo
-bash run.sh postprocessing topo-test topo
-
-bash run.sh training topo-test tsfresh
-bash run.sh postprocessing topo-test tsfresh
-
-bash run.sh training topo-test hybrid
-bash run.sh postprocessing topo-test hybrid
-```
-
-> `bash run.sh all topo-test <features>` also works but runs generation and preprocessing
-> redundantly for each feature type. Use the step-by-step form above to avoid that.
-
-All runs log to `logs/<timestamp>_<script>_<mode>_<features>.log`.  
-Figures save to `04-postprocessing/figures/<mode>_<features>/`.
+Logs land in `logs/`. Figures in `04-postprocessing/figures/<mode>_<features>/`.
 
 ---
 
 ## Datasets
 
-Generated with the **betise** library. All series have fixed length = 1,000 points.
+All series have fixed length = 1,000 points. Generated with the `betise` library (see [`01-data-generation/`](01-data-generation/)).
 
 | Config | Classes | Series/class | Total | Purpose |
-|--------|---------|-------------|-------|---------|
+|--------|--------:|------------:|------:|---------|
 | `full-dataset-config.json` | 39 | 1,000 | 39,000 | Full benchmark |
 | `test-config.json` | 39 | 100 | 3,900 | Fast iteration |
 | `topo-test-config.json` | 10 | 100 | 1,000 | Topology benchmark |
-
-### 39-class taxonomy
-
-| Group | Classes |
-|---|---|
-| Pure processes | `stationary`, `deterministic_trend`, `stochastic_trend`, `volatility` |
-| Single feature | `collective_anomaly`, `contextual_anomaly`, `mean_shift`, `point_anomaly`, `trend_shift`, `variance_shift` |
-| Trend × event | `cubic/damped/exponential/linear/quadratic` × `{collective, mean_shift, point_anomaly, variance_shift}` + `linear_trend_shift` |
-| Process × event | `stochastic/volatility` × `{collective, mean_shift, point_anomaly, variance_shift}` |
-
-### topo-test — 10-class topology benchmark
-
-Pure classes 0–9 selected for topologically distinct signatures:
-
-| Class | Topological signal |
-|---|---|
-| `stationary` | Many short, similar bars (high entropy) |
-| `deterministic_trend` | Monotone sub_H0 bar (birth → death spans full range) |
-| `stochastic_trend` | Long sub_H0 bar, unpredictable mid-range |
-| `volatility` | Clustered sup_H0 bars (bursts) |
-| `collective_anomaly` | Extended level shift → long sub_H0 bar |
-| `contextual_anomaly` | Localised deviation — sub/sup H0 changes |
-| `mean_shift` | One dominant sub_H0 bar at shift point |
-| `point_anomaly` | One dominant sup_H0 bar (spike, scale_factor=5) |
-| `trend_shift` | Direction change → two sub_H0 epochs |
-| `variance_shift` | sup_H0 entropy change at break point |
 
 ---
 
 ## Feature Pipelines
 
-Three pipelines are supported and can be run independently.
+| Pipeline | Features | Source |
+|----------|---------:|--------|
+| **TSFresh** | 100 | `EfficientFCParameters` → MI selection |
+| **Topology** | 18 | sub_H0 + sup_H0 + H1 persistence diagrams → 8 scalars each (24 raw) → MI + correlation pruning |
+| **Hybrid** | 118 | TSFresh ⊕ Topology |
 
-### TSFresh (default)
-
-~774 raw features extracted via `EfficientFCParameters` → top **100** selected by mutual information (fitted on train split only).
-
-```bash
-bash run.sh preprocessing topo-test tsfresh
-bash run.sh training      topo-test tsfresh
-```
-
-### Topology (opt-in)
-
-Persistent homology features from the signal. Default method `sublevel+h1` produces **24 features** across three complementary diagrams.
-
-```bash
-bash run.sh preprocessing topo-test topo
-bash run.sh training      topo-test topo
-```
-
-### Hybrid
-
-Inner join of TSFresh (100) + topology features on `series_id` → **118 features** total.  
-Preprocessing runs both pipelines automatically when `FEATURES=hybrid`.
-
-```bash
-bash run.sh preprocessing topo-test hybrid
-bash run.sh training      topo-test hybrid
-```
+Topology features per diagram: 5 Carlsson coordinates + persistent entropy + L¹ and L² norms of the mean persistence landscape. See [`reports/tda-background/tda_background.pdf`](reports/tda-background/tda_background.pdf) for definitions and the [`tda_pipeline_demo.ipynb`](reports/tda-background/tda_pipeline_demo.ipynb) notebook for a worked example.
 
 ---
 
 ## Results — topo-test (10 classes, 100 series/class)
 
-Train / Test split: 80 / 20 per class (stratified).
+Stratified 80/20 split, seed 42. CatBoost reaches the highest mean accuracy across pipelines.
 
 | Classifier | TSFresh (100 feat) | Topology (18 feat) | Hybrid (118 feat) |
-|------------|-------------------|--------------------|-------------------|
-| RandomForest | 93.5% | 84.5% | 93.0% |
-| XGBoost | 94.0% | 85.0% | 94.5% |
-| **CatBoost** | **95.5%** | **85.0%** | **96.5%** |
-| SVM-RBF | 88.5% | 78.0% | 91.0% |
+|------------|-------------------:|-------------------:|------------------:|
+| RandomForest | 93.0 % | 85.5 % | 92.5 % |
+| XGBoost      | 94.5 % | 85.0 % | 94.5 % |
+| **CatBoost** | **95.0 %** | **86.5 %** | **94.5 %** |
+| SVM-RBF      | 89.0 % | 78.5 % | 91.0 % |
 
-**Key observations:**
-- Hybrid (CatBoost) achieves **+1.0 pp** over TSFresh alone — topology adds complementary signal
-- Topology alone reaches 85% with only 18 features (24 extracted, 18 selected)
-- SVM benefits most from hybrid: **+2.5 pp** (88.5% → 91.0%)
-- Topology features are categorised as: Sublevel H0, Superlevel H0, Takens H0, Takens H1
+Headlines:
+- **Topology with 18 features reaches 86.5 % CatBoost** — ≈ 5 × better accuracy-per-feature than TSFresh.
+- **Hybrid lifts SVM most (+2 pp)**; tree-based models gain little from the merge.
+- **`topo__sub_H0__carl_f3` is the #1 feature** in the hybrid CatBoost model (13.2 % importance, outranks all 100 TSFresh features).
+- **Topology > TSFresh** on `trend_shift` (0.974 vs 0.919) and ties on `variance_shift`, `point_anomaly`.
+- **TSFresh > Topology** on `stationary` (0.884 vs 0.651) — persistence diagrams are invariant to temporal ordering.
 
----
-
-## Topology Methods
-
-Controlled by the `--method` flag in `topology_extraction.py` (passed via 3rd arg of `run-preprocessing.sh`).
-
-| Method | Diagrams | Features | Description |
-|--------|----------|----------|-------------|
-| `sublevel+h1` | sub_H0 + sup_H0 + H1 | **24** | **Default.** No overlap — each diagram adds unique signal |
-| `sublevel` | sub_H0 + sup_H0 | 16 | Sublevel/superlevel only, no Ripser |
-| `takens` | H0 + H1 | 16 | Takens embedding + Vietoris-Rips (Ripser) |
-| `both` | sub_H0 + sup_H0 + H0 + H1 | 32 | All diagrams |
-
-```bash
-bash run.sh preprocessing topo-test topo             # sublevel+h1 (default)
-bash run-preprocessing.sh topo-test topo sublevel    # sublevel only
-bash run-preprocessing.sh topo-test topo takens      # Takens + Ripser
-bash run-preprocessing.sh topo-test topo both        # all diagrams
-```
-
-### Why sublevel+h1?
-
-| Diagram | Filtration | Captures |
-|---------|-----------|---------|
-| **sub_H0** | `{f ≤ t}` — from below | Mean shifts, valleys, level structure |
-| **sup_H0** | `{f ≥ t}` — from above | Point anomalies (spikes), peaks |
-| **H1** (Takens) | Vietoris-Rips on delay embedding | Periodicity, oscillation, loops |
-
-Takens H0 is excluded from the default: it captures similar level/clustering structure to sub/sup H0, adding redundancy without new information.
-
-### Per-diagram features (8 per diagram)
-
-| Feature | Formula | Captures |
-|---------|---------|---------|
-| `carl_f1` | Σ bᵢ(dᵢ−bᵢ) | birth-weighted persistence |
-| `carl_f2` | Σ (d_max−dᵢ)(dᵢ−bᵢ) | death-proximity-weighted persistence |
-| `carl_f3` | Σ bᵢ²(dᵢ−bᵢ)⁴ | high-degree birth term |
-| `carl_f4` | Σ (d_max−dᵢ)²(dᵢ−bᵢ)⁴ | high-degree death term |
-| `carl_f5_max` | max(dᵢ−bᵢ) | most persistent bar |
-| `entropy` | −Σ(pᵢ/L)log(pᵢ/L) | diagram complexity |
-| `landscape_l1` | ∫\|λ(x)\| dx | total topological signal |
-| `landscape_l2` | √(∫λ(x)² dx) | dominant topological signal |
+Full per-class F1, error analysis, and confusion patterns: [`TECHNICAL_REPORT_v2.md`](TECHNICAL_REPORT_v2.md).
 
 ---
 
@@ -182,33 +72,19 @@ Takens H0 is excluded from the default: it captures similar level/clustering str
 
 ```
 .
-├── 01-data-generation/
-│   ├── generate.py                  # betise-based generation
-│   ├── full-dataset-config.json     # 39 classes × 1,000 series
-│   ├── test-config.json             # 39 classes × 100 series
-│   └── topo-test-config.json        # 10 classes × 100 series (topology benchmark)
-├── 02-preprocessing/
-│   ├── feature_extraction.py        # TSFresh statistical features (~774 raw)
-│   ├── topology_extraction.py       # Persistent homology features (24, default)
-│   ├── remove_leakage_features.py   # Removes stationarity-leaking TSFresh features
-│   └── feature_selection.py         # MI-based selection, fitted on train split only
-├── 03-models/
-│   ├── flat_classifier/
-│   │   └── train.py                 # RF, XGBoost, CatBoost, SVM-RBF
-│   └── utils/                       # constants, data_utils, metrics
-├── 04-postprocessing/               # Confusion matrices, feature importance, error analysis
-├── data/
-│   ├── raw/                         # Generated parquet files
-│   └── features/                    # Extracted / selected features
-├── logs/                            # Per-run logs (<timestamp>_<script>_<mode>_<features>.log)
-└── run*.sh                          # Pipeline automation scripts
+├── 01-data-generation/           # betise-based generation + JSON configs
+├── 02-preprocessing/             # feature extraction (TSFresh, topology) + MI selection
+├── 03-models/flat_classifier/    # RF, XGBoost, CatBoost, SVM-RBF
+├── 04-postprocessing/            # confusion matrices, feature importance, error analysis
+├── reports/tda-background/       # tda_background.pdf + tda_pipeline_demo.ipynb
+├── data/raw/ data/features/      # parquet files
+├── logs/                         # per-run logs
+└── run*.sh                       # pipeline scripts
 ```
 
 ---
 
 ## Shell Script Reference
-
-### Master script
 
 ```bash
 bash run.sh [step] [mode] [features]
@@ -216,26 +92,22 @@ bash run.sh [step] [mode] [features]
 
 | Argument | Options | Default |
 |----------|---------|---------|
-| `step` | `all`, `generation`, `preprocessing`, `training`, `postprocessing` | `all` |
-| `mode` | `full`, `test`, `topo-test` | `full` |
+| `step`     | `all`, `generation`, `preprocessing`, `training`, `postprocessing` | `all` |
+| `mode`     | `full`, `test`, `topo-test` | `full` |
 | `features` | `tsfresh`, `topo`, `hybrid` | `tsfresh` |
 
-### Individual scripts
+> `preprocessing topo-test hybrid` extracts both TSFresh and topology features in a single pass; you can then train each pipeline independently without re-extracting.
 
-| Script | Arguments | Notes |
-|--------|-----------|-------|
-| `run-generation.sh` | `[mode]` | — |
-| `run-preprocessing.sh` | `[mode] [features] [topo_method]` | `hybrid` runs both TSFresh and topology |
-| `run-training.sh` | `[mode] [features]` | — |
-| `run-postprocessing.sh` | `[mode] [features]` | — |
+---
 
-Output directories:
+## Documentation
 
-| Features | Training output | Figures |
-|----------|----------------|---------|
-| `tsfresh` | `03-models/flat_classifier/output/` | `04-postprocessing/figures/<mode>_tsfresh/` |
-| `topo` | `03-models/flat_classifier/output_topo/` | `04-postprocessing/figures/<mode>_topo/` |
-| `hybrid` | `03-models/flat_classifier/output_hybrid/` | `04-postprocessing/figures/<mode>_hybrid/` |
+| Document | Audience |
+|----------|----------|
+| [`TECHNICAL_REPORT_v2.md`](TECHNICAL_REPORT_v2.md) | Project technical report — results, error analysis, reproducibility |
+| [`reports/tda-background/tda_background.pdf`](reports/tda-background/tda_background.pdf) | Methods / background — theory, formulas, literature review |
+| [`reports/tda-background/tda_pipeline_demo.ipynb`](reports/tda-background/tda_pipeline_demo.ipynb) | TDA tutorial notebook — synthetic and real-data walk-through |
+| [`01-data-generation/betise_quickstart.ipynb`](01-data-generation/betise_quickstart.ipynb) | Minimal `betise` usage examples |
 
 ---
 

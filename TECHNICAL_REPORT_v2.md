@@ -148,7 +148,14 @@ TSFresh computes a broad battery of statistical, spectral, and complexity featur
 
 **Method:** Persistent Homology via the `sublevel+h1` method  
 **Raw features extracted:** 24 per series  
-**After MI selection:** 18 features  
+**After MI + correlation-based pruning:** 18 features  
+
+> **Selection detail.** MI alone does not explain which features survive: some of the
+> highest-MI features (`*__carl_f5_max`, `sup_H0__landscape_l2`) are dropped because
+> they are highly correlated with `*__landscape_l1` (max persistence ≈ landscape area;
+> L1 and L2 norms of the same vector covary). The selection keeps one representative
+> from each correlation cluster, so the retained 18 features are a less-redundant
+> subset rather than a strict top-MI subset.
 
 Three complementary filtrations are computed on each time series:
 
@@ -160,14 +167,18 @@ Three complementary filtrations are computed on each time series:
 
 Each filtration produces a **persistence diagram**. From each diagram, **8 scalar features** are extracted:
 
-| Feature | Description |
-|---------|-------------|
-| `carl_f1` – `carl_f5` | Carlsson coordinates — polynomial summaries of (birth, death) pairs |
-| `entropy` | Persistent entropy — complexity/spread of diagram |
-| `landscape_l1` | First persistence landscape norm |
-| `landscape_l2` | Second persistence landscape norm |
+| Feature | Formula | Description |
+|---------|---------|-------------|
+| `carl_f1` | $\sum_i b_i \cdot p_i$ | Birth-weighted total persistence (signed) |
+| `carl_f2` | $\sum_i (d_{\max}-d_i) \cdot p_i$ | Death-distance-weighted total persistence |
+| `carl_f3` | $\sum_i b_i^2 \cdot p_i^4$ | High-degree birth energy ($b^2 \times p^4$) |
+| `carl_f4` | $\sum_i (d_{\max}-d_i)^2 \cdot p_i^4$ | High-degree death energy |
+| `carl_f5_max` | $\max_i p_i$ | Maximum persistence (single most prominent bar) |
+| `entropy` | $-\sum_i \hat p_i \log \hat p_i$ | Persistent entropy — spread of persistence values |
+| `landscape_l1` | $\\|\bar\lambda\\|_1$ | $L^1$ norm of the **mean** of the top-5 persistence landscapes |
+| `landscape_l2` | $\\|\bar\lambda\\|_2$ | $L^2$ norm of the **mean** of the top-5 persistence landscapes |
 
-With 3 diagrams × 8 features = 24 total, and MI selection retaining 18, the topological representation is remarkably compact.
+where $p_i = d_i - b_i$ (persistence / bar length). With 3 diagrams × 8 features = 24 total, and MI + correlation-based pruning retaining 18, the topological representation is remarkably compact.
 
 **Key insight: 18 features vs. 100 features.** The topological pipeline distills the time series into just 18 numbers yet achieves **85–86% accuracy** — within ~9 percentage points of the 100-feature TSFresh pipeline. This represents a **5.6× compression** of the feature space with only a moderate accuracy penalty.
 
