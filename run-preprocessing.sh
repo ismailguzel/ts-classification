@@ -2,21 +2,20 @@
 # Preprocessing Pipeline
 #
 # Usage:
-#   bash run-preprocessing.sh                        # full, TSFresh only
-#   bash run-preprocessing.sh test                   # test dataset, TSFresh only
-#   bash run-preprocessing.sh topo-test              # topo-test (10 classes), TSFresh only
-#   bash run-preprocessing.sh test topo              # test, topology (sublevel+h1, default)
-#   bash run-preprocessing.sh topo-test topo         # topo-test, topology
-#   bash run-preprocessing.sh test topo sublevel     # sublevel only (no Ripser)
-#   bash run-preprocessing.sh test topo takens       # takens H0+H1 (Ripser)
-#   bash run-preprocessing.sh test topo both         # all diagrams
+#   bash run-preprocessing.sh shape                    # TSFresh only
+#   bash run-preprocessing.sh shape topo               # topology (sublevel+h1, default)
+#   bash run-preprocessing.sh shape hybrid             # TSFresh + topology in one pass
+#   bash run-preprocessing.sh season-anomaly topo      # Study B2, topology
+#   bash run-preprocessing.sh shape topo sublevel      # sublevel only (no Ripser)
+#   bash run-preprocessing.sh shape topo takens        # takens H0+H1 (Ripser)
+#   bash run-preprocessing.sh shape topo both          # all diagrams
 
 set -e
 
 PYTHON="${PYTHON:-python}"
 
-MODE=${1:-full}          # full | test | topo-test
-FEATURES=${2:-}          # topo  (leave empty for TSFresh only)
+MODE=${1:-shape}         # see modes.sh / 01-data-generation/*-config.json
+FEATURES=${2:-}          # topo | hybrid  (leave empty for TSFresh only)
 TOPO_METHOD=${3:-sublevel+h1}   # sublevel+h1 | sublevel | takens | both
 
 N_JOBS=-1
@@ -24,25 +23,7 @@ FEATURE_SET="efficient"
 TOP_K_FEATURES=100
 BASE_DIR=$(pwd)
 
-if [ "$MODE" == "test" ]; then
-    DATA_RAW="$BASE_DIR/data/raw/test"
-    DATA_FEATURES="$BASE_DIR/data/features/test/allfeatures"
-    DATA_SELECTED="$BASE_DIR/data/features/test/selected"
-    DATA_TOPO="$BASE_DIR/data/features/test/topological"
-    DATA_TOPO_SEL="$BASE_DIR/data/features/test/topological_selected"
-elif [ "$MODE" == "topo-test" ]; then
-    DATA_RAW="$BASE_DIR/data/raw/topo-test"
-    DATA_FEATURES="$BASE_DIR/data/features/topo-test/allfeatures"
-    DATA_SELECTED="$BASE_DIR/data/features/topo-test/selected"
-    DATA_TOPO="$BASE_DIR/data/features/topo-test/topological"
-    DATA_TOPO_SEL="$BASE_DIR/data/features/topo-test/topological_selected"
-else
-    DATA_RAW="$BASE_DIR/data/raw/dataset"
-    DATA_FEATURES="$BASE_DIR/data/features/dataset/allfeatures"
-    DATA_SELECTED="$BASE_DIR/data/features/dataset/selected"
-    DATA_TOPO="$BASE_DIR/data/features/dataset/topological"
-    DATA_TOPO_SEL="$BASE_DIR/data/features/dataset/topological_selected"
-fi
+source "$BASE_DIR/modes.sh"
 
 if [ ! -d "$DATA_RAW" ] || [ -z "$(ls -A $DATA_RAW 2>/dev/null)" ]; then
     echo "Error: Input not found: $DATA_RAW"

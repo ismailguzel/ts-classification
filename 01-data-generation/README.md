@@ -1,36 +1,52 @@
 # Data Generation
 
-Generates synthetic time series datasets using the **betise** library.
+Generates synthetic time series datasets using the **betise** library (0.4.0).
+
+One config per pipeline mode. Adding a mode means adding one config here and
+nothing else — every path is derived from the mode name in `../modes.sh`.
 
 ## Files
 
-| File | Purpose |
-|---|---|
-| `generate.py` | Main generation script (reads a config JSON) |
-| `full-dataset-config.json` | 39 classes × 1,000 series = 39,000 total |
-| `test-config.json` | 39 classes × 100 series = 3,900 total (fast) |
-| `dataset.jpeg` | Reference table of 39 target classes |
+`generate.py` is the entry point; it reads one of the configs below.
+
+| Config | Study | Classes | Series |
+|---|---|---:|---:|
+| `shape-config.json` | A | 9 | 900 |
+| `shape-full-config.json` | A | 38 | 38,000 |
+| `season-structure-config.json` | B1 | 4 | 400 |
+| `season-anomaly-config.json` | B2 | 4 | 400 |
 
 ## Usage
 
 ```bash
 cd 01-data-generation
 
-# Full dataset → data/raw/dataset/dataset.parquet
-python generate.py
+# Study A working set -> data/raw/shape/shape.parquet
+python generate.py --config shape-config.json
 
-# Test dataset → data/raw/test/test.parquet
-python generate.py --config test-config.json
+# Study B2 -> data/raw/season-anomaly/season-anomaly.parquet
+python generate.py --config season-anomaly-config.json
 ```
 
 Or via shell scripts from repo root:
 
 ```bash
-bash run-generation.sh        # full
-bash run-generation.sh test   # test
+bash run-generation.sh shape
+bash run-generation.sh season-anomaly
 ```
 
-## 39 Classes
+## Seasonality is a base_series, not a feature
+
+As of betise 0.4.0, seasonality is a property of `base_series`
+(`single_seasonality`, `multiple_seasonality`, `sarma`, `sarima`) rather than an
+overlay feature, and `contextual_anomaly` raises `ValueError` on any other base.
+That is why `contextual_anomaly` appears only in the Study B configs.
+
+`generate.py` passes an explicit `ALL_FEATURES_OFF` dict on every call: `load_config`
+defaults are not all "off", and omitting it changes the generated series. Do not
+remove it.
+
+## Study A class taxonomy
 
 | # | Class | Base | Feature overlay |
 |---|---|---|---|
@@ -39,7 +55,6 @@ bash run-generation.sh test   # test
 | 3 | stochastic_trend | random_walk / rw_drift / ari / ima / arima | — |
 | 4 | volatility | arch / garch / egarch / aparch | — |
 | 5 | collective_anomaly | ar | collective_anomaly |
-| 6 | contextual_anomaly | ar | contextual_anomaly |
 | 7 | mean_shift | ar | mean_shift |
 | 8 | point_anomaly | ar | point_anomaly |
 | 9 | trend_shift | ar | trend_shift |

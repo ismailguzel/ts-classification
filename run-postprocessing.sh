@@ -2,29 +2,22 @@
 # Post-Processing Pipeline
 #
 # Usage:
-#   bash run-postprocessing.sh                       # TSFresh output (default)
-#   bash run-postprocessing.sh test                  # test, TSFresh
-#   bash run-postprocessing.sh topo-test             # topo-test (10 classes), TSFresh
-#   bash run-postprocessing.sh test topo             # test, topology
-#   bash run-postprocessing.sh topo-test topo        # topo-test, topology
-#   bash run-postprocessing.sh test hybrid           # test, hybrid
+#   bash run-postprocessing.sh shape                 # Study A, TSFresh
+#   bash run-postprocessing.sh shape topo            # Study A, topology
+#   bash run-postprocessing.sh shape hybrid          # Study A, hybrid
+#   bash run-postprocessing.sh season-anomaly topo   # Study B2, topology
 
 set -e
 
 PYTHON="${PYTHON:-python}"
 
-MODE=${1:-full}         # full | test | topo-test
+MODE=${1:-shape}        # see modes.sh / 01-data-generation/*-config.json
 FEATURES=${2:-tsfresh}  # tsfresh | topo | hybrid
 
 BASE_DIR=$(pwd)
-POST_DIR="$BASE_DIR/04-postprocessing"
-FIGURES_DIR="$POST_DIR/figures/${MODE}_${FEATURES}"
+source "$BASE_DIR/modes.sh"
 
-case "$FEATURES" in
-    topo)    MODEL_DIR="$BASE_DIR/03-models/flat_classifier/output_topo" ;;
-    hybrid)  MODEL_DIR="$BASE_DIR/03-models/flat_classifier/output_hybrid" ;;
-    *)       MODEL_DIR="$BASE_DIR/03-models/flat_classifier/output" ;;
-esac
+POST_DIR="$BASE_DIR/04-postprocessing"
 
 [ -d "$MODEL_DIR" ] || {
     echo "Warning: $MODEL_DIR not found. Run run-training.sh $MODE $FEATURES first."

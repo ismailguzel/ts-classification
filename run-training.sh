@@ -2,50 +2,35 @@
 # Training Pipeline — Flat classifier
 #
 # Usage:
-#   bash run-training.sh                       # full dataset, TSFresh features
-#   bash run-training.sh test                  # test dataset (39 classes), TSFresh
-#   bash run-training.sh topo-test             # topo-test dataset (10 classes), TSFresh
-#   bash run-training.sh test topo             # test, topology features only
-#   bash run-training.sh topo-test topo        # topo-test, topology features only
-#   bash run-training.sh test hybrid           # test, TSFresh + topology merged
-#   bash run-training.sh topo-test hybrid      # topo-test, TSFresh + topology merged
+#   bash run-training.sh shape                 # Study A, TSFresh features
+#   bash run-training.sh shape topo            # Study A, topology features only
+#   bash run-training.sh shape hybrid          # Study A, TSFresh + topology merged
+#   bash run-training.sh season-anomaly topo   # Study B2, topology features only
 
 set -e
 
 PYTHON="${PYTHON:-python}"
 
-MODE=${1:-full}         # full | test | topo-test
+MODE=${1:-shape}        # see modes.sh / 01-data-generation/*-config.json
 FEATURES=${2:-tsfresh}  # tsfresh | topo | hybrid
 
 BASE_DIR=$(pwd)
+source "$BASE_DIR/modes.sh"
 
-if [ "$MODE" == "test" ]; then
-    DATA_TSFRESH="$BASE_DIR/data/features/test/selected"
-    DATA_TOPO="$BASE_DIR/data/features/test/topological_selected"
-elif [ "$MODE" == "topo-test" ]; then
-    DATA_TSFRESH="$BASE_DIR/data/features/topo-test/selected"
-    DATA_TOPO="$BASE_DIR/data/features/topo-test/topological_selected"
-else
-    DATA_TSFRESH="$BASE_DIR/data/features/dataset/selected"
-    DATA_TOPO="$BASE_DIR/data/features/dataset/topological_selected"
-fi
+OUTPUT_DIR="$MODEL_DIR"
 
 case "$FEATURES" in
     topo)
-        DATA_SELECTED="$DATA_TOPO"
-        OUTPUT_DIR="$BASE_DIR/03-models/flat_classifier/output_topo"
+        DATA_SELECTED="$DATA_TOPO_SEL"
         EXTRA_PATH=""
         PREREQ="bash run-preprocessing.sh $MODE topo"
         ;;
     hybrid)
-        DATA_SELECTED="$DATA_TSFRESH"
-        OUTPUT_DIR="$BASE_DIR/03-models/flat_classifier/output_hybrid"
-        EXTRA_PATH="$DATA_TOPO"
-        PREREQ="bash run-preprocessing.sh $MODE topo"
+        # DATA_SELECTED stays as the TSFresh selection from modes.sh; topology rides along
+        EXTRA_PATH="$DATA_TOPO_SEL"
+        PREREQ="bash run-preprocessing.sh $MODE hybrid"
         ;;
     *)  # tsfresh (default)
-        DATA_SELECTED="$DATA_TSFRESH"
-        OUTPUT_DIR="$BASE_DIR/03-models/flat_classifier/output"
         EXTRA_PATH=""
         PREREQ="bash run-preprocessing.sh $MODE"
         ;;

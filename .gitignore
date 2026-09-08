@@ -21,7 +21,8 @@ ENV/
 # Jupyter
 .ipynb_checkpoints/
 
-# Logs
+# Logs — run artifacts, produced on the compute host, never committed
+logs/
 
 # CatBoost info
 catboost_info/
@@ -48,14 +49,10 @@ dist/
 *.swp
 *.swo
 
-# Data files (large datasets excluded from git)
-data/raw/**/*.parquet
-data/processed/**/*.parquet
-data/features/**/*.parquet
-data/**/*.csv
-data/**/*.pkl
-
-# But keep directory structure and READMEs
+# Data — raw series and extracted features live on the compute host only.
+# Results (metrics JSON, importance CSV, figures) ARE committed: they are the
+# paper's evidence and must be versioned alongside the text.
+data/
 !data/README.md
 !data/**/README.md
 

@@ -1,7 +1,31 @@
+> # ⚠ SUPERSEDED — 2026-09-08
+>
+> **Every number in this report is void. Do not cite, quote, or build on them.**
+>
+> The `topo-test` dataset it describes contains a confound that invalidates the results.
+> In betise ≤ 0.3.0, `generate_contextual_anomalies` on a non-seasonal base injected a
+> full-length sine of amplitude 1.5–3 × σ before placing the anomaly. All three
+> `contextual_anomaly` scenarios used `ar` / `arma` / `white_noise`, so every series in
+> that class was strongly seasonal — the only such class among the ten. A two-condition
+> FFT rule with no learning (`45 < T < 100` and power share `> 0.40`) separates it with
+> TP=100, FP=0, FN=0, reproducing exactly the F1 = 1.000 attributed below to CatBoost.
+> The models were detecting the injected sine, not the anomaly. A second confound —
+> no per-series z-normalisation, so raw amplitude enters sub/superlevel persistence
+> directly — affects the topology pipeline throughout.
+>
+> The study has been restructured into Study A (non-periodic) and Study B (periodicity),
+> and the data is being regenerated with betise 0.4.0. See `README.md` and `CLAUDE.md`.
+>
+> This file is retained **only** for its error-analysis and reporting structure, which is
+> being reused. Treat all tables, figures and per-class F1 values below as historical.
+
+---
+
 # Time Series Classification with TSFresh and Topological Features: Technical Report
 
 **Author:** İsmail Güzel  
 **Date:** 2026-05-11  
+**Status:** Superseded — see the notice above  
 **Dataset:** topo-test — 1,000 Synthetic Time Series (100 series × 10 classes)  
 **Architecture:** Flat 10-Class Classifier — Three Feature Pipelines (TSFresh · Topology · Hybrid)
 

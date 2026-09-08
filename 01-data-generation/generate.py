@@ -1,10 +1,17 @@
 """
-39-Class Time Series Dataset via BeTiSe
-===========================================
+Labeled Time Series Dataset via BeTiSe
+======================================
 
-Reads ``full-dataset-config.json`` (same shape as
+Reads a ``<mode>-config.json`` (same shape as
 ``examples/configs/classification_config.json`` in the BeTiSe repo) and writes
 one merged, shuffled parquet of labeled series.
+
+Available configs — one per pipeline mode (see ``run.sh``):
+
+    shape-config.json            Study A, 9 classes   — non-periodic structure
+    shape-full-config.json       Study A, 38 classes  — full cross-product taxonomy
+    season-structure-config.json Study B1, 4 classes  — which seasonal structure
+    season-anomaly-config.json   Study B2, 4 classes  — perturbation of the loop
 
 Pipeline (see BeTiSe ``USAGE.md`` §6–7 and ``examples/05_classification_dataset.py``):
 
@@ -41,8 +48,8 @@ from betise.config import load_config
 # ── Configuration ─────────────────────────────────────────────────────────────
 
 _parser = argparse.ArgumentParser(description="Generate time series dataset with betise")
-_parser.add_argument("--config", type=str, default="full-dataset-config.json",
-                     help="Config file name inside 01-data-generation/ (default: full-dataset-config.json)")
+_parser.add_argument("--config", type=str, default="shape-config.json",
+                     help="Config file name inside 01-data-generation/ (default: shape-config.json)")
 _args = _parser.parse_args()
 
 CONFIG_FILE = Path(__file__).parent / _args.config
@@ -56,6 +63,13 @@ FIXED_LENGTH = CLASS_CFG["fixed_length"]
 RANDOM_SEED = CLASS_CFG["random_seed"]
 CLASSES = CLASS_CFG["classes"]
 
+# Every overlay feature betise 0.4.0 knows, all off. Scenarios switch on only what
+# they need, so a feature left out of a scenario is explicitly disabled rather than
+# left at whatever load_config defaults to.
+#
+# Seasonality is deliberately absent: as of betise 0.4.0 it is a property of
+# base_series (single_seasonality / multiple_seasonality / sarma / sarima), not an
+# overlay feature. Listing it here would be a dead key.
 ALL_FEATURES_OFF = {
     "linear_trend": {"enabled": False},
     "quadratic_trend": {"enabled": False},
@@ -65,10 +79,6 @@ ALL_FEATURES_OFF = {
     "garch": {"enabled": False},
     "egarch": {"enabled": False},
     "aparch": {"enabled": False},
-    "single_seasonality": {"enabled": False},
-    "multiple_seasonality": {"enabled": False},
-    "sarma": {"enabled": False},
-    "sarima": {"enabled": False},
     "mean_shift": {"enabled": False},
     "variance_shift": {"enabled": False},
     "trend_shift": {"enabled": False},

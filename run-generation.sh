@@ -2,30 +2,26 @@
 # ============================================================================
 # Data Generation Pipeline (betise)
 # ============================================================================
-# Generates synthetic time series dataset (config-driven).
-# Output: data/raw/dataset/dataset.parquet
+# Generates a synthetic time series dataset (config-driven).
+# Output: data/raw/<mode>/<mode>.parquet
 #
 # Usage:
-#   bash run-generation.sh           # full dataset (1000/class, 39 classes)
-#   bash run-generation.sh test      # test dataset  (100/class, 39 classes)
-#   bash run-generation.sh topo-test # topology-friendly dataset (100/class, 10 classes)
+#   bash run-generation.sh shape             # Study A,  9 classes,    900 series
+#   bash run-generation.sh shape-full        # Study A, 38 classes, 38,000 series
+#   bash run-generation.sh season-structure  # Study B1, 4 classes,   400 series
+#   bash run-generation.sh season-anomaly    # Study B2, 4 classes,   400 series
 # ============================================================================
 
 set -e
 
 PYTHON="${PYTHON:-python}"
-MODE=${1:-full}
+MODE=${1:-shape}
 
-if [ "$MODE" == "test" ]; then
-    CONFIG="test-config.json"
-    OUTPUT_FILE="data/raw/test/test.parquet"
-elif [ "$MODE" == "topo-test" ]; then
-    CONFIG="topo-test-config.json"
-    OUTPUT_FILE="data/raw/topo-test/topo-test.parquet"
-else
-    CONFIG="full-dataset-config.json"
-    OUTPUT_FILE="data/raw/dataset/dataset.parquet"
-fi
+BASE_DIR=$(pwd)
+source "$BASE_DIR/modes.sh"
+
+CONFIG="$CONFIG_NAME"
+OUTPUT_FILE="$RAW_PARQUET"
 
 echo "============================================================"
 echo "Data Generation — $MODE ($CONFIG)"
