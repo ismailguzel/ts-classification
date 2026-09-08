@@ -1,8 +1,10 @@
 # Time Series Classification with Persistent Homology
 
-A machine learning pipeline for time series classification on synthetic data generated with the **betise** library. Three feature pipelines are supported: TSFresh, persistent homology (topology), and their hybrid concatenation.
+A diagnostic study of **where topological features work on time series, and what each homology dimension captures** — using synthetic data generated with the **betise** library, with TSFresh as the comparison baseline.
 
-The work is split into two studies, because H₁ persistent homology counts loops in a delay embedding — which is a statement about *periodicity*. Keeping periodic and non-periodic classes in separate experiments is what stops the model from reading seasonality when it is supposed to be reading something else.
+The question is not what accuracy is reachable. It is which *character* of series a handful of persistence descriptors separates well, which ones they cannot touch, and how that splits between H₀ and H₁. TSFresh's 100 statistical features are there to be compared against, not to be out-engineered.
+
+The work is split into two studies, because H₁ counts loops in a delay embedding — which is a statement about *periodicity*. Keeping periodic and non-periodic classes in separate experiments is what stops the model from reading seasonality when it is supposed to be reading something else, and it is what makes H₁'s contribution interpretable.
 
 | | **Study A — shape** | **Study B — periodicity** |
 |---|---|---|
@@ -46,7 +48,6 @@ All series have fixed length = 1,000 points. Generated with `betise` 0.4.0 (see 
 | Mode | Study | Classes | Total | Purpose |
 |------|-------|--------:|------:|---------|
 | `shape` | A | 9 | 900 | Non-periodic benchmark; fast iteration |
-| `shape-full` | A | 38 | 38,000 | Full cross-product taxonomy |
 | `season-structure` | B1 | 4 | 400 | `single` / `multiple` / `sarma` / `sarima` |
 | `season-anomaly` | B2 | 4 | 400 | `pure` / `contextual` / `point` / `collective`, all on seasonal bases |
 
@@ -111,7 +112,7 @@ bash run.sh [step] [mode] [features]
 | Argument | Options | Default |
 |----------|---------|---------|
 | `step`     | `all`, `generation`, `preprocessing`, `training`, `postprocessing` | `all` |
-| `mode`     | `shape`, `shape-full`, `season-structure`, `season-anomaly` | `shape` |
+| `mode`     | `shape`, `season-structure`, `season-anomaly` | `shape` |
 | `features` | `tsfresh`, `topo`, `hybrid` | `tsfresh` |
 
 > `preprocessing <mode> hybrid` extracts both TSFresh and topology features in a single pass; you can then train each pipeline independently without re-extracting.

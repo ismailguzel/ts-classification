@@ -12,7 +12,6 @@ nothing else — every path is derived from the mode name in `../modes.sh`.
 | Config | Study | Classes | Series |
 |---|---|---:|---:|
 | `shape-config.json` | A | 9 | 900 |
-| `shape-full-config.json` | A | 38 | 38,000 |
 | `season-structure-config.json` | B1 | 4 | 400 |
 | `season-anomaly-config.json` | B2 | 4 | 400 |
 

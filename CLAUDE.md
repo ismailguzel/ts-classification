@@ -25,6 +25,29 @@ generator; this repo is the downstream research project, not the library.
 Do not reintroduce rsync of the code tree — an rsync copy is not a git checkout and
 silently diverges, leaving no way to tell which side is authoritative.
 
+## What this study is asking
+
+This is a **diagnostic**, not a benchmark. The question is not "what accuracy can we
+reach" — it is **where do topological features work, and what does each homology
+dimension actually capture**:
+
+- On which *character* of series do persistence features separate well, and on which
+  do they fail?
+- What is H₀ picking up versus H₁? Seasonality is the sharpest case: H₁ counts loops
+  in a delay embedding, which is a statement about periodicity, so it should carry
+  Study B and contribute almost nothing to Study A.
+- TSFresh is the **comparison baseline**, not a thing to optimise. The point is not to
+  out-engineer it with 100 statistical features; it is to show which series a handful
+  of topological descriptors handle as well or better, and which they cannot touch.
+
+Two consequences for how work is done here:
+
+1. **Small datasets.** Clarify the H₀/H₁ story on a few hundred series per study
+   before scaling anything up. There is deliberately no large-N mode.
+2. **Per-diagram results, not lumped accuracy.** Reporting one number for "topology
+   (18 features)" hides the actual finding. Results must break down by diagram family
+   (`sub_H0` / `sup_H0` / `H1`) and by class.
+
 ## The two studies
 
 The paper has two sections, and the repo carries both. The split exists because
@@ -53,7 +76,7 @@ flat label set:
 ```bash
 bash run.sh [step] [mode] [features]
 # step:     all | generation | preprocessing | training | postprocessing
-# mode:     shape | shape-full | season-structure | season-anomaly
+# mode:     shape | season-structure | season-anomaly
 # features: tsfresh | topo | hybrid
 ```
 
@@ -67,7 +90,6 @@ if/elif chain to update in four scripts. `MODEL_DIR` and `FIGURES_DIR` both carr
 | Mode | Study | Classes | Series |
 |---|---|---:|---:|
 | `shape` | A | 9 | 900 |
-| `shape-full` | A | 38 | 38,000 |
 | `season-structure` | B1 | 4 | 400 |
 | `season-anomaly` | B2 | 4 | 400 |
 

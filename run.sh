@@ -12,7 +12,7 @@
 #   training      : Train flat classifier
 #   postprocessing: Analyze results & generate figures
 #
-# Mode    : shape (default) | shape-full | season-structure | season-anomaly
+# Mode    : shape (default) | season-structure | season-anomaly
 #           One per 01-data-generation/<mode>-config.json — see modes.sh
 # Features: tsfresh (default) | topo | hybrid
 #
@@ -35,7 +35,7 @@ RED='\033[0;31m'
 NC='\033[0m'
 
 STEP=${1:-all}      # all | generation | preprocessing | training | postprocessing
-MODE=${2:-shape}    # shape | shape-full | season-structure | season-anomaly
+MODE=${2:-shape}    # shape | season-structure | season-anomaly
 FEATURES=${3:-tsfresh}  # tsfresh | topo | hybrid
 
 VALID_STEPS=("all" "generation" "preprocessing" "training" "postprocessing")
@@ -46,7 +46,7 @@ if [[ ! " ${VALID_STEPS[@]} " =~ " ${STEP} " ]]; then
     echo "Usage: bash run.sh [step] [mode] [features]"
     echo ""
     echo "Steps   : all | generation | preprocessing | training | postprocessing"
-    echo "Mode    : shape (default) | shape-full | season-structure | season-anomaly"
+    echo "Mode    : shape (default) | season-structure | season-anomaly"
     echo "Features: tsfresh (default) | topo | hybrid"
     exit 1
 fi
