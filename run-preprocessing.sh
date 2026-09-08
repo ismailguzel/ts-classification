@@ -86,7 +86,10 @@ if [ "$FEATURES" == "topo" ] || [ "$FEATURES" == "hybrid" ]; then
 
     mkdir -p "$DATA_TOPO" "$DATA_TOPO_SEL"
 
-    echo "Step 1: Topological Feature Extraction (method=$TOPO_METHOD)"
+    ZSCORE_FLAG=""
+    [ "$ZSCORE" == "1" ] && ZSCORE_FLAG="--zscore"
+
+    echo "Step 1: Topological Feature Extraction (method=$TOPO_METHOD, zscore=$ZSCORE)"
     $PYTHON topology_extraction.py \
         --input      "$DATA_RAW" \
         --output     "$DATA_TOPO" \
@@ -94,7 +97,8 @@ if [ "$FEATURES" == "topo" ] || [ "$FEATURES" == "hybrid" ]; then
         --auto-delay \
         --auto-dim   \
         --n-perm     500 \
-        --n-jobs     $N_JOBS
+        --n-jobs     $N_JOBS \
+        $ZSCORE_FLAG
 
     [ -f "$DATA_TOPO/features.parquet" ] || { echo "Error: Topology extraction failed."; exit 1; }
 

@@ -43,6 +43,9 @@ Usage:
     # Takens with auto-selected embedding parameters:
     python topology_extraction.py \\
         --method takens --auto-delay --auto-dim --n-perm 500
+
+    # Shape rather than amplitude (mandatory for the season-* modes):
+    python topology_extraction.py --zscore
 """
 
 import argparse
@@ -478,8 +481,31 @@ def _make_feature_names(diagram_tags: list[str], mode: str, resolution: int) -> 
 # Worker + Pipeline
 # ---------------------------------------------------------------------------
 
-def _extract_worker(series_id, values, extractor):
+def _zscore(ts: np.ndarray) -> np.ndarray:
+    """Per-series standardisation: (x - mean) / std.
+
+    Sub- and superlevel persistence is measured in the units of the signal, so
+    without this the absolute amplitude of a series flows straight into its
+    topological features. Whether that is wanted depends on the question:
+
+      Study A  — keep raw scale. `variance_shift` and `volatility` are *about*
+                 amplitude, so standardising away scale would remove the signal.
+      Study B  — standardise. With betise 0.4.0 defaults, per-series sigma spans
+                 ~0.2 (single_seasonality) to ~5.7 (sarima); a 25x gap that raw
+                 amplitude alone would separate, telling us nothing about shape.
+
+    Running both ways on the same data is also the only way to see how much of a
+    diagram family's discriminative power is shape and how much is scale.
+    """
+    ts = np.asarray(ts, dtype=float)
+    std = ts.std()
+    return (ts - ts.mean()) / std if std > 1e-12 else ts - ts.mean()
+
+
+def _extract_worker(series_id, values, extractor, zscore=False):
     try:
+        if zscore:
+            values = _zscore(values)
         feat, delay, dim = extractor.extract_one(values)
         return series_id, feat, None, delay, dim
     except Exception as exc:
@@ -487,14 +513,16 @@ def _extract_worker(series_id, values, extractor):
 
 
 class TopologyPipeline:
-    def __init__(self, extractor, n_jobs: int = -1, batch_size: int = 200):
+    def __init__(self, extractor, n_jobs: int = -1, batch_size: int = 200,
+                 zscore: bool = False):
         self.extractor  = extractor
         self.n_jobs     = n_jobs if n_jobs and n_jobs > 0 else os.cpu_count()
         self.batch_size = batch_size
+        self.zscore     = zscore
 
     def _process_batch(self, batch):
         results = Parallel(n_jobs=self.n_jobs)(
-            delayed(_extract_worker)(sid, vals, self.extractor)
+            delayed(_extract_worker)(sid, vals, self.extractor, self.zscore)
             for sid, vals in batch
         )
         ids, feats, errors, delays, dims = [], [], [], [], []
@@ -618,6 +646,12 @@ def main():
     p.add_argument("--n-landscapes",         type=int, default=5)
     p.add_argument("--landscape-resolution", type=int, default=100)
     p.add_argument("--no-normalize",         action="store_true")
+    p.add_argument("--zscore", action="store_true",
+                   help="Standardise each series ((x-mean)/std) BEFORE the filtration and "
+                        "the Takens embedding, so persistence measures shape rather than "
+                        "amplitude. Required for the season-* modes, where per-series sigma "
+                        "spans ~0.2 to ~5.7; leave off for shape, where variance_shift and "
+                        "volatility are genuinely about scale.")
 
     p.add_argument("--batch-size", type=int, default=200)
     p.add_argument("--n-jobs",     type=int, default=-1)
@@ -685,10 +719,12 @@ def main():
         print(f"Takens delay       : {delay_str}")
         print(f"Takens dimension   : {dim_str}")
         print(f"n_perm             : {n_perm}")
+    print(f"Per-series z-score : {'yes' if args.zscore else 'no (raw amplitude)'}")
     print(f"n_jobs             : {args.n_jobs}")
     print("=" * 70)
 
-    TopologyPipeline(extractor, n_jobs=args.n_jobs, batch_size=args.batch_size).run(
+    TopologyPipeline(extractor, n_jobs=args.n_jobs, batch_size=args.batch_size,
+                     zscore=args.zscore).run(
         input_path=Path(args.input),
         output_path=Path(args.output),
     )

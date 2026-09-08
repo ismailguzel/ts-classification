@@ -47,3 +47,23 @@ DATA_TOPO_SEL="$BASE_DIR/data/features/$MODE/topological_selected"
 
 MODEL_DIR="$BASE_DIR/03-models/flat_classifier/output/${MODE}_${FEATURES}"
 FIGURES_DIR="$BASE_DIR/04-postprocessing/figures/${MODE}_${FEATURES}"
+
+# Per-series z-normalisation before the filtration and the Takens embedding.
+# Derived from the mode rather than passed by hand, because getting it wrong is
+# silent: sub/superlevel persistence is measured in the units of the signal.
+#
+#   season-*  ON.  Measured on the generated data, per-series sigma is 8.45 for
+#                  sarima against 0.28-0.86 for the other three seasonal bases.
+#                  Raw amplitude alone would separate sarima and tell us nothing
+#                  about the shape of its loop.
+#   shape     OFF. variance_shift and volatility are genuinely about amplitude;
+#                  standardising it away would delete the signal.
+#
+# Override with ZSCORE=1 / ZSCORE=0 to run a mode both ways — that comparison is
+# how you measure how much of a diagram family's power is shape and how much is
+# scale.
+case "$MODE" in
+    season-*) ZSCORE_DEFAULT=1 ;;
+    *)        ZSCORE_DEFAULT=0 ;;
+esac
+ZSCORE="${ZSCORE:-$ZSCORE_DEFAULT}"
