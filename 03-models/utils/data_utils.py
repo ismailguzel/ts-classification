@@ -16,7 +16,7 @@ from pathlib import Path
 from sklearn.model_selection import train_test_split
 
 from .constants import (
-    PRIMARY_CATEGORY_MAPPING,
+    build_category_mapping,
     DEFAULT_RANDOM_STATE,
     DEFAULT_TEST_SIZE,
 )
@@ -119,7 +119,7 @@ def extract_multiclass_labels(labels_df, category_mapping=None,
     Args:
         labels_df: DataFrame with category column
         category_mapping: Dict mapping category names to integers
-                         (default: PRIMARY_CATEGORY_MAPPING)
+                         (default: derived from the data, sorted by name)
         category_col: Name of category column (default: 'primary_category')
     
     Returns:
@@ -135,7 +135,7 @@ def extract_multiclass_labels(labels_df, category_mapping=None,
         )
     
     if category_mapping is None:
-        category_mapping = PRIMARY_CATEGORY_MAPPING
+        category_mapping = build_category_mapping(labels_df[category_col])
     
     # Map categories to integers
     labels = labels_df[category_col].map(category_mapping)
@@ -229,7 +229,7 @@ def load_features_and_labels(features_path, target='binary', verbose=True):
     if target == 'binary':
         y = extract_binary_labels(labels_df)
     elif target == 'primary':
-        y = extract_multiclass_labels(labels_df, PRIMARY_CATEGORY_MAPPING, 'primary_category')
+        y = extract_multiclass_labels(labels_df, None, 'primary_category')
     elif target == 'sub':
         # Sub-category requires custom mapping per primary category
         raise NotImplementedError("Sub-category classification not yet implemented")

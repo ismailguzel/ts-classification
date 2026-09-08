@@ -17,9 +17,8 @@ from .data_utils import (
     remove_series_id_leakage
 )
 from .constants import (
-    PRIMARY_CATEGORY_MAPPING,
-    PRIMARY_CATEGORY_REVERSE,
-    PRIMARY_CLASS_NAMES,
+    build_category_mapping,
+    class_names_from_mapping,
     DEFAULT_RANDOM_STATE,
     DEFAULT_TEST_SIZE,
     DEFAULT_N_JOBS
@@ -38,9 +37,8 @@ __all__ = [
     'remove_series_id_leakage',
 
     # Constants
-    'PRIMARY_CATEGORY_MAPPING',
-    'PRIMARY_CATEGORY_REVERSE',
-    'PRIMARY_CLASS_NAMES',
+    'build_category_mapping',
+    'class_names_from_mapping',
     'DEFAULT_RANDOM_STATE',
     'DEFAULT_TEST_SIZE',
     'DEFAULT_N_JOBS',

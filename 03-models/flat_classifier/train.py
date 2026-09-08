@@ -45,8 +45,8 @@ from utils import (  # noqa: E402
     load_features_and_labels,
     split_train_test,
     remove_series_id_leakage,
-    PRIMARY_CATEGORY_MAPPING,
-    PRIMARY_CLASS_NAMES,
+    build_category_mapping,
+    class_names_from_mapping,
     DEFAULT_RANDOM_STATE,
     DEFAULT_TEST_SIZE,
 )
@@ -125,18 +125,18 @@ if HYBRID:
     X_df = X_df.join(X_extra, how='inner', lsuffix='', rsuffix='_extra')
     # Re-align labels to merged series (encode strings → ints via mapping)
     labels_df = labels_df[labels_df.index.isin(X_df.index)]
-    labels = labels_df['primary_category'].map(PRIMARY_CATEGORY_MAPPING).values
     print(f"  Merged  : {X_df.shape}  ({len(X_df)} series)")
 
 sample_ids = X_df.index.to_numpy()
 feature_names = X_df.columns.tolist()
 X = X_df.values
-y = np.array(labels)
 
-present_labels = sorted(np.unique(y))
-N_CLASSES = len(present_labels)
-# Build class name list for only the classes present in the data
-CLASS_NAMES = [PRIMARY_CLASS_NAMES[i] for i in present_labels]
+# Encode labels from the classes actually present, so every pipeline mode brings
+# its own class set and the names can never drift out of step with the integers.
+CATEGORY_MAPPING = build_category_mapping(labels_df['primary_category'])
+y = labels_df.loc[X_df.index, 'primary_category'].map(CATEGORY_MAPPING).values
+CLASS_NAMES = class_names_from_mapping(CATEGORY_MAPPING)
+N_CLASSES = len(CLASS_NAMES)
 
 print(f"\nFeature matrix : {X.shape}")
 print(f"Classes        : {N_CLASSES}")
