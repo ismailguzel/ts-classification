@@ -206,3 +206,7 @@ features (`*__carl_f5_max`, `*__landscape_l2`) are dropped as redundant with
 - Run the pipeline on munchlab1, never on the Mac
 - Long runs go to İsmail's terminal, not a background job here; short tests are fine
 - Stop and show the result at each meaningful step rather than chaining many decisions
+- On munchlab1, write run output to `~/experiments/results/`, never into the repo tree.
+  Results are committed from the Mac, so a copy written into a tracked path on the
+  remote blocks the next `git pull` as an untracked-file collision. Pull it over with
+  rsync and commit it here instead.
