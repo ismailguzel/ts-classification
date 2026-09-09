@@ -12,8 +12,10 @@ Three feature families, compared alone and in every combination:
                      and constant+trend), ARCH-LM, CUSUM, Ljung-Box on squared
                      residuals, a variance ratio between halves, and Grubbs. One
                      test per phenomenon, statistic and p-value each
-    topology    24   sub_H0 + sup_H0 + H1, 8 scalars per diagram, signed-log
-                     transformed
+    topology    78   sub_H0 + sup_H0 + H1, 26 per diagram: the 8 classic scalars,
+                     8 lifetime statistics and a 10-point Betti curve. Reported
+                     both as the classic 24 and as the full 78, so the extension
+                     is measured against itself. Signed-log transformed
     tsfresh     24   the top-24 by mutual information, so the budget matches
                      topology; also reported at the full selected 100
 
@@ -226,6 +228,13 @@ def main() -> None:
     cache_dir = Path(args.cache_dir) if args.cache_dir else REPO / "data" / "cache"
     C = get_classical(args.mode, list(idx), cache_dir)
     T = signed_log(clean(Xt.to_numpy(float)))
+    # The classic 8-per-diagram block, so "what did the extension buy" is exact
+    # rather than a comparison against a separately extracted run.
+    CLASSIC = ('carl_f1', 'carl_f2', 'carl_f3', 'carl_f4', 'carl_f5_max',
+               'entropy', 'landscape_l1', 'landscape_l2')
+    classic_cols = [i for i, c in enumerate(Xt.columns)
+                    if c.rsplit("__", 1)[-1] in CLASSIC]
+    T8 = T[:, classic_cols]
     A = clean(Xa.to_numpy(float))
     mi = mutual_info_classif(A, y9, random_state=args.seed)
     S24 = A[:, np.argsort(mi)[::-1][:24]]
@@ -233,16 +242,18 @@ def main() -> None:
     print(f"  topology {T.shape[1]} | tsfresh pool {A.shape[1]} -> top24 | selected {S100.shape[1]}")
 
     nc = C.shape[1]
+    nt, n8 = T.shape[1], T8.shape[1]
     SETS = {
         f"classical ({nc})":            C,
-        "topology (24)":                T,
+        f"topology classic ({n8})":     T8,
+        f"topology extended ({nt})":    T,
         "tsfresh (24)":                 S24,
         "tsfresh (100)":                S100,
-        f"classical+topology ({nc+24})": np.hstack([C, T]),
+        f"classical+topology ({nc+nt})": np.hstack([C, T]),
         f"classical+tsfresh ({nc+24})":  np.hstack([C, S24]),
-        "tsfresh+topology (48)":        np.hstack([S24, T]),
-        f"all three ({nc+48})":         np.hstack([C, S24, T]),
-        "tsfresh100+topology (124)":    np.hstack([S100, T]),
+        f"tsfresh+topology ({24+nt})":   np.hstack([S24, T]),
+        f"all three ({nc+24+nt})":       np.hstack([C, S24, T]),
+        f"tsfresh100+topology ({100+nt})": np.hstack([S100, T]),
     }
     BASE_CLASSICAL = f"classical ({nc})"
 
@@ -272,12 +283,13 @@ def main() -> None:
         print(f"  {name:28s} {b.mean():.3f} +/- {b.std():.3f}   {m.mean():.3f} +/- {m.std():.3f}")
 
     # Does topology add anything on top of each baseline?
-    print("\n  What topology adds (9-class, paired over folds)")
+    print("\n  What each addition buys (9-class, paired over folds)")
     print("  " + "-" * 62)
-    for base, combo in [(BASE_CLASSICAL, f"classical+topology ({nc+24})"),
-                        ("tsfresh (24)", "tsfresh+topology (48)"),
-                        (f"classical+tsfresh ({nc+24})", f"all three ({nc+48})"),
-                        ("tsfresh (100)", "tsfresh100+topology (124)")]:
+    for base, combo in [(f"topology classic ({n8})", f"topology extended ({nt})"),
+                        (BASE_CLASSICAL, f"classical+topology ({nc+nt})"),
+                        ("tsfresh (24)", f"tsfresh+topology ({24+nt})"),
+                        (f"classical+tsfresh ({nc+24})", f"all three ({nc+24+nt})"),
+                        ("tsfresh (100)", f"tsfresh100+topology ({100+nt})")]:
         d = folds[combo] - folds[base]
         se = d.std(ddof=1) / np.sqrt(len(d))
         verdict = "adds" if d.mean() > 2 * se else ("no gain" if d.mean() > -2 * se else "hurts")
@@ -286,8 +298,8 @@ def main() -> None:
 
     cv1 = StratifiedKFold(args.folds, shuffle=True, random_state=args.seed)
     per_class = {}
-    for name in (BASE_CLASSICAL, "topology (24)", f"classical+topology ({nc+24})",
-                 "tsfresh (24)", f"all three ({nc+48})"):
+    for name in (BASE_CLASSICAL, f"topology classic ({n8})", f"topology extended ({nt})",
+                 f"classical+topology ({nc+nt})", "tsfresh (24)"):
         pred = cross_val_predict(rf(), SETS[name], y9, cv=cv1)
         per_class[name] = f1_score(y9, pred, average=None, labels=classes)
     F = pd.DataFrame(per_class, index=classes)
@@ -299,7 +311,8 @@ def main() -> None:
     print("\n  Non-stationarity score from the 9-class model, vs the binary task")
     print("  " + "-" * 62)
     k = classes.index("stationary")
-    for name in (BASE_CLASSICAL, "topology (24)", f"classical+topology ({nc+24})", "tsfresh (24)"):
+    for name in (BASE_CLASSICAL, f"topology extended ({nt})",
+                 f"classical+topology ({nc+nt})", "tsfresh (24)"):
         P = cross_val_predict(rf(), SETS[name], y9, cv=cv1, method="predict_proba")
         print(f"  {name:28s} AUC = {roc_auc_score(y2, 1.0 - P[:, k]):.3f}")
 

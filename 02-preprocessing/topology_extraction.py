@@ -4,8 +4,20 @@ Topological Feature Extraction for Time Series (Persistent Homology)
 Mirrors the interface of feature_extraction.py so output feeds directly into
 feature_selection.py and train.py.
 
-Each persistence diagram is vectorised into 8 features:
-    5 Carlsson coordinates (f1–f5) + persistent entropy + landscape L1 + landscape L2
+Each persistence diagram is vectorised into 26 features, in three blocks:
+
+    8   the classic scalars — 5 Carlsson coordinates (f1–f5), persistent entropy,
+        landscape L1 and L2 norms
+    8   lifetime statistics — n_bars, total persistence, mean, std, skew, q90,
+        second-longest bar, and the second/first ratio
+   10   Betti curve — how many bars are alive at each of 10 points across the
+        diagram's own range
+
+The last two blocks exist because the classic 8 omit two things measurement
+showed to matter: the number of bars (which for sub_H0 equals the number of local
+minima minus one, a direct readout of oscillation structure) and the
+second-longest bar (which is what separates one loop from two). Both blocks are
+always computed; select by feature name to recover the classic 8 alone.
 
 --method controls which diagrams are computed:
 
@@ -13,19 +25,19 @@ Each persistence diagram is vectorised into 8 features:
       sub_H0   : sublevel set H0 — captures mean shifts, valley structure
       sup_H0   : superlevel set H0 — captures point anomalies, peaks
       H1       : Takens + Vietoris-Rips H1 — captures periodicity, loops
-      Total    : 3 × 8 = 24 features   (requires Ripser for H1)
+      Total    : 3 × 26 = 78 features  (requires Ripser for H1)
 
   sublevel
       sub_H0 + sup_H0 only — no Ripser needed
-      Total: 2 × 8 = 16 features
+      Total: 2 × 26 = 52 features
 
   takens
       Takens H0 + H1 via Vietoris-Rips (Ripser)
-      Total: 2 × 8 = 16 features
+      Total: 2 × 26 = 52 features
 
   both
       sub_H0 + sup_H0 + H0 + H1 — all diagrams
-      Total: 4 × 8 = 32 features
+      Total: 4 × 26 = 104 features
 
 Usage:
     # Default (sublevel+h1):
@@ -161,19 +173,97 @@ def _persistence_landscape_vector(
     return lands.mean(axis=0) if use_mean else lands.flatten()
 
 
+BETTI_RESOLUTION = 10
+
+
+def persistence_statistics(diagram: np.ndarray) -> np.ndarray:
+    """Order and scale statistics of the lifetime distribution.
+
+    The original 8 scalars omit the plainest quantity a diagram has: how many
+    bars it contains. That omission is not cosmetic here — measurement showed the
+    number of significant sub_H0 bars equals the number of local minima minus one
+    (a sine of period P over n samples gives n/P bars), so bar count is a direct
+    readout of oscillation structure, and none of carl_f1..f5, entropy or the
+    landscape norms carries it. Entropy comes closest, but only under equal
+    lifetimes, where it degenerates to log(n).
+
+    The second-longest bar and its ratio to the longest are included for the same
+    reason: they are what distinguishes one loop from two (a torus gives a ratio
+    near 1, a single closed curve near 0), and carl_f5_max keeps only the largest.
+
+    Returns 8 values, see _PERS_STAT_SUFFIXES.
+    """
+    diag = diagram[np.isfinite(diagram).all(axis=1)]
+    diag = diag[diag[:, 1] > diag[:, 0]]
+    if len(diag) == 0:
+        return np.zeros(8)
+
+    p = np.sort(diag[:, 1] - diag[:, 0])[::-1]
+    b, d = diag[:, 0], diag[:, 1]
+    mean = float(p.mean())
+    std = float(p.std())
+    skew = float(np.mean(((p - mean) / std) ** 3)) if std > 1e-12 else 0.0
+    second = float(p[1]) if len(p) > 1 else 0.0
+
+    return np.array([
+        float(len(p)),                    # n_bars
+        float(p.sum()),                   # total_persistence
+        mean,                             # pers_mean
+        std,                              # pers_std
+        skew,                             # pers_skew
+        float(np.quantile(p, 0.90)),      # pers_q90
+        second,                           # pers_second
+        second / (p[0] + 1e-12),          # pers_ratio_21
+    ])
+
+
+def betti_curve(diagram: np.ndarray, resolution: int = BETTI_RESOLUTION) -> np.ndarray:
+    """How many bars are alive at each of `resolution` points across the diagram.
+
+    Sampled on the diagram's own [min birth, max death] range rather than on a
+    fixed grid, so the curve describes shape and the statistics above carry the
+    scale. A fixed grid would not be comparable across diagrams anyway: for
+    sub/sup_H0 the filtration parameter is in the units of the series, while for
+    H1 it is a distance in the delay embedding.
+
+    Motivation: a mean shift puts the series at two levels, so its bars are born
+    in two clusters and the curve is bimodal. The 8 scalars average that away,
+    and mean_shift is one of the classes topology handles worst (0.888).
+    """
+    diag = diagram[np.isfinite(diagram).all(axis=1)]
+    diag = diag[diag[:, 1] > diag[:, 0]]
+    if len(diag) == 0:
+        return np.zeros(resolution)
+    lo, hi = diag[:, 0].min(), diag[:, 1].max()
+    if hi <= lo:
+        return np.zeros(resolution)
+    grid = np.linspace(lo, hi, resolution)
+    births, deaths = diag[:, 0][None, :], diag[:, 1][None, :]
+    alive = (births <= grid[:, None]) & (grid[:, None] < deaths)
+    return alive.sum(axis=1).astype(float)
+
+
 def diagram_to_stats(diagram: np.ndarray,
                      n_landscapes: int = 5,
                      resolution: int = 100) -> np.ndarray:
-    """Compact 8-feature summary for one persistence diagram.
+    """Summary vector for one persistence diagram.
 
-    [carlsson×5, persistent_entropy, landscape_L1_norm, landscape_L2_norm]
+    [carlsson x5, entropy, landscape_L1, landscape_L2]   the original 8
+    [n_bars ... pers_ratio_21]                           8 lifetime statistics
+    [betti_0 ... betti_9]                                10-point Betti curve
+
+    Both blocks are always computed. Downstream code selects by feature name, so
+    the original 8 and the extended set come from one extraction pass rather than
+    two, and the comparison between them is exact.
     """
     carl    = carlsson_coordinates(diagram)
     entropy = persistent_entropy(diagram)
     lvec    = _persistence_landscape_vector(diagram, n_landscapes, resolution, use_mean=True)
     l1      = float(np.sum(np.abs(lvec)))
     l2      = float(np.sqrt(np.sum(lvec ** 2)))
-    return np.concatenate([carl, [entropy, l1, l2]])
+    return np.concatenate([carl, [entropy, l1, l2],
+                           persistence_statistics(diagram),
+                           betti_curve(diagram)])
 
 
 def diagram_to_vector(diagram: np.ndarray,
@@ -186,7 +276,7 @@ def diagram_to_vector(diagram: np.ndarray,
 
 
 def _diagram_feature_len(mode: str, resolution: int) -> int:
-    return len(_STAT_SUFFIXES)  # 8: 5 Carlsson + entropy + L1 + L2
+    return len(_STAT_SUFFIXES)  # 26: 8 classic + 8 lifetime stats + 10 Betti
 
 
 # ---------------------------------------------------------------------------
@@ -463,10 +553,21 @@ class CombinedExtractor:
 # Feature name helpers
 # ---------------------------------------------------------------------------
 
-_STAT_SUFFIXES = [
+# The original 8 — keep these names stable, downstream code selects on them to
+# reproduce the pre-extension feature set exactly.
+_CLASSIC_SUFFIXES = [
     'carl_f1', 'carl_f2', 'carl_f3', 'carl_f4', 'carl_f5_max',
     'entropy', 'landscape_l1', 'landscape_l2',
 ]
+
+_PERS_STAT_SUFFIXES = [
+    'n_bars', 'total_pers', 'pers_mean', 'pers_std', 'pers_skew',
+    'pers_q90', 'pers_second', 'pers_ratio_21',
+]
+
+_BETTI_SUFFIXES = [f'betti_{i}' for i in range(BETTI_RESOLUTION)]
+
+_STAT_SUFFIXES = _CLASSIC_SUFFIXES + _PERS_STAT_SUFFIXES + _BETTI_SUFFIXES
 
 
 def _make_feature_names(diagram_tags: list[str], mode: str, resolution: int) -> list[str]:
