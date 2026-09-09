@@ -1,0 +1,288 @@
+{
+  "_comment": "Same nine characteristics as shape-config.json at length 250 instead of 1000. The length sweep exists because at 1000 points with a single clean cause per class every feature family saturates in the 0.95-0.97 band, and a saturated comparison carries no information. Real archives (UCR) are mostly 100-500 points. Shortening the series is the cheapest way to find where each family actually degrades: classical tests lose power as n falls, and persistence has fewer extrema to work with.",
+  "output_root": "../data/raw/shape250",
+  "output_name": "shape250.parquet",
+  "fixed_length": 250,
+  "random_seed": 42,
+  "classes": {
+    "stationary": [
+      {
+        "base_series": "ar",
+        "n": 125,
+        "features": {}
+      },
+      {
+        "base_series": "ma",
+        "n": 125,
+        "features": {}
+      },
+      {
+        "base_series": "arma",
+        "n": 125,
+        "features": {}
+      },
+      {
+        "base_series": "white_noise",
+        "n": 125,
+        "features": {}
+      }
+    ],
+    "deterministic_trend": [
+      {
+        "base_series": "ar",
+        "n": 125,
+        "features": {
+          "linear_trend": {
+            "enabled": true,
+            "direction": "upward"
+          }
+        }
+      },
+      {
+        "base_series": "ar",
+        "n": 125,
+        "features": {
+          "quadratic_trend": {
+            "enabled": true,
+            "direction": "upward"
+          }
+        }
+      },
+      {
+        "base_series": "ar",
+        "n": 125,
+        "features": {
+          "cubic_trend": {
+            "enabled": true,
+            "direction": "upward"
+          }
+        }
+      },
+      {
+        "base_series": "ar",
+        "n": 125,
+        "features": {
+          "exponential_trend": {
+            "enabled": true,
+            "direction": "upward"
+          }
+        }
+      }
+    ],
+    "stochastic_trend": [
+      {
+        "base_series": "random_walk",
+        "n": 125,
+        "features": {}
+      },
+      {
+        "base_series": "random_walk_drift",
+        "n": 125,
+        "features": {}
+      },
+      {
+        "base_series": "ari",
+        "n": 125,
+        "features": {}
+      },
+      {
+        "base_series": "arima",
+        "n": 125,
+        "features": {}
+      }
+    ],
+    "volatility": [
+      {
+        "base_series": "arch",
+        "n": 125,
+        "features": {}
+      },
+      {
+        "base_series": "garch",
+        "n": 125,
+        "features": {}
+      },
+      {
+        "base_series": "egarch",
+        "n": 125,
+        "features": {}
+      },
+      {
+        "base_series": "aparch",
+        "n": 125,
+        "features": {}
+      }
+    ],
+    "collective_anomaly": [
+      {
+        "base_series": "ar",
+        "n": 168,
+        "features": {
+          "collective_anomaly": {
+            "enabled": true,
+            "mode": "single",
+            "location": "random"
+          }
+        }
+      },
+      {
+        "base_series": "arma",
+        "n": 166,
+        "features": {
+          "collective_anomaly": {
+            "enabled": true,
+            "mode": "single",
+            "location": "random"
+          }
+        }
+      },
+      {
+        "base_series": "white_noise",
+        "n": 166,
+        "features": {
+          "collective_anomaly": {
+            "enabled": true,
+            "mode": "single",
+            "location": "random"
+          }
+        }
+      }
+    ],
+    "point_anomaly": [
+      {
+        "base_series": "ar",
+        "n": 168,
+        "features": {
+          "point_anomaly": {
+            "enabled": true,
+            "mode": "single",
+            "location": "random",
+            "scale_factor": 5
+          }
+        }
+      },
+      {
+        "base_series": "arma",
+        "n": 166,
+        "features": {
+          "point_anomaly": {
+            "enabled": true,
+            "mode": "single",
+            "location": "random",
+            "scale_factor": 5
+          }
+        }
+      },
+      {
+        "base_series": "white_noise",
+        "n": 166,
+        "features": {
+          "point_anomaly": {
+            "enabled": true,
+            "mode": "single",
+            "location": "random",
+            "scale_factor": 5
+          }
+        }
+      }
+    ],
+    "mean_shift": [
+      {
+        "base_series": "ar",
+        "n": 168,
+        "features": {
+          "mean_shift": {
+            "enabled": true,
+            "mode": "single",
+            "direction": "up"
+          }
+        }
+      },
+      {
+        "base_series": "ar",
+        "n": 166,
+        "features": {
+          "mean_shift": {
+            "enabled": true,
+            "mode": "single",
+            "direction": "down"
+          }
+        }
+      },
+      {
+        "base_series": "arma",
+        "n": 166,
+        "features": {
+          "mean_shift": {
+            "enabled": true,
+            "mode": "single",
+            "direction": "up"
+          }
+        }
+      }
+    ],
+    "variance_shift": [
+      {
+        "base_series": "ar",
+        "n": 168,
+        "features": {
+          "variance_shift": {
+            "enabled": true,
+            "mode": "single",
+            "direction": "up"
+          }
+        }
+      },
+      {
+        "base_series": "ar",
+        "n": 166,
+        "features": {
+          "variance_shift": {
+            "enabled": true,
+            "mode": "single",
+            "direction": "down"
+          }
+        }
+      },
+      {
+        "base_series": "arma",
+        "n": 166,
+        "features": {
+          "variance_shift": {
+            "enabled": true,
+            "mode": "single",
+            "direction": "up"
+          }
+        }
+      }
+    ],
+    "trend_shift": [
+      {
+        "base_series": "ar",
+        "n": 250,
+        "features": {
+          "trend_shift": {
+            "enabled": true,
+            "mode": "single",
+            "change_type": "direction_change"
+          }
+        }
+      },
+      {
+        "base_series": "ar",
+        "n": 250,
+        "features": {
+          "linear_trend": {
+            "enabled": true,
+            "direction": "upward"
+          },
+          "trend_shift": {
+            "enabled": true,
+            "mode": "single",
+            "change_type": "direction_change"
+          }
+        }
+      }
+    ]
+  }
+}
