@@ -14,8 +14,7 @@ def build_category_mapping(categories) -> dict:
     """Map class names to integers, derived from the data and sorted by name.
 
     This used to be a hardcoded 39-class table. That broke the moment each
-    pipeline mode got its own class set (9 for `shape`, 4 for each `season-*`
-    study): unseen names raised, and — worse — the integer a class was given
+    pipeline mode got its own class set: unseen names raised, and — worse — the integer a class was given
     depended on a table nobody re-checked, so class-name lookups could silently
     label a confusion matrix wrong.
 

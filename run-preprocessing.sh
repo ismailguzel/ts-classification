@@ -5,7 +5,6 @@
 #   bash run-preprocessing.sh shape                    # TSFresh only
 #   bash run-preprocessing.sh shape topo               # topology (sublevel+h1, default)
 #   bash run-preprocessing.sh shape hybrid             # TSFresh + topology in one pass
-#   bash run-preprocessing.sh season-anomaly topo      # Study B2, topology
 #   bash run-preprocessing.sh shape topo sublevel      # sublevel only (no Ripser)
 #   bash run-preprocessing.sh shape topo takens        # takens H0+H1 (Ripser)
 #   bash run-preprocessing.sh shape topo both          # all diagrams
@@ -88,8 +87,10 @@ if [ "$FEATURES" == "topo" ] || [ "$FEATURES" == "hybrid" ]; then
 
     ZSCORE_FLAG=""
     [ "$ZSCORE" == "1" ] && ZSCORE_FLAG="--zscore"
+    NORM_FLAG=""
+    [ "$SELF_NORM" == "1" ] || NORM_FLAG="--no-normalize"
 
-    echo "Step 1: Topological Feature Extraction (method=$TOPO_METHOD, zscore=$ZSCORE)"
+    echo "Step 1: Topological Feature Extraction (method=$TOPO_METHOD, zscore=$ZSCORE, self_norm=$SELF_NORM)"
     $PYTHON topology_extraction.py \
         --input      "$DATA_RAW" \
         --output     "$DATA_TOPO" \
@@ -98,7 +99,7 @@ if [ "$FEATURES" == "topo" ] || [ "$FEATURES" == "hybrid" ]; then
         --auto-dim   \
         --n-perm     500 \
         --n-jobs     $N_JOBS \
-        $ZSCORE_FLAG
+        $ZSCORE_FLAG $NORM_FLAG
 
     [ -f "$DATA_TOPO/features.parquet" ] || { echo "Error: Topology extraction failed."; exit 1; }
 

@@ -20,13 +20,15 @@ symmetric):
     tsfresh      100  MI-selected statistical baseline
     tsfresh+topo 124  both
 
-The expectation the two-study split was built on: H1 should carry Study B and
-contribute almost nothing to Study A. This script is what confirms or refutes
-that.
+Read the per-class F1 table, not the accuracy row: the point is which
+characteristic each diagram family resolves, and the mechanism behind it —
+sub_H0 registers an extreme value as a barrier splitting the baseline (its
+lifetime equals the spike height), sup_H0 the mirror case, H1 the amplitude of
+an oscillation.
 
 Usage:
     python diagram_ablation.py --mode shape
-    python diagram_ablation.py --mode season-anomaly --classifier xgboost
+    python diagram_ablation.py --mode shape --classifier xgboost
     python diagram_ablation.py --mode shape --subsets sub_H0,H1,tsfresh
 """
 
@@ -168,7 +170,7 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--mode", required=True,
-                    help="pipeline mode: shape | season-structure | season-anomaly")
+                    help="pipeline mode — see 01-data-generation/<mode>-config.json")
     ap.add_argument("--classifier", default="rf", choices=["rf", "xgboost", "catboost"])
     ap.add_argument("--subsets", default=None,
                     help="comma-separated subset names to restrict to")

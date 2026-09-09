@@ -7,8 +7,6 @@
 #
 # Usage:
 #   bash run-generation.sh shape             # Study A,  9 classes, 900 series
-#   bash run-generation.sh season-structure  # Study B1, 4 classes,   400 series
-#   bash run-generation.sh season-anomaly    # Study B2, 4 classes,   400 series
 # ============================================================================
 
 set -e

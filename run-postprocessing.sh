@@ -5,7 +5,6 @@
 #   bash run-postprocessing.sh shape                 # Study A, TSFresh
 #   bash run-postprocessing.sh shape topo            # Study A, topology
 #   bash run-postprocessing.sh shape hybrid          # Study A, hybrid
-#   bash run-postprocessing.sh season-anomaly topo   # Study B2, topology
 
 set -e
 

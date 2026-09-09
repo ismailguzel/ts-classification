@@ -5,7 +5,6 @@
 #   bash run-training.sh shape                 # Study A, TSFresh features
 #   bash run-training.sh shape topo            # Study A, topology features only
 #   bash run-training.sh shape hybrid          # Study A, TSFresh + topology merged
-#   bash run-training.sh season-anomaly topo   # Study B2, topology features only
 
 set -e
 

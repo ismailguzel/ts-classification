@@ -44,7 +44,7 @@ Usage:
     python topology_extraction.py \\
         --method takens --auto-delay --auto-dim --n-perm 500
 
-    # Shape rather than amplitude (mandatory for the season-* modes):
+    # Measure shape rather than amplitude:
     python topology_extraction.py --zscore
 """
 
@@ -488,11 +488,11 @@ def _zscore(ts: np.ndarray) -> np.ndarray:
     without this the absolute amplitude of a series flows straight into its
     topological features. Whether that is wanted depends on the question:
 
-      Study A  — keep raw scale. `variance_shift` and `volatility` are *about*
-                 amplitude, so standardising away scale would remove the signal.
-      Study B  — standardise. With betise 0.4.0 defaults, per-series sigma spans
-                 ~0.2 (single_seasonality) to ~5.7 (sarima); a 25x gap that raw
-                 amplitude alone would separate, telling us nothing about shape.
+      Off (default) — `variance_shift` and `volatility` are *about* amplitude,
+                      so standardising it away removes the signal that defines them.
+      On            — when amplitude is a nuisance rather than the signal, e.g. any
+                      comparison where classes differ in scale for reasons unrelated
+                      to the label.
 
     Running both ways on the same data is also the only way to see how much of a
     diagram family's discriminative power is shape and how much is scale.
@@ -649,9 +649,8 @@ def main():
     p.add_argument("--zscore", action="store_true",
                    help="Standardise each series ((x-mean)/std) BEFORE the filtration and "
                         "the Takens embedding, so persistence measures shape rather than "
-                        "amplitude. Required for the season-* modes, where per-series sigma "
-                        "spans ~0.2 to ~5.7; leave off for shape, where variance_shift and "
-                        "volatility are genuinely about scale.")
+                        "amplitude. Off by default: variance_shift and volatility are "
+                        "genuinely about scale, and standardising deletes what defines them.")
 
     p.add_argument("--batch-size", type=int, default=200)
     p.add_argument("--n-jobs",     type=int, default=-1)

@@ -8,9 +8,7 @@ one merged, shuffled parquet of labeled series.
 
 Available configs — one per pipeline mode (see ``run.sh``):
 
-    shape-config.json            Study A,  9 classes  — non-periodic structure
-    season-structure-config.json Study B1, 4 classes  — which seasonal structure
-    season-anomaly-config.json   Study B2, 4 classes  — perturbation of the loop
+    shape-config.json   9 classes — one stationary, eight sources of non-stationarity
 
 Pipeline (see BeTiSe ``USAGE.md`` §6–7 and ``examples/05_classification_dataset.py``):
 
