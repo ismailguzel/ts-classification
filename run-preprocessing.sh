@@ -49,12 +49,16 @@ if [ "$FEATURES" != "topo" ]; then
 
     mkdir -p "$DATA_FEATURES" "$DATA_SELECTED"
 
-    echo "Step 1: Feature Extraction (TSFresh $FEATURE_SET)"
+    TSF_ZSCORE_FLAG=""
+    [ "$ZSCORE" == "1" ] && TSF_ZSCORE_FLAG="--zscore"
+
+    echo "Step 1: Feature Extraction (TSFresh $FEATURE_SET, zscore=$ZSCORE)"
     $PYTHON feature_extraction.py \
         --input   "$DATA_RAW" \
         --output  "$DATA_FEATURES" \
         --feature-set $FEATURE_SET \
-        --n-jobs  $N_JOBS
+        --n-jobs  $N_JOBS \
+        $TSF_ZSCORE_FLAG
 
     [ -f "$DATA_FEATURES/features.parquet" ] || { echo "Error: Feature extraction failed."; exit 1; }
 

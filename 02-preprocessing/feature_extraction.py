@@ -39,10 +39,12 @@ warnings.filterwarnings("ignore")
 REQUIRED_COLUMNS = ["series_id", "time", "data", "is_stationary", "primary_category", "sub_category"]
 
 class ChunkedFeatureExtractor:
-    def __init__(self, feature_set: str = "efficient", n_jobs: int = -1):
+    def __init__(self, feature_set: str = "efficient", n_jobs: int = -1,
+                 zscore: bool = False):
         self.feature_set = feature_set.lower()
         self.n_jobs = n_jobs if n_jobs and n_jobs > 0 else os.cpu_count()
         self.settings = self._select_feature_set(self.feature_set)
+        self.zscore = zscore
         
         print(f"Initialized with {self.n_jobs} cores.")
         print(f"Feature Set: {self.feature_set}")
@@ -86,6 +88,15 @@ class ChunkedFeatureExtractor:
             # 3. Prepare
             labels = df.groupby("series_id")[["is_stationary", "primary_category", "sub_category"]].first()
             ts_data = df[["series_id", "time", "data"]]
+
+            if self.zscore:
+                # Per-series standardisation, matching topology_extraction.py --zscore.
+                # Both extractors must see the same input or the comparison between
+                # them is not about features, it is about preprocessing.
+                g = ts_data.groupby("series_id")["data"]
+                ts_data = ts_data.assign(
+                    data=(ts_data["data"] - g.transform("mean"))
+                         / g.transform("std").replace(0, 1.0))
             
             del df
             gc.collect()
@@ -198,6 +209,10 @@ def main():
     parser.add_argument("--output", type=str, required=True, help="Output folder")
     parser.add_argument("--feature-set", type=str, default="efficient", choices=["minimal", "efficient", "comprehensive"])
     parser.add_argument("--n-jobs", type=int, default=0, help="Number of parallel jobs")
+    parser.add_argument("--zscore", action="store_true",
+                        help="Standardise each series ((x-mean)/std) before extraction. "
+                             "Mirrors topology_extraction.py --zscore so both feature sets "
+                             "see identical input.")
     
     args = parser.parse_args()
     
@@ -214,7 +229,9 @@ def main():
     files = sorted(input_path.rglob("*.parquet"))
     print(f"Found {len(files)} files to process.")
     
-    extractor = ChunkedFeatureExtractor(feature_set=args.feature_set, n_jobs=args.n_jobs)
+    print(f"Per-series z-score : {'yes' if args.zscore else 'no (raw amplitude)'}")
+    extractor = ChunkedFeatureExtractor(feature_set=args.feature_set, n_jobs=args.n_jobs,
+                                        zscore=args.zscore)
     
     # Process Loop
     for i, file_path in enumerate(files, 1):

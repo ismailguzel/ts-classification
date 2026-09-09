@@ -48,12 +48,18 @@ DATA_TOPO_SEL="$BASE_DIR/data/features/$MODE/topological_selected"
 MODEL_DIR="$BASE_DIR/03-models/flat_classifier/output/${MODE}_${FEATURES}"
 FIGURES_DIR="$BASE_DIR/04-postprocessing/figures/${MODE}_${FEATURES}"
 
-# Per-series z-normalisation before the filtration. OFF by default: sub/superlevel
-# persistence is measured in the units of the signal, and variance_shift and
-# volatility are genuinely *about* amplitude — standardising would delete the very
-# property those classes are defined by. Set ZSCORE=1 to run a mode both ways; that
-# comparison is how you separate shape from scale.
-ZSCORE="${ZSCORE:-0}"
+# Per-series z-normalisation, applied by BOTH extractors so the feature sets see
+# identical input. ON by default — measured, against the earlier expectation:
+#
+#   topology  9-class 0.820 -> 0.873, binary 0.942 -> 0.961
+#   tsfresh   9-class 0.952 -> 0.947, binary 0.984 -> 0.983
+#
+# The reasoning for leaving it off was that variance_shift and volatility are
+# *about* amplitude. That is true, but the carl_f3/carl_f4 coordinates carry p^4
+# terms whose across-series scale spread (up to 1e20 on raw data) swamped the shape
+# information. Putting every series on a common scale costs less than it recovers.
+# Set ZSCORE=0 to reproduce the raw-amplitude behaviour.
+ZSCORE="${ZSCORE:-1}"
 
 # Feature-vector self-normalisation — dividing each diagram family's 8-vector by its
 # own maximum element. OFF by default. It costs accuracy (measured 0.700 -> 0.775 on
